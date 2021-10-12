@@ -1,5 +1,5 @@
-Package: certetemplate
-Title: A Certe R Package for ...
+Package: certedb
+Title: A Certe R Package for Connecting to Databases
 Version: 0.0.1
 Authors@R: c(
   person(given = c("Matthijs", "S."), 
@@ -16,11 +16,11 @@ Authors@R: c(
          email = "e.dijkstra@certe.nl"),
   person(given = "Certe Medical Diagnostics & Advice Foundation",
          role = c("cph", "fnd")))
-Description: A Certe R Package for ... .
+Description: A Certe R Package for connecting to databases.
   This package is part of the 'certedata' universe.
 URL: https://github.com/certe-medical-epidemiology
 Depends: 
-  R (>= 4.0.0)
+  R (>= 3.6.0)
 Suggests: 
   testthat (>= 2.0.0)
 License: GPL-2

@@ -1,4 +1,4 @@
-# The `certetemplate` package for R
+# The `certedb` package for R
 
 ### General Information
 
