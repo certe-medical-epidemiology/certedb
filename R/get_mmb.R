@@ -23,7 +23,6 @@
 #' @param arg1 text
 #' @rdname title123
 #' @export
-#' @importFrom dplyr summarise n_distinct
 #' @examples
 #' a <- "example1"
 #' b <- "example2"
