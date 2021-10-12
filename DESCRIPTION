@@ -21,6 +21,8 @@ Description: A Certe R Package for connecting to databases.
 URL: https://github.com/certe-medical-epidemiology
 Depends: 
   R (>= 3.6.0)
+Imports:
+  dplyr (>= 1.0.0)
 Suggests: 
   testthat (>= 2.0.0)
 License: GPL-2

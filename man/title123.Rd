@@ -11,8 +11,6 @@ def(d)
 }
 \arguments{
 \item{d}{text}
-
-\item{arg1}{text}
 }
 \description{
 Short description
@@ -20,4 +18,9 @@ Short description
 \examples{
 a <- "example1"
 b <- "example2"
+paste(a, b)
+
+head(mtcars)
+
+1 + 1
 }

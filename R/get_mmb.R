@@ -20,12 +20,16 @@
 #' Title of function
 #'
 #' Short description
-#' @param arg1 text
 #' @rdname title123
 #' @export
 #' @examples
 #' a <- "example1"
 #' b <- "example2"
+#' paste(a, b)
+#' 
+#' head(mtcars)
+#' 
+#' 1 + 1
 abc <- function() {
 
 }
