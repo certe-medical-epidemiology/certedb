@@ -132,6 +132,7 @@ Voor gebruik van \code{where} staan hieronder de tabelreferenties. Deze zijn ook
 Locatie wordt dus op \strong{drie manieren gekoppeld}; als \code{l_instelling} (op \code{o.instelling}, zoals huisarts), als \code{l_ontvangst} (op \code{o.recsitenb}, zoals Assen) en als \code{l_uitvoer} (op \code{u.uitvafd}, zoals Moleculair).
 }
 \examples{
+\dontrun{
 ################
 # MMB-gegevens #
 ################
@@ -224,7 +225,7 @@ data <- certedb_getmmb_tat(2020,
 
 data <- certedb_getmmb_tat(2020,
                            where(db$t.testcode == "PXNORO"))
-
+}
 }
 \seealso{
 \code{\link{certedb_query}} voor het direct gebruik van query's.

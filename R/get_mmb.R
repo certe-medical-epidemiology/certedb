@@ -74,9 +74,11 @@
 #'
 #'   Locatie wordt dus op \strong{drie manieren gekoppeld}; als \code{l_instelling} (op \code{o.instelling}, zoals huisarts), als \code{l_ontvangst} (op \code{o.recsitenb}, zoals Assen) en als \code{l_uitvoer} (op \code{u.uitvafd}, zoals Moleculair).
 #' @importFrom crayon silver
+#' @importFrom dplyr filter
 #' @export
 #' @seealso \code{\link{certedb_query}} voor het direct gebruik van query's.
 #' @examples
+#' \dontrun{
 #' ################
 #' # MMB-gegevens #
 #' ################
@@ -169,7 +171,7 @@
 #'
 #' data <- certedb_getmmb_tat(2020,
 #'                            where(db$t.testcode == "PXNORO"))
-#'
+#' }
 certedb_getmmb <- function(dates = NULL,
                            where = NULL,
                            select_preset = "mmb",
@@ -1419,9 +1421,6 @@ certedb <- function(host = Sys.getenv("DB_HOST"),
   con
 }
 
-#' @inherit DBI::dbDisconnect
-#' @seealso \code{\link{certedb_query}} voor het direct gebruik van query's.
-#' @export
 certedb_close <- function(conn, ...) {
   RMariaDB::dbDisconnect(conn = conn, ...)
 }
