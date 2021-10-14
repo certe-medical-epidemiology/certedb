@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function reference • certedb</title>
+<title>Tabellen valideren in MySQL-/MariaDB-database — certedb_check_tbls • certedb</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,8 @@
 
 
 
-<meta property="og:title" content="Function reference" />
+<meta property="og:title" content="Tabellen valideren in MySQL-/MariaDB-database — certedb_check_tbls" />
+<meta property="og:description" content="Hiermee worden tabellen opgezocht in een MySQL-/MariaDB-database. Niet-bestaande tabellen worden hoofdletterongevoelig vergeleken met bestaande tabellen. Wanneer een niet-bestaande tabel wel voorkomt met een prefix eindigend op een underscore (&quot;_&quot;, wordt de tabelnaam overschreven door de bestaande tabelnaam die alfabetisch als laatste voorkomt." />
 
 
 
@@ -58,7 +59,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-reference-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -105,84 +106,42 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Reference</h1>
+    <h1>Tabellen valideren in MySQL-/MariaDB-database</h1>
+    <small class="dont-index">Source: <a href='NA/NA/NA/blob/master/R/get_mmb.R'><code>R/get_mmb.R</code></a></small>
+    <div class="hidden name"><code>certedb_check_tbls.Rd</code></div>
     </div>
 
-    <table class="ref-index">
+    <div class="ref-description">
+    <p>Hiermee worden tabellen opgezocht in een MySQL-/MariaDB-database. Niet-bestaande tabellen worden hoofdletterongevoelig vergeleken met bestaande tabellen. Wanneer een niet-bestaande tabel wel voorkomt met een prefix eindigend op een underscore (<code>"_"</code>, wordt de tabelnaam overschreven door de bestaande tabelnaam die alfabetisch als laatste voorkomt.</p>
+    </div>
 
-    <colgroup>
-      
-      <col class="alias" />
-      <col class="title" />
-    </colgroup>
+    <pre class="usage"><span class='fu'>certedb_check_tbls</span><span class='op'>(</span><span class='va'>tbls</span>, con <span class='op'>=</span> <span class='cn'>NULL</span>, dbname <span class='op'>=</span> <span class='st'>"certemmb"</span>, info <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
-    <tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
-        </th>
-      </tr>
-      
-      
-    </tbody><tbody>
-      
-      
-      <tr>
-        
-        <td>
-          <p><code><a href="certedb.html">certedb()</a></code> </p>
-        </td>
-        <td><p>Verbinding maken met MySQL-/MariaDB-database</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="certedb_check_tbls.html">certedb_check_tbls()</a></code> </p>
-        </td>
-        <td><p>Tabellen valideren in MySQL-/MariaDB-database</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="certedb_checkmmb.html">certedb_checkmmb_mtrlcodes()</a></code> <code><a href="certedb_checkmmb.html">certedb_checkmmb_testcodes()</a></code> </p>
-        </td>
-        <td><p>Controleren van nieuwe materiaal- en testcodes</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="certedb_getmmb.html">certedb_getmmb()</a></code> <code><a href="certedb_getmmb.html">certedb_getmmb_tat()</a></code> </p>
-        </td>
-        <td><p>MMB-gegevens ophalen van MySQL-/MariaDB-database</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="certedb_query.html">certedb_query()</a></code> </p>
-        </td>
-        <td><p>SQL-query uitvoeren op MySQL-/MariaDB-database</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="certedb_tbls.html">certedb_tbls()</a></code> </p>
-        </td>
-        <td><p>Tabellen ophalen uit MySQL-/MariaDB-database</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="preset.html">preset.list()</a></code> <code><a href="preset.html">preset.thisfolder.list()</a></code> <code><a href="preset.html">preset.exists()</a></code> <code><a href="preset.html">preset.read()</a></code> <code><a href="preset.html">preset.add()</a></code> <code><a href="preset.html">preset.thisfolder()</a></code> </p>
-        </td>
-        <td><p>Voorgedefinieerde variabelen selecteren</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="qry.html">qry()</a></code> <code><a href="qry.html">`qry&lt;-`()</a></code> <code><a href="qry.html">has_qry()</a></code> <code><a href="qry.html">qry_beautify()</a></code> <code><a href="qry.html">qry_isvalid()</a></code> </p>
-        </td>
-        <td><p>Query van een object</p></td>
-      </tr>
-    </tbody>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>tbls</th>
+      <td><p>Tabellen in de database die gecontroleerd moeten worden.</p></td>
+    </tr>
+    <tr>
+      <th>con</th>
+      <td><p>Standaard is leeg, waarmee de verbinding gemaakt wordt op basis van de omgevingsvariabelen van de huidige gebruiker: <code>"DB_HOST"</code>, <code>"DB_PORT"</code>, <code>"DB_USERNAME"</code> en <code>"DB_PASSWORD"</code>.</p></td>
+    </tr>
+    <tr>
+      <th>dbname</th>
+      <td><p>Standaard is <code>"certemmb"</code>. Naam van de database die geselecteerd moet worden. Wordt genegeerd als <code>con</code> al een bestaande verbinding is.</p></td>
+    </tr>
+    <tr>
+      <th>info</th>
+      <td><p>Standaard is <code>TRUE</code>. Waarschuwing weergeven over niet-bestaande tabellen die vervangen worden door bestaande tabellen.</p></td>
+    </tr>
     </table>
-  </div>
 
+
+  </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
       <h2 data-toc-skip>Contents</h2>

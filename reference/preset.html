@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function reference • certedb</title>
+<title>Voorgedefinieerde variabelen selecteren — preset • certedb</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,8 @@
 
 
 
-<meta property="og:title" content="Function reference" />
+<meta property="og:title" content="Voorgedefinieerde variabelen selecteren — preset" />
+<meta property="og:description" content="Dit downloadt bestanden uit de map Sys.getenv(&quot;R_REFMAP&quot;) die de structuur preset_*.sql hebben. Gebruik een of meerdere van deze (zelf te maken) bestanden als parameter select_preset in de functies certedb_getmmb en certedb_getmmb_tat. Zie Details." />
 
 
 
@@ -58,7 +59,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-reference-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -105,84 +106,63 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Reference</h1>
+    <h1>Voorgedefinieerde variabelen selecteren</h1>
+    <small class="dont-index">Source: <a href='NA/NA/NA/blob/master/R/get_mmb.R'><code>R/get_mmb.R</code></a></small>
+    <div class="hidden name"><code>preset.Rd</code></div>
     </div>
 
-    <table class="ref-index">
+    <div class="ref-description">
+    <p>Dit downloadt bestanden uit de map <code><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv("R_REFMAP")</a></code> die de structuur <code>preset_*.sql</code> hebben. Gebruik een of meerdere van deze (zelf te maken) bestanden als parameter <code>select_preset</code> in de functies <code><a href='certedb_getmmb.html'>certedb_getmmb</a></code> en <code><a href='certedb_getmmb.html'>certedb_getmmb_tat</a></code>. Zie Details.</p>
+    </div>
 
-    <colgroup>
-      
-      <col class="alias" />
-      <col class="title" />
-    </colgroup>
+    <pre class="usage"><span class='fu'>preset.list</span><span class='op'>(</span>fullname <span class='op'>=</span> <span class='cn'>FALSE</span>, recursive <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
 
-    <tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
-        </th>
-      </tr>
-      
-      
-    </tbody><tbody>
-      
-      
-      <tr>
-        
-        <td>
-          <p><code><a href="certedb.html">certedb()</a></code> </p>
-        </td>
-        <td><p>Verbinding maken met MySQL-/MariaDB-database</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="certedb_check_tbls.html">certedb_check_tbls()</a></code> </p>
-        </td>
-        <td><p>Tabellen valideren in MySQL-/MariaDB-database</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="certedb_checkmmb.html">certedb_checkmmb_mtrlcodes()</a></code> <code><a href="certedb_checkmmb.html">certedb_checkmmb_testcodes()</a></code> </p>
-        </td>
-        <td><p>Controleren van nieuwe materiaal- en testcodes</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="certedb_getmmb.html">certedb_getmmb()</a></code> <code><a href="certedb_getmmb.html">certedb_getmmb_tat()</a></code> </p>
-        </td>
-        <td><p>MMB-gegevens ophalen van MySQL-/MariaDB-database</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="certedb_query.html">certedb_query()</a></code> </p>
-        </td>
-        <td><p>SQL-query uitvoeren op MySQL-/MariaDB-database</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="certedb_tbls.html">certedb_tbls()</a></code> </p>
-        </td>
-        <td><p>Tabellen ophalen uit MySQL-/MariaDB-database</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="preset.html">preset.list()</a></code> <code><a href="preset.html">preset.thisfolder.list()</a></code> <code><a href="preset.html">preset.exists()</a></code> <code><a href="preset.html">preset.read()</a></code> <code><a href="preset.html">preset.add()</a></code> <code><a href="preset.html">preset.thisfolder()</a></code> </p>
-        </td>
-        <td><p>Voorgedefinieerde variabelen selecteren</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="qry.html">qry()</a></code> <code><a href="qry.html">`qry&lt;-`()</a></code> <code><a href="qry.html">has_qry()</a></code> <code><a href="qry.html">qry_beautify()</a></code> <code><a href="qry.html">qry_isvalid()</a></code> </p>
-        </td>
-        <td><p>Query van een object</p></td>
-      </tr>
-    </tbody>
+<span class='fu'>preset.thisfolder.list</span><span class='op'>(</span>fullname <span class='op'>=</span> <span class='cn'>FALSE</span>, recursive <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+
+<span class='fu'>preset.exists</span><span class='op'>(</span><span class='va'>name</span>, returnlocation <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
+
+<span class='fu'>preset.read</span><span class='op'>(</span><span class='va'>name</span><span class='op'>)</span>
+
+<span class='fu'>preset.add</span><span class='op'>(</span><span class='va'>name</span>, <span class='va'>vector</span><span class='op'>)</span>
+
+<span class='fu'>preset.thisfolder</span><span class='op'>(</span>recursive <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
+
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>fullname</th>
+      <td><p>Standaard is <code>FALSE</code>. Bestandsnamen weergeven met prefix <code>prefix_</code> en suffix <code>.sql</code>.</p></td>
+    </tr>
+    <tr>
+      <th>recursive</th>
+      <td><p>Ook onderliggende mappen doorzoeken.</p></td>
+    </tr>
+    <tr>
+      <th>name</th>
+      <td><p>Tekst(vector) om te zoeken in de map <code><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv("R_REFMAP")</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>vector</th>
+      <td><p>Tekst(vector) met kolomnamen die opgeslagen moet worden als nieuwe preset. Deze kunnen geselecteerd worden met <code>db</code>.</p></td>
+    </tr>
     </table>
-  </div>
 
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Gebruik: <br /></p><ul>
+<li><p><code>preset.list</code> voor het weergeven van alle presets in de map <code><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv("R_REFMAP")</a></code>; <br /></p></li>
+<li><p><code>preset.add</code> voor het toevoegen van een nieuwe preset; <br /></p></li>
+<li><p><code>preset.read</code> voor het uitlezen van een preset; <br /></p></li>
+<li><p><code>preset.thisfolder.list</code> voor het weergeven van alle presets in de huidige map(pen); <br /></p></li>
+<li><p><code>preset.thisfolder</code> voor het weergeven van de eerst gevonden preset in de huidge map; <br /></p></li>
+<li><p><code>preset.exists</code> voor toetsen of een preset bestaat.</p></li>
+</ul>
+
+
+  </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
       <h2 data-toc-skip>Contents</h2>
