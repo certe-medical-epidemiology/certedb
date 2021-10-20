@@ -25,10 +25,10 @@ on:
     branches: '**' # matches every branch
   pull_request:
     branches: '**' # matches every branch
-  schedule:
-    # run a schedule everyday at 1 AM.
-    # this is to check that all dependencies are still available
-    - cron:  '0 1 * * *'
+  # schedule:
+  #   # run a schedule everyday at 1 AM.
+  #   # this is to check that all dependencies are still available
+  #   - cron:  '0 1 * * *'
 
 name: R-CMD-check
 
