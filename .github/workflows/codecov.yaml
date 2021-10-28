@@ -17,21 +17,25 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
+# set up in https://app.codecov.io/gh/certe-medical-epidemiology
+# and add repo secret CODECOV_TOKEN to GitHub
+
 on:
   push:
-    branches: 'main' # only update gh-pages branch when change is accepted on main
+    branches: '**' # matches every branch
+  pull_request:
+    branches: '**' # matches every branch
 
-name: website
+name: Codecov
 
 jobs:
-  website:
-    runs-on: ubuntu-latest
+  Codecov:
+    runs-on: macOS-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}
     steps:
       - uses: actions/checkout@v2
-
-      - uses: r-lib/actions/setup-pandoc@v1
 
       - uses: r-lib/actions/setup-r@v1
         with:
@@ -41,18 +45,8 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v1
         with:
-          extra-packages: pkgdown
-          needs: website
+          extra-packages: covr
 
-      - name: Generate Dutch locale for website examples
-        run: |
-          sudo locale-gen nl_NL
-          sudo locale-gen nl_NL.UTF-8
-          sudo update-locale
-
-      - name: Deploy package
-        run: |
-          git config --local user.name "$GITHUB_ACTOR"
-          git config --local user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          Rscript -e 'pkgdown::build_favicons()'
-          Rscript -e 'pkgdown::deploy_to_branch(new_process = FALSE, clean = TRUE)'
+      - name: Test coverage
+        run: covr::codecov()
+        shell: Rscript {0}

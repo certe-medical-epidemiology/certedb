@@ -26,9 +26,9 @@ on:
   pull_request:
     branches: '**' # matches every branch
   schedule:
-    # run a schedule everyday at 1 AM.
+    # run a schedule every Monday and Thursday at 1 AM.
     # this is to check that all dependencies are still available
-    - cron:  '0 1 * * *'
+    - cron:  '0 1 * * 1,4'
 
 name: R-CMD-check
 
@@ -44,12 +44,15 @@ jobs:
           - {os: macOS-latest,   r: 'devel',   allowfail: true}
           - {os: macOS-latest,   r: '4.1',     allowfail: false}
           - {os: macOS-latest,   r: '4.0',     allowfail: false}
+          - {os: macOS-latest,   r: '3.6',     allowfail: false}
           - {os: ubuntu-20.04,   r: 'devel',   allowfail: true,  rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           - {os: ubuntu-20.04,   r: '4.1',     allowfail: false, rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           - {os: ubuntu-20.04,   r: '4.0',     allowfail: false, rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
+          - {os: ubuntu-20.04,   r: '3.6',     allowfail: false, rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           - {os: windows-latest, r: 'devel',   allowfail: true}
           - {os: windows-latest, r: '4.1',     allowfail: false}
           - {os: windows-latest, r: '4.0',     allowfail: false}
+          - {os: windows-latest, r: '3.6',     allowfail: false}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
