@@ -1,6 +1,6 @@
 Package: certedb
 Title: A Certe R Package for Connecting to Databases
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: c(
   person(given = c("Matthijs", "S."), 
          family = "Berends",
@@ -18,7 +18,7 @@ Authors@R: c(
          role = c("cph", "fnd")))
 Description: A Certe R Package for connecting to databases.
   This package is part of the 'certedata' universe.
-URL: https://github.com/certe-medical-epidemiology
+URL: https://certe-medical-epidemiology.github.io/certedb, https://github.com/certe-medical-epidemiology/certedb
 Depends: 
   R (>= 3.6.0)
 Imports:
@@ -29,7 +29,6 @@ Suggests:
   testthat (>= 2.0.0)
 License: GPL-2
 Encoding: UTF-8
-LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Config/testthat/edition: 2

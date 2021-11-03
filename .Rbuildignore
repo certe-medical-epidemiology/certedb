@@ -2,4 +2,6 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^\.github$
-^certedb.Rproj$
+^certedb\.Rproj$
+^_pkgdown\.yml$
+^logo\.svg$
