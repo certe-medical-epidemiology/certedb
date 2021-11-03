@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Tabellen ophalen uit MySQL-/MariaDB-database — certedb_tbls • certedb</title>
+<title>Retrieve tables from MySQL-/MariaDB-database — certedb_tbls • certedb</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="Tabellen ophalen uit MySQL-/MariaDB-database — certedb_tbls" />
-<meta property="og:description" content="Alle tabellen uit een MySQL-/MariaDB-database zoals de Certe-database ophalen en in een list plaatsen, waarbij elke waarde in de lijst ook de naam is van het element in de lijst." />
+<meta property="og:title" content="Retrieve tables from MySQL-/MariaDB-database — certedb_tbls" />
+<meta property="og:description" content="Retrieve all tables from a MySQL-/MariaDB-database like the Certe-database ophalen and place them in a list, where each listed value is also the name of the element in the list." />
 <meta property="og:image" content="https://certe-medical-epidemiology.github.io/certedb/logo.svg" />
 
 
@@ -129,13 +129,13 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Tabellen ophalen uit MySQL-/MariaDB-database</h1>
-    <small class="dont-index">Source: <a href='https://github.com/certe-medical-epidemiology/certedb/blob/master/R/get_mmb.R'><code>R/get_mmb.R</code></a></small>
+    <h1>Retrieve tables from MySQL-/MariaDB-database</h1>
+    <small class="dont-index">Source: <a href='https://github.com/certe-medical-epidemiology/certedb/blob/master/R/db.R'><code>R/db.R</code></a></small>
     <div class="hidden name"><code>certedb_tbls.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Alle tabellen uit een MySQL-/MariaDB-database zoals de Certe-database ophalen en in een <code><a href='https://rdrr.io/r/base/list.html'>list</a></code> plaatsen, waarbij elke waarde in de lijst ook de naam is van het element in de lijst.</p>
+    <p>Retrieve all tables from a MySQL-/MariaDB-database like the Certe-database ophalen and place them in a <code><a href='https://rdrr.io/r/base/list.html'>list</a></code>, where each listed value is also the name of the element in the list.</p>
     </div>
 
     <pre class="usage"><span class='fu'>certedb_tbls</span><span class='op'>(</span>con <span class='op'>=</span> <span class='cn'>NULL</span>, dbname <span class='op'>=</span> <span class='st'>"certemmb"</span><span class='op'>)</span></pre>
@@ -145,20 +145,20 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>con</th>
-      <td><p>Standaard is leeg, waarmee de verbinding gemaakt wordt op basis van de omgevingsvariabelen van de huidige gebruiker: <code>"DB_HOST"</code>, <code>"DB_PORT"</code>, <code>"DB_USERNAME"</code> en <code>"DB_PASSWORD"</code>.</p></td>
+      <td><p>Default is empty, by which the connection is made based on the current user's environment variables: <code>"db.mmb.host"</code>, <code>"db.mmb.port"</code>, <code>"db.mmb.username"</code> en <code>"db.mmb.password"</code>.</p></td>
     </tr>
     <tr>
       <th>dbname</th>
-      <td><p>Standaard is <code>"certemmb"</code>. Naam van de database die geselecteerd moet worden. Wordt genegeerd als <code>con</code> al een bestaande verbinding is.</p></td>
+      <td><p>Default is <code>"certemmb"</code>. Name of the database to be selected. Will be ignored if <code>con</code> is already an existing connection.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code><a href='https://rdrr.io/r/base/list.html'>list</a></code> met alle gevonden SQL-tabellen.</p>
+    <p><code><a href='https://rdrr.io/r/base/list.html'>list</a></code> containing all retrieved SQL-tables.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='certedb_query.html'>certedb_query</a></code> voor het direct gebruik van query's.</p></div>
+    <div class='dont-index'><p><code><a href='certedb_query.html'>certedb_query</a></code> for using query's.</p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

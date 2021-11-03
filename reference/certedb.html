@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Verbinding maken met MySQL-/MariaDB-database — certedb • certedb</title>
+<title>Connecting to the MySQL-/MariaDB-database — certedb • certedb</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="Verbinding maken met MySQL-/MariaDB-database — certedb" />
-<meta property="og:description" content="Dit maakt verbinding met een MySQL-/MariaDB-database zoals de Certe-databaseserver." />
+<meta property="og:title" content="Connecting to the MySQL-/MariaDB-database — certedb" />
+<meta property="og:description" content="Makes a connection to a MySQL-/MariaDB-database like the Certe-databaseserver." />
 <meta property="og:image" content="https://certe-medical-epidemiology.github.io/certedb/logo.svg" />
 
 
@@ -129,20 +129,20 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Verbinding maken met MySQL-/MariaDB-database</h1>
-    <small class="dont-index">Source: <a href='https://github.com/certe-medical-epidemiology/certedb/blob/master/R/get_mmb.R'><code>R/get_mmb.R</code></a></small>
+    <h1>Connecting to the MySQL-/MariaDB-database</h1>
+    <small class="dont-index">Source: <a href='https://github.com/certe-medical-epidemiology/certedb/blob/master/R/db.R'><code>R/db.R</code></a></small>
     <div class="hidden name"><code>certedb.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Dit maakt verbinding met een MySQL-/MariaDB-database zoals de Certe-databaseserver.</p>
+    <p>Makes a connection to a MySQL-/MariaDB-database like the Certe-databaseserver.</p>
     </div>
 
     <pre class="usage"><span class='fu'>certedb</span><span class='op'>(</span>
-  host <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv</a></span><span class='op'>(</span><span class='st'>"DB_HOST"</span><span class='op'>)</span>,
-  port <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv</a></span><span class='op'>(</span><span class='st'>"DB_PORT"</span><span class='op'>)</span>,
-  username <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv</a></span><span class='op'>(</span><span class='st'>"DB_USERNAME"</span><span class='op'>)</span>,
-  password <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv</a></span><span class='op'>(</span><span class='st'>"DB_PASSWORD"</span><span class='op'>)</span>,
+  host <span class='op'>=</span> <span class='fu'>read_secret</span><span class='op'>(</span><span class='st'>"db.mmb.host"</span><span class='op'>)</span>,
+  port <span class='op'>=</span> <span class='fu'>read_secret</span><span class='op'>(</span><span class='st'>"db.mmb.port"</span><span class='op'>)</span>,
+  username <span class='op'>=</span> <span class='fu'>read_secret</span><span class='op'>(</span><span class='st'>"db.mmb.username"</span><span class='op'>)</span>,
+  password <span class='op'>=</span> <span class='fu'>read_secret</span><span class='op'>(</span><span class='st'>"db.mmb.password"</span><span class='op'>)</span>,
   dbname <span class='op'>=</span> <span class='st'>"certemmb"</span>,
   info <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
@@ -152,43 +152,43 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>host, port, username, password</th>
-      <td><p>Standaard zijn omgevingsvariabelen van de huidige gebruiker: <code>"DB_HOST"</code> (bij ontbreken wordt dit <code>localhost</code>), <code>"DB_PORT"</code> (bij ontbreken wordt dit <code>3306</code>), <code>"DB_USERNAME"</code> en <code>"DB_PASSWORD"</code>. Inloggegevens voor de MySQL/MariaDB-server.</p></td>
+      <td><p>Default is the current user's environment variables: <code>"db.mmb.host"</code> (if missing will be <code>localhost</code>), <code>"db.mmb.port"</code> (if missing will be <code>3306</code>), <code>"db.mmb.username"</code> and <code>"db.mmb.password"</code>. Login credentials for the MySQL/MariaDB-server.</p></td>
     </tr>
     <tr>
       <th>dbname</th>
-      <td><p>Standaard is <code>"certemmb"</code>. Naam van de database die geselecteerd moet worden.</p></td>
+      <td><p>Default is <code>"certemmb"</code>. Name of the database to be selected.</p></td>
     </tr>
     <tr>
       <th>info</th>
-      <td><p>Standaard is <code>FALSE</code>. Weergeven van informatie over het verbinden.</p></td>
+      <td><p>Default is <code>FALSE</code>. Display of connecting info.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='certedb_query.html'>certedb_query</a></code> voor het direct gebruik van query's en <code>certedb_close</code> voor het sluiten van een verbinding.</p></div>
+    <div class='dont-index'><p><code><a href='certedb_query.html'>certedb_query</a></code> for the use of query's and <code>certedb_close</code> for closing a connection.</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
 <span class='r-in'></span>
-<span class='r-in'><span class='co'># gegevens direct downloaden naar tibble:</span></span>
+<span class='r-in'><span class='co'># download data directly to tibble:</span></span>
 <span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certe_db</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
 <span class='r-in'>  <span class='fu'>tbl</span><span class='op'>(</span><span class='st'>"temporary_certemm_locaties"</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
 <span class='r-in'>  <span class='fu'>collect</span><span class='op'>(</span><span class='op'>)</span></span>
 <span class='r-in'></span>
-<span class='r-in'><span class='co'># alleen query weergeven en niet uitvoeren:</span></span>
+<span class='r-in'><span class='co'># only show query without running it:</span></span>
 <span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certe_db</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
 <span class='r-in'>  <span class='fu'>tbl</span><span class='op'>(</span><span class='st'>"temporary_certemm_locaties"</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
 <span class='r-in'>  <span class='fu'>show_query</span><span class='op'>(</span><span class='op'>)</span></span>
 <span class='r-in'></span>
-<span class='r-in'><span class='co'># rest werkt met dpylr, zoals filter() en select():</span></span>
+<span class='r-in'><span class='co'># works with dpylr functions like filter() and select():</span></span>
 <span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certe_db</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
 <span class='r-in'>  <span class='fu'>tbl</span><span class='op'>(</span><span class='st'>"temporary_certemm_locaties"</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
 <span class='r-in'>  <span class='fu'><a href='https://rdrr.io/r/stats/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>zkhgroepcode</span> <span class='op'>&gt;</span> <span class='fl'>0</span>, <span class='va'>cu_sd</span> <span class='op'>==</span> <span class='st'>"Noord"</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
 <span class='r-in'>  <span class='fu'>select</span><span class='op'>(</span><span class='va'>instelling</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
 <span class='r-in'>  <span class='fu'>collect</span><span class='op'>(</span><span class='op'>)</span></span>
 <span class='r-in'></span>
-<span class='r-in'><span class='co'># gebruik head() zoals LIMIT in MySQL:</span></span>
+<span class='r-in'><span class='co'># use head() like LIMIT in MySQL:</span></span>
 <span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certe_db</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
 <span class='r-in'>  <span class='fu'>tbl</span><span class='op'>(</span><span class='st'>"temporary_certemm_locaties"</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
 <span class='r-in'>  <span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span><span class='op'>(</span><span class='fl'>5</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>SQL-query uitvoeren op MySQL-/MariaDB-database — certedb_query • certedb</title>
+<title>Run SQL-query on a MySQL-/MariaDB-database — certedb_query • certedb</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="SQL-query uitvoeren op MySQL-/MariaDB-database — certedb_query" />
-<meta property="og:description" content="Een SQL-query uitvoeren op een MySQL-/MariaDB-database van bijv. Certe. De output krijgt een qry-attribuut, dat met qry opgehaald kan worden." />
+<meta property="og:title" content="Run SQL-query on a MySQL-/MariaDB-database — certedb_query" />
+<meta property="og:description" content="Run an SQL-query on a MySQL-/MariaDB-database from, for example, Certe. Output gets a qry-attribute, which can be retrieved with qry." />
 <meta property="og:image" content="https://certe-medical-epidemiology.github.io/certedb/logo.svg" />
 
 
@@ -129,13 +129,13 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>SQL-query uitvoeren op MySQL-/MariaDB-database</h1>
-    <small class="dont-index">Source: <a href='https://github.com/certe-medical-epidemiology/certedb/blob/master/R/get_mmb.R'><code>R/get_mmb.R</code></a></small>
+    <h1>Run SQL-query on a MySQL-/MariaDB-database</h1>
+    <small class="dont-index">Source: <a href='https://github.com/certe-medical-epidemiology/certedb/blob/master/R/db.R'><code>R/db.R</code></a></small>
     <div class="hidden name"><code>certedb_query.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Een SQL-query uitvoeren op een MySQL-/MariaDB-database van bijv. Certe. De output krijgt een <code>qry</code>-attribuut, dat met <code><a href='qry.html'>qry</a></code> opgehaald kan worden.</p>
+    <p>Run an SQL-query on a MySQL-/MariaDB-database from, for example, Certe. Output gets a <code>qry</code>-attribute, which can be retrieved with <code><a href='qry.html'>qry</a></code>.</p>
     </div>
 
     <pre class="usage"><span class='fu'>certedb_query</span><span class='op'>(</span>
@@ -163,58 +163,58 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>query</th>
-      <td><p>(Bestand met) SQL-tekst die uitgevoerd moet worden. Tabelnamen in de query hoeven geen <code>"temporary_"</code> of <code>"certemm_"</code> te bevatten en zijn hoofdletterongevoelig. Deze query wordt bij het object opgeslagen als eigenschap <code>query</code> dat bekeken kan worden met de functie <code><a href='qry.html'>qry</a></code>.</p></td>
+      <td><p>(File containing) SQL-text to be run. Table names in the query don't need to contain <code>"temporary_"</code> or <code>"certemm_"</code> and are not case sensitive. This query will be saved with the object as attribute <code>query</code> which can be viewed with the <code><a href='qry.html'>qry</a></code> function.</p></td>
     </tr>
     <tr>
       <th>limit</th>
-      <td><p>Standaard is 10.000.000. Het aantal rijen dat maximaal opgehaald moet worden.</p></td>
+      <td><p>Default is 10.000.000. The maximum amount of rows to be retrieved.</p></td>
     </tr>
     <tr>
       <th>con</th>
-      <td><p>Standaard is leeg, waarmee de verbinding gemaakt wordt op basis van de omgevingsvariabelen van de huidige gebruiker: <code>"DB_HOST"</code>, <code>"DB_PORT"</code>, <code>"DB_USERNAME"</code> en <code>"DB_PASSWORD"</code>.</p></td>
+      <td><p>Default is empty, by which the connection is made based on the current user's environment variables: <code>"db.mmb.host"</code>, <code>"db.mmb.port"</code>, <code>"db.mmb.username"</code> en <code>"db.mmb.password"</code>.</p></td>
     </tr>
     <tr>
       <th>dbname</th>
-      <td><p>Standaard is <code>"certemmb"</code>. Naam van de database die geselecteerd moet worden. Wordt genegeerd als <code>con</code> al een bestaande verbinding is.</p></td>
+      <td><p>Default is <code>"certemmb"</code>. Name of the database to be selected. Will be ignored if <code>con</code> is already an existing connection.</p></td>
     </tr>
     <tr>
       <th>info</th>
-      <td><p>Standaard is <code>TRUE</code>. Printen van voortgang van run/fetch en het uiteindelijke aantal rijen en kolommen dat gedownload is.</p></td>
+      <td><p>Default is <code>TRUE</code>. Printing of run/fetch progress en the resulting number of rows and columns downloaded.</p></td>
     </tr>
     <tr>
       <th>check_mtrl_test_codes</th>
-      <td><p>Standaard is <code>TRUE</code>. Controleren van materiaal- en testcodes in de tijdelijke tabellen van de database. Hiervoor moet ook <code>info = TRUE</code> zijn.</p></td>
+      <td><p>Default is <code>TRUE</code>. Check on material- and testcodes in the database's temporary tables. Also requires <code>info = TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>binary_as_logical</th>
-      <td><p>Standaard is <code>TRUE</code>. Kolommen die alleen de waarden <code>0</code> en/of <code>1</code> bevatten, tranformeren naar logical m.b.v. <code>tbl_binary2logical</code>.</p></td>
+      <td><p>Default is <code>TRUE</code>. Transform columns only containing <code>0</code> and/or <code>1</code> values to logical using <code>tbl_binary2logical</code>.</p></td>
     </tr>
     <tr>
       <th>auto_append_prefix</th>
-      <td><p>Standaard is <code>TRUE</code>. Wanneer tabellen die voorkomen in de query niet bestaan, wordt gezocht naar tabellen met dezelfde naam die beginnen met <code>"temporary_"</code> of <code>"certemm_"</code>. Wanneer zo'n tabel gevonden, wordt die gebruikt.</p></td>
+      <td><p>Default is <code>TRUE</code>. When the selected columns in query are non-existent, eponymous tables starting with <code>"temporary_"</code> or <code>"certemm_"</code>. When such a table is found, it will be used instead.</p></td>
     </tr>
     <tr>
       <th>auto_transform</th>
-      <td><p>Standaard is <code>TRUE</code>. Automatisch alle gedownloade kolommen transformeren met <code>tbl_guess_columns</code>.</p></td>
+      <td><p>Default is <code>TRUE</code>. Automatically transform all downloaded columns with <code>tbl_guess_columns</code>.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Overige ongebruikte parameters</p></td>
+      <td><p>not used</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='certedb.html'>certedb</a></code> voor alleen het verbinden met de Certe-databaseserver en <code><a href='certedb_getmmb.html'>certedb_getmmb</a></code> om ineens alle relevante MMB-gegevens te downloaden.</p></div>
+    <div class='dont-index'><p><code><a href='certedb.html'>certedb</a></code> for connecting to the Certe-databaseserver and <code><a href='certedb_getmmb.html'>certedb_getmmb</a></code> for downloading all relevant MMB data.</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
 <span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM temporary_certemm_locaties"</span><span class='op'>)</span></span>
 <span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM temporary_certemm_locaties"</span>, limit <span class='op'>=</span> <span class='fl'>5</span><span class='op'>)</span></span>
 <span class='r-in'></span>
-<span class='r-in'><span class='co'># Door `auto_append_prefix = TRUE` wordt:</span></span>
+<span class='r-in'><span class='co'># With `auto_append_prefix = TRUE`:</span></span>
 <span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM locaties"</span><span class='op'>)</span></span>
-<span class='r-in'><span class='co'># vertaald naar:</span></span>
+<span class='r-in'><span class='co'># will be transformed to:</span></span>
 <span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM temporary_certemm_locaties"</span><span class='op'>)</span></span>
 <span class='r-in'><span class='op'>}</span></span>
 </pre>
