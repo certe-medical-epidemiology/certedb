@@ -17,6 +17,68 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
+
+#' MMB-gegevens ophalen van MySQL-/MariaDB-database
+#'
+#' @description Gegevens van Certe Medische Microbiologie uit de Certe-database downloaden. De benodigde tabellen worden als \code{LEFT JOIN} automatisch toegevoegd op basis van de input bij \code{where} en \code{select}. Nadien kan met \code{\link{qry}} de query bekeken worden, die als eigenschap bij het object opgeslagen wordt.
+#'
+#' \code{certedb_getmmb} haalt orders en resultaten op, met uitslagen. \cr
+#' \code{certedb_getmmb_tat} haalt van deze orders de doorlooptijden op (TAT = Turn Around Time).
+#' @rdname certedb_getmmb
+#' @param dates Standaard is dit hele jaar. Geldige opties zijn: leeg (selecteert dit hele jaar) of een vector met 2 datums (bestaande uit oudste en nieuwste datum) of een enkele datum (einddatum wordt laatste dag van dat jaar).
+#' @param where Standaard is leeg. Syntax om toe te voegen aan de WHERE-clausule. \cr \cr
+#' R-syntax wordt omgezet naar SQL-syntax, zie Examples. Deze syntax wordt geëvalueerd, dus gebruik van variabelen is ook mogelijk, zoals \code{certedb_getmmb(where = where(o.jaar == mijnjaar))}. \cr \cr
+#' \strong{NB.} Wanneer tabelvelden in meerdere brontabellen voorkomen, moet de tabelreferentie opgegeven worden. Zie Details voor de tabelreferenties en Examples voor voorbeelden.
+#' @param select_preset,preset Standaard is \code{"mmb"} of \code{"tat"} bij doorlooptijden. Variabelen om te selecteren volgens de voorgedefinieerde lijst met variabelen, zie \code{\link{preset.list}}. Kan ook een vector met meerdere presets zijn. Voor het selecteren van de eerste preset uit de huidige map (bestandsnaam moet beginnen met \code{"preset"}), gebruik \code{select_preset = \link{preset.thisfolder}()}.
+#' @param select Standaard is leeg. Variabelen om \strong{handmatig} te selecteren. Deze kunnen het best geselecteerd worden met \code{\link{db}} en dit overschrijft \code{select_preset}.
+#' @param add_cols Standaard is leeg. Variabelen in een vector of \code{list} om \strong{extra} te selecteren. Deze kunnen het best geselecteerd worden met \code{\link{db}}. Gebruik \code{add_cols = c("naam" = db$t.kolom)} voor \code{"t.kolom AS naam"}.
+#' @param limit Standaard is 10.000.000. Het aantal rijen dat maximaal opgehaald moet worden.
+#' @param con Standaard is leeg, waarmee de verbinding gemaakt wordt op basis van de omgevingsvariabelen van de huidige gebruiker: \code{"DB_HOST"}, \code{"DB_PORT"}, \code{"DB_USERNAME"} en \code{"DB_PASSWORD"}.
+#' @param dbname Standaard is \code{"certemmb"}. Naam van de database die geselecteerd moet worden. Wordt genegeerd als \code{con} al een bestaande verbinding is.
+#' @param info Standaard is \code{TRUE}. Printen van voortgang en het uiteindelijke aantal rijen en kolommen dat gedownload is.
+#' @param first_isolates Standaard is \code{FALSE}. Bepaling van eerste isolaten toevoegen.
+#' @param eucast_rules Standaard is \code{"all"}. EUCAST expert rules toepassen, zie \code{\link{eucast_rules}}.
+#' @param MIC Standaard is \code{FALSE}. Toevoegen van MIC's aan alle RSI-kolommen van de de standaard query (i.e. zonder dat \code{select} gebruikt wordt).
+#' @param zipcodes Standaard is \code{FALSE}. Toevoegen van postcodes van de patiënt, als \code{p.postcode}. Met name voor gebruik met \code{\link{get_map}} en \code{\link{plot2.map}}.
+#' @param ziplength Standaard is \code{4}. De gewenste lengte van de postcode.
+#' @param inhabitants Standaard is \code{FALSE}, maar alleen zinvol als \code{zipcodes = TRUE}. Voegt automatisch de data van CBS toe, die opgeslagen liggen in de tabel \code{temporary_certemm_cbs}, op basis van de postcodelengte die opgegeven is met \code{ziplength}.
+#' @param tat_hours Standaard is \code{TRUE}. Turn-around-times toevoegen in uren \emph{(alleen voor doorlooptijden)}.
+#' @param only_real_patients Standaard is \code{TRUE}. Hiermee worden alleen daadwerkelijke patiënten gedownload (geen rondzendingen en testorders). Dit voegt automatisch \code{AND u.is_echte_patient = TRUE} toe aan de \code{WHERE}.
+#' @param only_conducted_tests Standaard is \code{TRUE}. Hiermee worden alleen verrichte testen gedownload (geen testen die niet verricht zijn). Dit voegt automatisch \code{AND u.is_verricht = TRUE} toe aan de \code{WHERE}.
+#' @param only_validated  Standaard is \code{FALSE} bij \code{certedb_getmmb()} en \code{TRUE} bij \code{certedb_getmmb_tat()}. Hiermee worden alleen geautoriseerde uitslagen gedownload. Dit voegt automatisch \code{AND u.uitslag_int <> '(in behandeling)'} toe aan de \code{WHERE}.
+#' @param only_show_query Standaard is \code{FALSE}. Draait de query niet, maar toont hem alleen.
+#' @param review_where Standaard is \code{FALSE} als \code{info = FALSE} of de sessie in niet-interactief (RMarkdown). Bij een interactieve sessie (d.w.z. niet in RMarkdown) wordt de WHERE weergegeven die de gebruiker moet accorderen. Dit kan standaard op \code{FALSE} gezet worden met \code{\link{getOption}("review_where")}.
+#' @param unselect_all_same Standaard is \code{FALSE}. Kolommen excluderen die maar 1 unieke waarde bevatten met \code{select(!\link{all_same}())}.
+#' @param unselect_all_empty Standaard is \code{FALSE}. Kolommen excluderen die helemaal leeg zijn met \code{select(!\link{all_empty}())}.
+#' @param ... Overige parameters die doorgegeven worden aan \code{\link{certedb_query}}, zoals \code{auto_transform} en \code{timezone}.
+#' @details Voor gebruik van \code{where} staan hieronder de tabelreferenties. Deze zijn ook beschikbaar via de \emph{list} \code{\link[certetools]{db}}:
+#'   \itemize{
+#'     \item{\strong{\code{a}}} \cr {\code{temporary_certemm_aanvragers_praktijken}}
+#'     \item{\strong{\code{aanvr}}} \cr {\code{temporary_certemm_aanvragers_praktijken}}
+#'     \item{\strong{\code{beh}}} \cr {\code{temporary_certemm_aanvragers_praktijken}}
+#'     \item{\strong{\code{b}}} \cr {\code{temporary_certemm_bacterienlijst}}
+#'     \item{\strong{\code{cbs}}} \cr {\code{temporary_certemm_cbs} (joint aan \code{certemm_pat.postcode})}
+#'     \item{\strong{\code{d}}} \cr {\code{temporary_certemm_aanmaakdatums}}
+#'     \item{\strong{\code{dlt}} \emph{(alleen voor doorlooptijden)}} \cr {\code{temporary_certemm_doorlooptijden}}
+#'     \item{\strong{\code{i}}} \cr {\code{temporary_certemm_isolaten_rsi}}
+#'     \item{\strong{\code{i_mic}}} \cr {\code{temporary_certemm_isolaten_mic}}
+#'     \item{\strong{\code{l_instelling}}} \cr {\code{temporary_certemm_locaties}}
+#'     \item{\strong{\code{l_ontvangst}}} \cr {\code{temporary_certemm_locaties}}
+#'     \item{\strong{\code{l_uitvoer}}} \cr {\code{temporary_certemm_locaties}}
+#'     \item{\strong{\code{m}}} \cr {\code{temporary_certemm_materiaalgroepen}}
+#'     \item{\strong{\code{o}}} \cr {\code{temporary_certemm_orders}}
+#'     \item{\strong{\code{p}}} \cr {\code{certemm_pat}}
+#'     \item{\strong{\code{pat}}} \cr {\code{temporary_certemm_patienten}}
+#'     \item{\strong{\code{t}}} \cr {\code{temporary_certemm_testgroepen}}
+#'     \item{\strong{\code{u}}} \cr {\code{temporary_certemm_uitslagen}}
+#'   }
+#'
+#'   Locatie wordt dus op \strong{drie manieren gekoppeld}; als \code{l_instelling} (op \code{o.instelling}, zoals huisarts), als \code{l_ontvangst} (op \code{o.recsitenb}, zoals Assen) en als \code{l_uitvoer} (op \code{u.uitvafd}, zoals Moleculair).
+#' @importFrom crayon silver
+#' @export
+#' @seealso \code{\link{certedb_query}} voor het direct gebruik van query's.
+#' @examples
+#' 
 certedb_getmmb <- function(dates = NULL,
                            where = NULL,
                            select_preset = "mmb",
