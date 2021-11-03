@@ -48,7 +48,7 @@
 
 <meta property="og:title" content="SQL-query uitvoeren op MySQL-/MariaDB-database — certedb_query" />
 <meta property="og:description" content="Een SQL-query uitvoeren op een MySQL-/MariaDB-database van bijv. Certe. De output krijgt een qry-attribuut, dat met qry opgehaald kan worden." />
-<meta property="og:image" content="/logo.svg" />
+<meta property="og:image" content="https://certe-medical-epidemiology.github.io/certedb/logo.svg" />
 
 
 
@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2</span>
       </span>
     </div>
 
@@ -88,19 +88,32 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home"></span>
      
+    Home
   </a>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../reference/index.html">
+    <span class="fa fa-book-open"></span>
+     
+    Manual
+  </a>
+</li>
+<li>
+  <a href="https://github.com/certe-medical-epidemiology/certedb">
+    <span class="fab fa-github"></span>
+     
+    Source Code
+  </a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="../NA/NA/NA/">
-    <span class="fab fa-github fa-lg"></span>
+  <a href="https://certe.nl">
+    <span class="fa fa-flask"></span>
      
+    Certe Website
   </a>
 </li>
       </ul>
@@ -117,7 +130,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>SQL-query uitvoeren op MySQL-/MariaDB-database</h1>
-    <small class="dont-index">Source: <a href='NA/NA/NA/blob/master/R/get_mmb.R'><code>R/get_mmb.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/certe-medical-epidemiology/certedb/blob/master/R/get_mmb.R'><code>R/get_mmb.R</code></a></small>
     <div class="hidden name"><code>certedb_query.Rd</code></div>
     </div>
 
@@ -195,16 +208,16 @@
     <div class='dont-index'><p><code><a href='certedb.html'>certedb</a></code> voor alleen het verbinden met de Certe-databaseserver en <code><a href='certedb_getmmb.html'>certedb_getmmb</a></code> om ineens alle relevante MMB-gegevens te downloaden.</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM temporary_certemm_locaties"</span><span class='op'>)</span>
-<span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM temporary_certemm_locaties"</span>, limit <span class='op'>=</span> <span class='fl'>5</span><span class='op'>)</span>
-
-<span class='co'># Door `auto_append_prefix = TRUE` wordt:</span>
-<span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM locaties"</span><span class='op'>)</span>
-<span class='co'># vertaald naar:</span>
-<span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM temporary_certemm_locaties"</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM temporary_certemm_locaties"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM temporary_certemm_locaties"</span>, limit <span class='op'>=</span> <span class='fl'>5</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Door `auto_append_prefix = TRUE` wordt:</span></span>
+<span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM locaties"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='co'># vertaald naar:</span></span>
+<span class='r-in'><span class='va'>locaties</span> <span class='op'>&lt;-</span> <span class='fu'>certedb_query</span><span class='op'>(</span><span class='st'>"SELECT * FROM temporary_certemm_locaties"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -48,7 +48,7 @@
 
 <meta property="og:title" content="Voorgedefinieerde variabelen selecteren — preset" />
 <meta property="og:description" content="Dit downloadt bestanden uit de map Sys.getenv(&quot;R_REFMAP&quot;) die de structuur preset_*.sql hebben. Gebruik een of meerdere van deze (zelf te maken) bestanden als parameter select_preset in de functies certedb_getmmb en certedb_getmmb_tat. Zie Details." />
-<meta property="og:image" content="/logo.svg" />
+<meta property="og:image" content="https://certe-medical-epidemiology.github.io/certedb/logo.svg" />
 
 
 
@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2</span>
       </span>
     </div>
 
@@ -88,19 +88,32 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home"></span>
      
+    Home
   </a>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../reference/index.html">
+    <span class="fa fa-book-open"></span>
+     
+    Manual
+  </a>
+</li>
+<li>
+  <a href="https://github.com/certe-medical-epidemiology/certedb">
+    <span class="fab fa-github"></span>
+     
+    Source Code
+  </a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="../NA/NA/NA/">
-    <span class="fab fa-github fa-lg"></span>
+  <a href="https://certe.nl">
+    <span class="fa fa-flask"></span>
      
+    Certe Website
   </a>
 </li>
       </ul>
@@ -117,12 +130,12 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Voorgedefinieerde variabelen selecteren</h1>
-    <small class="dont-index">Source: <a href='NA/NA/NA/blob/master/R/get_mmb.R'><code>R/get_mmb.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/certe-medical-epidemiology/certedb/blob/master/R/get_mmb.R'><code>R/get_mmb.R</code></a></small>
     <div class="hidden name"><code>preset.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Dit downloadt bestanden uit de map <code><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv("R_REFMAP")</a></code> die de structuur <code>preset_*.sql</code> hebben. Gebruik een of meerdere van deze (zelf te maken) bestanden als parameter <code>select_preset</code> in de functies <code><a href='certedb_getmmb.html'>certedb_getmmb</a></code> en <code><a href='certedb_getmmb.html'>certedb_getmmb_tat</a></code>. Zie Details.</p>
+    <p>Dit downloadt bestanden uit de map <code>Sys.getenv("R_REFMAP")</code> die de structuur <code>preset_*.sql</code> hebben. Gebruik een of meerdere van deze (zelf te maken) bestanden als parameter <code>select_preset</code> in de functies <code><a href='certedb_getmmb.html'>certedb_getmmb</a></code> en <code><a href='certedb_getmmb.html'>certedb_getmmb_tat</a></code>. Zie Details.</p>
     </div>
 
     <pre class="usage"><span class='fu'>preset.list</span><span class='op'>(</span>fullname <span class='op'>=</span> <span class='cn'>FALSE</span>, recursive <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
@@ -150,7 +163,7 @@
     </tr>
     <tr>
       <th>name</th>
-      <td><p>Tekst(vector) om te zoeken in de map <code><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv("R_REFMAP")</a></code>.</p></td>
+      <td><p>Tekst(vector) om te zoeken in de map <code>Sys.getenv("R_REFMAP")</code>.</p></td>
     </tr>
     <tr>
       <th>vector</th>
@@ -161,7 +174,7 @@
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Gebruik: <br /></p><ul>
-<li><p><code>preset.list</code> voor het weergeven van alle presets in de map <code><a href='https://rdrr.io/r/base/Sys.getenv.html'>Sys.getenv("R_REFMAP")</a></code>; <br /></p></li>
+<li><p><code>preset.list</code> voor het weergeven van alle presets in de map <code>Sys.getenv("R_REFMAP")</code>; <br /></p></li>
 <li><p><code>preset.add</code> voor het toevoegen van een nieuwe preset; <br /></p></li>
 <li><p><code>preset.read</code> voor het uitlezen van een preset; <br /></p></li>
 <li><p><code>preset.thisfolder.list</code> voor het weergeven van alle presets in de huidige map(pen); <br /></p></li>

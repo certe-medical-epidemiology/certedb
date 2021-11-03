@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://certe-medical-epidemiology.github.io/certedb/index.html</loc>
+  </url>
+  <url>
+    <loc>https://certe-medical-epidemiology.github.io/certedb/reference/certedb.html</loc>
+  </url>
+  <url>
+    <loc>https://certe-medical-epidemiology.github.io/certedb/reference/certedb_check_tbls.html</loc>
+  </url>
+  <url>
+    <loc>https://certe-medical-epidemiology.github.io/certedb/reference/certedb_checkmmb.html</loc>
+  </url>
+  <url>
+    <loc>https://certe-medical-epidemiology.github.io/certedb/reference/certedb_getmmb.html</loc>
+  </url>
+  <url>
+    <loc>https://certe-medical-epidemiology.github.io/certedb/reference/certedb_query.html</loc>
+  </url>
+  <url>
+    <loc>https://certe-medical-epidemiology.github.io/certedb/reference/certedb_tbls.html</loc>
+  </url>
+  <url>
+    <loc>https://certe-medical-epidemiology.github.io/certedb/reference/preset.html</loc>
+  </url>
+  <url>
+    <loc>https://certe-medical-epidemiology.github.io/certedb/reference/qry.html</loc>
+  </url>
+</urlset>
