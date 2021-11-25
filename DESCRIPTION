@@ -2,21 +2,21 @@ Package: certedb
 Title: A Certe R Package for Connecting to Databases
 Version: 0.0.2
 Authors@R: c(
-  person(given = c("Matthijs", "S."), 
-         family = "Berends",
-         role = c("aut", "cre"),
-         email = "m.berends@certe.nl"),
   person(given = c("Erwin", "E.", "A."),
          family = "Hassing", 
-         role = c("aut"),
+         role = c("aut", "cre"),
          email = "e.hassing@certe.nl"),
+  person(given = c("Matthijs", "S."), 
+         family = "Berends",
+         role = c("aut"),
+         email = "m.berends@certe.nl"),
   person(given = c("Erwin"),
          family = "Dijkstra", 
          role = c("aut"),
          email = "e.dijkstra@certe.nl"),
   person(given = "Certe Medical Diagnostics & Advice Foundation",
          role = c("cph", "fnd")))
-Description: A Certe R Package for connecting to databases.
+Description: A Certe R Package for connecting to internal Certe databases.
   This package is part of the 'certedata' universe.
 URL: https://certe-medical-epidemiology.github.io/certedb, https://github.com/certe-medical-epidemiology/certedb
 Depends: 
