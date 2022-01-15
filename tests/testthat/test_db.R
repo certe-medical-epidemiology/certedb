@@ -17,32 +17,8 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
-on:
-  push:
-    branches: '**' # matches every branch
-  pull_request:
-    branches: '**' # matches every branch
+test_that("database connection works", {
+  expect_s4_class(get_driver("certemmb"), "MariaDBDriver")
+  expect_error(get_driver("test"))
+})
 
-name: lintr
-
-jobs:
-  lintr:
-    runs-on: ubuntu-latest
-    env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
-          # be sure to enable our R-universe
-          extra-repositories: 'https://certe-medical-epidemiology.r-universe.dev'
-
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: lintr
-
-      - name: Lint
-        run: lintr::lint_package(linters = lintr::with_defaults(line_length_linter = NULL, trailing_whitespace_linter = NULL, object_name_linter = NULL, cyclocomp_linter = NULL, object_length_linter = lintr::object_length_linter(length = 50L)))
-        shell: Rscript {0}

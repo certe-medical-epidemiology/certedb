@@ -17,6 +17,9 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
+build_ <- function(select) {
+  
+}
 
 #' Run SQL-query on a MySQL-/MariaDB-database
 #'
@@ -199,67 +202,75 @@ certedb_query <- function(query,
 #' \dontrun{
 #'
 #' # download data directly to tibble:
-#' locaties <- certe_db() %>%
+#' locaties <- certedb() %>%
 #'   tbl("temporary_certemm_locaties") %>%
 #'   collect()
 #'
 #' # only show query without running it:
-#' locaties <- certe_db() %>%
+#' locaties <- certedb() %>%
 #'   tbl("temporary_certemm_locaties") %>%
 #'   show_query()
 #'
 #' # works with dpylr functions like filter() and select():
-#' locaties <- certe_db() %>%
+#' locaties <- certedb() %>%
 #'   tbl("temporary_certemm_locaties") %>%
 #'   filter(zkhgroepcode > 0, cu_sd == "Noord") %>%
 #'   select(instelling) %>%
 #'   collect()
 #'
 #' # use head() like LIMIT in MySQL:
-#' locaties <- certe_db() %>%
+#' locaties <- certedb() %>%
 #'   tbl("temporary_certemm_locaties") %>%
 #'   head(5) %>%
 #'   collect()
 #' }
-certedb <- function(host = read_secret("db.mmb.host"),
-                    port = read_secret("db.mmb.port"),
-                    username = read_secret("db.mmb.username"),
-                    password = read_secret("db.mmb.password"),
-                    dbname = 'certemmb',
+certedb <- function(dbname = "certemmb",
+                    host = NULL,
+                    port = NULL,
+                    username = NULL,
+                    password = NULL,
+                    driver = get_driver(dbname = dbname),
                     info = FALSE) {
   
+  if (is.null(host)) {
+    host <- read_secret(paste0("db.", dbname, ".host"))
+  }
+  if (is.null(port)) {
+    port <- read_secret(paste0("db.", dbname, ".port"))
+  }
+  if (is.null(username)) {
+    username <- read_secret(paste0("db.", dbname, ".username"))
+  }
+  if (is.null(password)) {
+    password <- read_secret(paste0("db.", dbname, ".password"))
+  }
+  
   if (host == "") {
-    host <- 'localhost'
+    host <- "localhost"
   }
   if (port == "") {
     port <- 3306
-  } else if (!is.double2(port)) {
-    stop('`port` must be a numeric value.')
+  } else if (port %unlike% "^[0-9]+$") {
+    stop("`port` must be a numeric value.")
+    port <- as.integer(port)
   }
   
-  if (username == "" | password == "") {
-    if (info == TRUE) {
-      warning('`username` or `password` is empty.', call. = FALSE, immediate. = TRUE)
-    }
-  }
-  
-  if (info == TRUE) {
-    cat(paste0('Connecting to database `', dbname, '`... '))
-  }
-  # set proxy using the password set in environment variables "R_WW"
-  set_certe_proxy()
-  con <- RMariaDB::dbConnect(RMariaDB::MariaDB(),
-                             dbname = dbname,
-                             host = host,
-                             port = port %>% as.integer(),
-                             username = username,
-                             password = password)
-  certedb_timestamp('OK', print = info, timestamp = FALSE, appendLF = TRUE)
+  certedb_timestamp(paste0('Connecting to database `', dbname, '`... '),
+                    print = info,
+                    timestamp = FALSE,
+                    appendLF = FALSE)
+  con <- DBI::dbConnect(driver,
+                        dbname = dbname,
+                        host = host,
+                        port = port,
+                        username = username,
+                        password = password)
+  certedb_timestamp("OK", print = info, timestamp = FALSE, appendLF = TRUE)
   con
 }
 
 certedb_close <- function(conn, ...) {
-  RMariaDB::dbDisconnect(conn = conn, ...)
+  DBI::dbDisconnect(conn = conn, ...)
 }
 
 #' Retrieve tables from MySQL-/MariaDB-database

@@ -1,15 +1,15 @@
 Package: certedb
 Title: A Certe R Package for Connecting to Databases
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: c(
-  person(given = c("Erwin", "E.", "A."),
-         family = "Hassing", 
-         role = c("aut", "cre"),
-         email = "e.hassing@certe.nl"),
   person(given = c("Matthijs", "S."), 
          family = "Berends",
-         role = c("aut"),
+         role = c("aut", "cre"),
          email = "m.berends@certe.nl"),
+  person(given = c("Erwin", "E.", "A."),
+         family = "Hassing", 
+         role = c("aut"),
+         email = "e.hassing@certe.nl"),
   person(given = "Certe Medical Diagnostics & Advice Foundation",
          role = c("cph", "fnd")))
 Description: A Certe R Package for connecting to internal Certe databases.
@@ -18,9 +18,12 @@ URL: https://certe-medical-epidemiology.github.io/certedb, https://github.com/ce
 Depends: 
   R (>= 3.6.0)
 Imports:
-  crayon (>= 1.4.1),
+  certestyle,
+  DBI (>= 1.0.0),
+  dbplyr (>= 2.1.0),
   dplyr (>= 1.0.0),
-  RMariaDB (>= 1.1.2),
+  odbc,
+  RMariaDB,
   yaml (>= 2.2.1)
 Suggests: 
   testthat (>= 2.0.0)

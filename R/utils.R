@@ -17,7 +17,44 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
-test_that("function_name works", {
-  expect_true(1 + 1 == 2)
-  expect_identical(1, 2 - 1)
-})
+#' @importFrom RMariaDB MariaDB
+#' @importFrom odbc odbc
+get_driver <- function(dbname) {
+  if (dbname == "certemmb") {
+    RMariaDB::MariaDB()
+  } else if (dbname == "diver") {
+    odbc::odbc()
+  } else {
+    stop("no valid database name: '", dbname, "'", call. = FALSE) 
+  }
+}
+
+#' @importFrom certestyle font_black font_blue font_red
+db_message <- function(...,
+                       print = interactive() | Sys.getenv("IN_PKGDOWN") != "",
+                       type = "info",
+                       new_line = TRUE) {
+  # at default, only prints in interactive mode and for the website generation
+  if (isTRUE(print)) {
+    msg <- paste0(font_black(c(...), collapse = NULL), collapse = "")
+    # get info icon
+    if (isTRUE(base::l10n_info()$`UTF-8`) && interactive()) {
+      # \u2139 is a symbol officially named 'information source'
+      icon <- "\u2139"
+    } else {
+      icon <- "i"
+    }
+    if (is.null(type)) {
+      icon <- ""
+    } else if (type == "info") {
+      icon <- font_blue(icon)
+    } else if (type == "warning") {
+      icon <- font_red(icon)
+    }
+    message(trimws(paste(icon, font_black(msg))), appendLF = new_line)
+  }
+}
+
+db_warning <- function(..., print = interactive() | Sys.getenv("IN_PKGDOWN") != "") {
+  plot2_message(..., print = print, type = "warning")
+}
