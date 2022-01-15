@@ -56,5 +56,5 @@ db_message <- function(...,
 }
 
 db_warning <- function(..., print = interactive() | Sys.getenv("IN_PKGDOWN") != "") {
-  plot2_message(..., print = print, type = "warning")
+  db_message(..., print = print, type = "warning")
 }

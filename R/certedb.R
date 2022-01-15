@@ -30,15 +30,16 @@ build_ <- function(select) {
 #' @param host,port,username,password credentials
 #' @param driver database driver to use
 #' @param info Default is \code{FALSE}. Display of connecting info.
-#' @rdname certedb
+#' @rdname db_connect
+#' @importFrom certestyle font_red font_green
 #' @export
-certedb <- function(dbname = "certemmb",
-                    host = NULL,
-                    port = NULL,
-                    username = NULL,
-                    password = NULL,
-                    driver = get_driver(dbname = dbname),
-                    info = TRUE) {
+db_connect <- function(dbname = "certemmb",
+                       host = NULL,
+                       port = NULL,
+                       username = NULL,
+                       password = NULL,
+                       driver = get_driver(dbname = dbname),
+                       info = TRUE) {
   
   if (is.null(host)) {
     host <- suppressWarnings(read_secret(paste0("db.", dbname, ".host")))
@@ -79,10 +80,16 @@ certedb <- function(dbname = "certemmb",
   con
 }
 
-#' @rdname certedb
-#' @param conn connection to close, such as the output of [certedb()]
+#' @rdname db_connect
+#' @param conn connection to close, such as the output of [db_connect()]
 #' @param ... arguments passed on to [DBI::dbDisconnect()]
 #' @export
-certedb_close <- function(conn, ...) {
+db_close <- function(conn, ...) {
   DBI::dbDisconnect(conn = conn, ...)
 }
+
+#' @rdname db_connect
+#' @format NULL
+#' @details `db` is a [list] with all the database tables and columns.
+#' @export
+"db"
