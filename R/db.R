@@ -29,7 +29,8 @@ build_ <- function(select) {
 #' @param dbname database name
 #' @param host,port,username,password credentials
 #' @param driver database driver to use
-#' @param info Default is \code{FALSE}. Display of connecting info.
+#' @param info a logical to indicate whether info about the connection should be printed
+#' @details If no credentials are set, they will be retrieved using [`read_secret()`][certetoolbox::read_secret()] as `"db.dbname.item"`, such as `"db.certemmb.host"`.
 #' @rdname db_connect
 #' @importFrom certestyle font_red font_green
 #' @export

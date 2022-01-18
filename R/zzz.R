@@ -21,10 +21,10 @@
   # download the database structure and add it as an element `db` to the package environment,
   # so the filtering on database data can be typed faster
   # (the SQL query to get the structure in is the "data-raw" folder)
+  tryCatch({
   db_tbls_path <- suppressWarnings(read_secret("db.db_tbls_path"))
-  if (db_tbls_path != "" && file.exists(db_tbls_path)) {
     # read CSV file
-    db_tbls <- utils::read.csv(db_tbls_path, check.names = FALSE)
+    db_tbls <- suppressWarnings(utils::read.csv(db_tbls_path, check.names = FALSE))
     if (is.data.frame(db_tbls) &&
         all(c("table_name", "column_name", "data_type", "max_length") %in% colnames(db_tbls))) {
       db_tbls <- db_tbls[which(db_tbls$table_name %unlike% "(^test|__|brmoverkenner)"), ]
@@ -46,11 +46,17 @@
                envir = asNamespace("certedb"))
       }
     }
-  }
+  },
+  error = function(e) {
+    # something went wrong, return an empty list
+    assign(x = "db",
+           value = list(),
+           envir = asNamespace("certedb"))
+  })
 }
 
 .onAttach <- function(...) {
-  if ("db" %in% ls(envir = asNamespace("certedb"))) {
+  if (length(certedb::db) > 0) {
     packageStartupMessage("certedb: database structure imported")
   }
 }

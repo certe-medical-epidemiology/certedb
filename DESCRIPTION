@@ -1,6 +1,6 @@
 Package: certedb
 Title: A Certe R Package for Connecting to Databases
-Version: 0.0.4
+Version: 0.0.5
 Authors@R: c(
   person(given = c("Matthijs", "S."), 
          family = "Berends",
@@ -25,7 +25,8 @@ Imports:
   odbc,
   RMariaDB,
   yaml (>= 2.2.1)
-Suggests: 
+Suggests:
+  certetoolbox,
   testthat (>= 2.0.0)
 License: GPL-2
 Encoding: UTF-8
