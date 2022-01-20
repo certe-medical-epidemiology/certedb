@@ -5,14 +5,11 @@
 \alias{db_connect}
 \alias{db_close}
 \alias{db}
-\title{Connect to Certe Database}
+\title{Connect to a Certe Database}
 \usage{
 db_connect(
   dbname = "certemmb",
-  host = NULL,
-  port = NULL,
-  username = NULL,
-  password = NULL,
+  credentials = list(),
   driver = get_driver(dbname = dbname),
   info = TRUE
 )
@@ -24,7 +21,7 @@ db
 \arguments{
 \item{dbname}{database name}
 
-\item{host, port, username, password}{credentials}
+\item{credentials}{database credentials as a \link{list} with named items, such as \code{credentials = list(host = "0.0.0.0", port = 3306)}}
 
 \item{driver}{database driver to use}
 
@@ -35,10 +32,10 @@ db
 \item{...}{arguments passed on to \code{\link[DBI:dbDisconnect]{DBI::dbDisconnect()}}}
 }
 \description{
-Connect to a remote database using \code{\link[DBI:dbConnect]{DBI::dbConnect()}}.
+Connect to an internal (yet remote) Certe database server using \code{\link[DBI:dbConnect]{DBI::dbConnect()}}.
 }
 \details{
-If no credentials are set, they will be retrieved using \code{\link[certetoolbox:read_secret]{read_secret()}} as \code{"db.dbname.item"}, such as \code{"db.certemmb.host"}.
+If no credentials are set, they will be retrieved using \code{\link[certetoolbox:read_secret]{read_secret()}}.
 
 \code{db} is a \link{list} with all the database tables and columns.
 }

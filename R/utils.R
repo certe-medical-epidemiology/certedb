@@ -17,6 +17,8 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
+pkg_env <- new.env(hash = FALSE)
+
 #' @importFrom RMariaDB MariaDB
 #' @importFrom odbc odbc
 get_driver <- function(dbname) {
@@ -57,4 +59,31 @@ db_message <- function(...,
 
 db_warning <- function(..., print = interactive() | Sys.getenv("IN_PKGDOWN") != "") {
   db_message(..., print = print, type = "warning")
+}
+
+msg_init <- function(...) {
+  db_message(..., type = "info", new_line = FALSE)
+  pkg_env$time <- Sys.time()
+}
+
+#' @importFrom certestyle font_green
+msg_ok <- function(time = TRUE) {
+  time_diff <- Sys.time() - pkg_env$time
+  db_message(font_green("OK"),
+             ifelse(isTRUE(time),
+                    paste0(" (", format(round(time_diff, digits = 1)), ")"),
+                    ""),
+             type = NULL)
+  pkg_env$time <- NULL
+}
+
+#' @importFrom certestyle font_red
+msg_error <- function(time = TRUE) {
+  time_diff <- Sys.time() - pkg_env$time
+  db_message(font_red("ERROR"),
+             ifelse(isTRUE(time),
+                    paste0(" (", format(round(time_diff, digits = 1)), ")"),
+                    ""),
+             type = NULL)
+  pkg_env$time <- NULL
 }

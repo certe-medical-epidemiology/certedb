@@ -22,12 +22,11 @@
   # so the filtering on database data can be typed faster
   # (the SQL query to get the structure in is the "data-raw" folder)
   tryCatch({
-  db_tbls_path <- suppressWarnings(read_secret("db.db_tbls_path"))
+  db_tbls_path <- suppressWarnings(read_secret("db.tbls_path"))
     # read CSV file
     db_tbls <- suppressWarnings(utils::read.csv(db_tbls_path, check.names = FALSE))
     if (is.data.frame(db_tbls) &&
         all(c("table_name", "column_name", "data_type", "max_length") %in% colnames(db_tbls))) {
-      db_tbls <- db_tbls[which(db_tbls$table_name %unlike% "(^test|__|brmoverkenner)"), ]
       # add the database structure to a list in the package environment
       db <- as.list(paste0(db_tbls$table_name, ".", db_tbls$column_name))
       names(db) <- paste0(db_tbls$table_name, ".", db_tbls$column_name)
