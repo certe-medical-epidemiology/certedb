@@ -1,6 +1,6 @@
 Package: certedb
 Title: A Certe R Package for Connecting to Databases
-Version: 0.0.6
+Version: 0.0.7
 Authors@R: c(
   person(given = c("Matthijs", "S."), 
          family = "Berends",
@@ -23,7 +23,6 @@ Imports:
   dbplyr (>= 2.1.0),
   dplyr (>= 1.0.0),
   odbc,
-  rlang (>= 0.4.0),
   RMariaDB,
   yaml (>= 2.2.1)
 Suggests:

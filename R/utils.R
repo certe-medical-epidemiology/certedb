@@ -19,18 +19,6 @@
 
 pkg_env <- new.env(hash = FALSE)
 
-#' @importFrom RMariaDB MariaDB
-#' @importFrom odbc odbc
-get_driver <- function(dbname) {
-  if (dbname == "certemmb") {
-    RMariaDB::MariaDB()
-  } else if (dbname == "diver") {
-    odbc::odbc()
-  } else {
-    stop("no valid database name: '", dbname, "'", call. = FALSE) 
-  }
-}
-
 #' @importFrom certestyle font_black font_blue font_red
 db_message <- function(...,
                        print = interactive() | Sys.getenv("IN_PKGDOWN") != "",
@@ -67,11 +55,20 @@ msg_init <- function(...) {
 }
 
 #' @importFrom certestyle font_green
-msg_ok <- function(time = TRUE) {
+msg_ok <- function(time = TRUE, dimensions = NULL) {
   time_diff <- Sys.time() - pkg_env$time
+  if (is.null(dimensions)) {
+    size <- ""
+  } else {
+    size <- paste0(", ",
+                   format(dimensions[1], big.mark = ","),
+                   "x",
+                   format(dimensions[2], big.mark = ","),
+                   " observations")
+  }
   db_message(font_green("OK"),
              ifelse(isTRUE(time),
-                    paste0(" (", format(round(time_diff, digits = 1)), ")"),
+                    paste0(" (", format(round(time_diff, digits = 1)), size, ")"),
                     ""),
              type = NULL)
   pkg_env$time <- NULL
@@ -86,4 +83,8 @@ msg_error <- function(time = TRUE) {
                     ""),
              type = NULL)
   pkg_env$time <- NULL
+}
+
+is_empty <- function(x) {
+  is.null(x) || isFALSE(x) || identical(x, "") || all(is.na(as.character(x)))
 }

@@ -31,7 +31,7 @@
       db <- as.list(paste0(db_tbls$table_name, ".", db_tbls$column_name))
       names(db) <- paste0(db_tbls$table_name, ".", db_tbls$column_name)
       # this the global db:
-      assign(x = "db",
+      assign(x = "db2",
              value = db,
              envir = asNamespace("certedb"))
       # this is a list for each database:
@@ -48,14 +48,14 @@
   },
   error = function(e) {
     # something went wrong, return an empty list
-    assign(x = "db",
+    assign(x = "db2",
            value = list(),
            envir = asNamespace("certedb"))
   })
 }
 
 .onAttach <- function(...) {
-  if (length(certedb::db) > 0) {
+  if (length(certedb::db2) > 0) {
     packageStartupMessage("certedb: database structure imported")
   }
 }
