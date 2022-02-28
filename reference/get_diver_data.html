@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.8</span>
       </span>
     </div>
 
@@ -91,7 +91,7 @@
     <dl><dt>date_range</dt>
 <dd><p>date range, can be length 1 or 2 to filter on the column <code>Ontvangstdatum</code>), or <code>NULL</code> to not filter on any date column. Defaults to current year.</p></dd>
 <dt>where</dt>
-<dd><p>arguments to filter data on, will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code></p></dd>
+<dd><p>arguments to filter data on, will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>. <strong>Do not use <code>&amp;&amp;</code> or <code>||</code> but only <code>&amp;</code> or <code>|</code> in filtering.</strong></p></dd>
 <dt>diver_project</dt>
 <dd><p>name of the Diver project</p></dd>
 <dt>diver_cbase</dt>
