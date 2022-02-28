@@ -78,9 +78,3 @@ db_close <- function(conn, ...) {
   })
   invisible(TRUE)
 }
-
-#' @rdname db_connect
-#' @format NULL
-#' @details `db2` is a [list] with all the database tables and columns.
-#' @export
-"db2"

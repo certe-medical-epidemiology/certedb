@@ -16,7 +16,7 @@ get_diver_data(
 \arguments{
 \item{date_range}{date range, can be length 1 or 2 to filter on the column \code{Ontvangstdatum}), or \code{NULL} to not filter on any date column. Defaults to current year.}
 
-\item{where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}}
+\item{where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.}}
 
 \item{diver_project}{name of the Diver project}
 

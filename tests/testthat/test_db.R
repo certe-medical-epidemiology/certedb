@@ -18,7 +18,6 @@
 # ===================================================================== #
 
 test_that("database connection works", {
-  expect_s4_class(get_driver("certemmb"), "MariaDBDriver")
-  expect_error(get_driver("test"))
+ 
 })
 

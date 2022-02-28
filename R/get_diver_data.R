@@ -20,13 +20,14 @@
 #' Download Data from Diver Server
 #' 
 #' @param date_range date range, can be length 1 or 2 to filter on the column `Ontvangstdatum`), or `NULL` to not filter on any date column. Defaults to current year.
-#' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]
+#' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
 #' @param diver_project name of the Diver project
 #' @param diver_cbase name of the Diver cbase, can be left blank to select using a popup window
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise
 #' @importFrom dbplyr sql remote_query
 #' @importFrom dplyr tbl `%>%` filter 
 #' @importFrom certestyle format2
+#' @export
 get_diver_data <- function(date_range = c(paste0(format(Sys.Date(), "%Y"), "-01-01"),
                                           paste0(format(Sys.Date(), "%Y"), "-12-31")),
                            where = NULL,
