@@ -10,19 +10,22 @@ get_diver_data(
   where = NULL,
   diver_project = read_secret("db.diver_project"),
   diver_cbase = read_secret("db.diver_cbase"),
-  review_qry = interactive()
+  review_qry = interactive(),
+  antibiogram_type = NULL
 )
 }
 \arguments{
-\item{date_range}{date range, can be length 1 or 2 to filter on the column \code{Ontvangstdatum}), or \code{NULL} to not filter on any date column. Defaults to current year.}
+\item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column \code{Ontvangstdatum}. Defaults to current year. Use \code{NULL} to set no date filter.}
 
 \item{where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.}}
 
 \item{diver_project}{name of the Diver project}
 
-\item{diver_cbase}{name of the Diver cbase, can be left blank to select using a popup window}
+\item{diver_cbase}{name of the Diver cbase, can be left blank to select using a popup window (using \code{""}, \code{NA}, \code{NULL} or \code{FALSE})}
 
 \item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise}
+
+\item{antibiogram_type}{antibiotic transformation mode. Leave blank to strip antibiotic results from the data, \code{"rsi"} to keep RSI values, \code{"mic"} to keep MIC values or \code{"disk"} to keep disk diffusion values. Values will be cleaned with \code{\link[AMR:as.rsi]{as.rsi()}}, \code{\link[AMR:as.mic]{as.mic()}} or \code{\link[AMR:as.disk]{as.disk()}}.}
 }
 \description{
 Download Data from Diver Server

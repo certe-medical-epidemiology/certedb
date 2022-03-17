@@ -17,28 +17,11 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
-test_that("utils work", {
-  expect_true(is_empty(""))
-  expect_true(is_empty(NA))
-  expect_true(is_empty(FALSE))
-  expect_true(is_empty(NULL))
-  expect_true(is_empty(""))
-  
-  expect_message(db_message("test", print = TRUE))
-  expect_message(db_warning("test", print = TRUE))
-  
-  expect_message(msg_init("test", print = TRUE))
-  expect_message(msg_ok(print = TRUE))
-  expect_message(msg_init("test", print = TRUE))
-  expect_message(msg_ok(dimensions = c(NA, 6), print = TRUE))
-  expect_message(msg_init("test", print = TRUE))
-  expect_message(msg_error(print = TRUE))
-})
+coverage:
+  range:
+  - 0.0
+  - 80.0
 
-test_that("utils work", {
-  expect_s3_class(db_connect(dbplyr::simulate_sqlite()), "DBIConnection")
-  expect_s3_class(db_connect(dbplyr::simulate_sqlite(), host = "hostname"), "DBIConnection")
-  expect_s3_class(db_connect(dbplyr::simulate_sqlite(), cbase = "cbasename"), "DBIConnection")
-  expect_s3_class(db_connect(dbplyr::simulate_sqlite(), cbase = "cbasename", project = "projectname"), "DBIConnection")
-  expect_error(db_close(db_connect(dbplyr::simulate_sqlite())))
-})
+ignore:
+  - "R/get_diver_data.R"
+  - "R/universal.R"

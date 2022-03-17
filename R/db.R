@@ -25,6 +25,7 @@
 #' @param info a logical to indicate whether info about the connection should be printed
 #' @rdname db_connect
 #' @importFrom certestyle font_red font_green font_blue
+#' @importFrom DBI dbConnect
 #' @export
 db_connect <- function(driver,
                        ...,
@@ -46,10 +47,12 @@ db_connect <- function(driver,
   }
   
   msg_init("Opening connection", datasource, "...")
-  tryCatch(
-    con <- do.call(DBI::dbConnect,
-                   args = c(list(driver),
-                            dots)),
+  tryCatch({
+    if (inherits(driver, "DBIConnection")) {
+      con <- driver
+    } else {
+      con <- do.call(dbConnect, args = c(list(driver), dots))
+    }},
     error = function(e) {
       msg_error(time = FALSE)
       stop(e$message, call. = FALSE)
@@ -62,11 +65,12 @@ db_connect <- function(driver,
 #' @param conn connection to close, such as the output of [db_connect()]
 #' @param ... arguments passed on to [DBI::dbDisconnect()]
 #' @importFrom certestyle font_red font_green
+#' @importFrom DBI dbDisconnect
 #' @export
 db_close <- function(conn, ...) {
   db_message("Closing connection...", new_line = FALSE)
   tryCatch({
-    DBI::dbDisconnect(conn, ...)
+    dbDisconnect(conn, ...)
     db_message(font_green("OK"), type = NULL)
   }, error = function(e) {
     db_message(font_red("ERROR\n"), type = NULL)

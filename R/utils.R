@@ -55,33 +55,39 @@ msg_init <- function(...) {
 }
 
 #' @importFrom certestyle font_green
-msg_ok <- function(time = TRUE, dimensions = NULL) {
+msg_ok <- function(time = TRUE, dimensions = NULL, ...) {
   time_diff <- Sys.time() - pkg_env$time
   if (is.null(dimensions)) {
     size <- ""
   } else {
-    size <- paste0(", ",
-                   format(dimensions[1], big.mark = ","),
+    na_as_question_marks <- function(x) {
+      x[is.na(x)] <- "??"
+      x
+    }
+    size <- paste0(", result: ",
+                   format(na_as_question_marks(dimensions[1]), big.mark = ","),
                    "x",
-                   format(dimensions[2], big.mark = ","),
+                   format(na_as_question_marks(dimensions[2]), big.mark = ","),
                    " observations")
   }
   db_message(font_green("OK"),
              ifelse(isTRUE(time),
                     paste0(" (", format(round(time_diff, digits = 1)), size, ")"),
                     ""),
-             type = NULL)
+             type = NULL,
+             ...)
   pkg_env$time <- NULL
 }
 
 #' @importFrom certestyle font_red
-msg_error <- function(time = TRUE) {
+msg_error <- function(time = TRUE, ...) {
   time_diff <- Sys.time() - pkg_env$time
   db_message(font_red("ERROR"),
              ifelse(isTRUE(time),
                     paste0(" (", format(round(time_diff, digits = 1)), ")"),
                     ""),
-             type = NULL)
+             type = NULL,
+             ...)
   pkg_env$time <- NULL
 }
 

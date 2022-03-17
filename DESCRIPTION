@@ -1,6 +1,6 @@
 Package: certedb
 Title: A Certe R Package for Connecting to Databases
-Version: 0.0.8
+Version: 1.0.0
 Authors@R: c(
   person(given = c("Matthijs", "S."), 
          family = "Berends",
@@ -19,13 +19,14 @@ Depends:
   R (>= 3.6.0)
 Imports:
   certestyle,
+  AMR (>= 1.8.0),
   DBI (>= 1.0.0),
   dbplyr (>= 2.1.0),
   dplyr (>= 1.0.0),
   odbc,
+  tidyr (>= 1.1.0),
   yaml (>= 2.2.1)
 Suggests:
-  certetoolbox,
   testthat (>= 2.0.0)
 License: GPL-2
 Encoding: UTF-8
