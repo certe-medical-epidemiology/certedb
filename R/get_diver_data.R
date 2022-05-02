@@ -26,7 +26,7 @@
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise
 #' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"rsi"` to keep RSI values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.rsi()`][AMR::as.rsi()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
 #' @importFrom dbplyr sql remote_query
-#' @importFrom dplyr tbl `%>%` filter collect matches mutate across select distinct first
+#' @importFrom dplyr tbl filter collect matches mutate across select distinct first
 #' @importFrom certestyle format2
 #' @importFrom tidyr pivot_wider
 #' @importFrom AMR as.rsi as.mic as.disk
@@ -53,16 +53,16 @@ get_diver_data <- function(date_range = c(paste0(format(Sys.Date(), "%Y"), "-01-
       date_range <- c(min(date_range, na.rm = TRUE), max(date_range, na.rm = TRUE))
     }
     date_range <- as.Date(date_range)
-    out <- conn %>%
+    out <- conn |>
       tbl(sql(paste0("select * from data where ",
                      "Ontvangstdatum BETWEEN ",
                      "EVAL('date(\"", format2(date_range[1], "yyyy/mm/dd"), "\")') AND ",
                      "EVAL('date(\"", format2(date_range[2], "yyyy/mm/dd"), "\")')")))
   } else {
-    out <- conn %>% tbl("data")
+    out <- conn |> tbl("data")
   }
   # apply filters
-  out <- out %>% filter({{ where }})
+  out <- out |> filter({{ where }})
   msg_ok(time = TRUE, dimensions = dim(out))
 
   if (isTRUE(review_qry)) {
@@ -93,59 +93,59 @@ get_diver_data <- function(date_range = c(paste0(format(Sys.Date(), "%Y"), "-01-
     # do nothing
   } else if (isTRUE(is_empty(antibiogram_type))) {
     msg_init("Removing AB columns...")
-    out <- out %>%
-      select(!matches("^(Ab_|ABMC$)")) %>% 
+    out <- out |>
+      select(!matches("^(Ab_|ABMC$)")) |> 
       distinct()
     msg_ok(dimensions = dim(out))
   } else if (isTRUE(antibiogram_type == "rsi")) {
     msg_init("Transforming RSIs...")
     ab_vars <- unique(out$ABMC)
     ab_vars <- ab_vars[!is.na(ab_vars)]
-    out <- out %>%
+    out <- out |>
       pivot_wider(names_from = "ABMC",
                   values_from = "Ab_RSI",
                   id_cols = !matches("^Ab_"),
                   values_fill = list(Ab_RSI = NA),
-                  values_fn = first) %>% 
+                  values_fn = first) |> 
       mutate(across(ab_vars, function(x) {
         x[x %in% c("-", "NULL", "N", "NA")] <- NA
         as.rsi(x)
       }))
     if ("NA" %in% colnames(out)) {
-      out <- out %>% select(-"NA")
+      out <- out |> select(-"NA")
     }
     msg_ok(dimensions = dim(out))
   } else if (isTRUE(antibiogram_type == "mic")) {
     msg_init("Transforming MICs...")
     ab_vars <- unique(out$ABMC)
     ab_vars <- ab_vars[!is.na(ab_vars)]
-    out <- out %>%
+    out <- out |>
       pivot_wider(names_from = "ABMC",
                   values_from = "Ab_MIC",
                   id_cols = !matches("^Ab_"),
                   values_fill = list(Ab_RSI = NA),
-                  values_fn = first) %>% 
+                  values_fn = first) |> 
       mutate(across(ab_vars, function(x) {
         x[x %in% c("F", "Neg", "Pos")] <- NA
         as.mic(x)
       }))
     if ("NA" %in% colnames(out)) {
-      out <- out %>% select(-"NA")
+      out <- out |> select(-"NA")
     }
     msg_ok(dimensions = dim(out))
   } else if (isTRUE(antibiogram_type == "disk")) {
     msg_init("Transforming disk diameters...")
     ab_vars <- unique(out$ABMC)
     ab_vars <- ab_vars[!is.na(ab_vars)]
-    out <- out %>%
+    out <- out |>
       pivot_wider(names_from = "ABMC",
                   values_from = "Ab_Diameter",
                   id_cols = !matches("^Ab_"),
                   values_fill = list(Ab_RSI = NA),
-                  values_fn = first) %>% 
+                  values_fn = first) |> 
       mutate(across(ab_vars, as.disk))
     if ("NA" %in% colnames(out)) {
-      out <- out %>% select(-"NA")
+      out <- out |> select(-"NA")
     }
     msg_ok(dimensions = dim(out))
   }
