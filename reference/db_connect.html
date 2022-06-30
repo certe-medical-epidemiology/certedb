@@ -76,21 +76,28 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">db_connect</span><span class="op">(</span><span class="va">driver</span>, <span class="va">...</span>, info <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-
-<span class="fu">db_close</span><span class="op">(</span><span class="va">conn</span>, <span class="va">...</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">db_connect</span><span class="op">(</span><span class="va">driver</span>, <span class="va">...</span>, info <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">db_close</span><span class="op">(</span><span class="va">conn</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>driver</dt>
 <dd><p>database driver to use</p></dd>
+
+
 <dt>...</dt>
 <dd><p>arguments passed on to <code><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">DBI::dbDisconnect()</a></code></p></dd>
+
+
 <dt>info</dt>
 <dd><p>a logical to indicate whether info about the connection should be printed</p></dd>
+
+
 <dt>conn</dt>
 <dd><p>connection to close, such as the output of <code>db_connect()</code></p></dd>
+
 </dl></div>
 
   </div>
@@ -105,7 +112,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

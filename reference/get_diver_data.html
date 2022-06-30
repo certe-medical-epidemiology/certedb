@@ -76,31 +76,42 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">get_diver_data</span><span class="op">(</span>
-  date_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"%Y"</span><span class="op">)</span>, <span class="st">"-01-01"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>,
-    <span class="st">"%Y"</span><span class="op">)</span>, <span class="st">"-12-31"</span><span class="op">)</span><span class="op">)</span>,
-  where <span class="op">=</span> <span class="cn">NULL</span>,
-  diver_project <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_project"</span><span class="op">)</span>,
-  diver_cbase <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_cbase"</span><span class="op">)</span>,
-  review_qry <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,
-  antibiogram_type <span class="op">=</span> <span class="cn">NULL</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_diver_data</span><span class="op">(</span></span>
+<span>  date_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"%Y"</span><span class="op">)</span>, <span class="st">"-01-01"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>    <span class="st">"%Y"</span><span class="op">)</span>, <span class="st">"-12-31"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  where <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  diver_project <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_project"</span><span class="op">)</span>,</span>
+<span>  diver_cbase <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_cbase"</span><span class="op">)</span>,</span>
+<span>  review_qry <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  antibiogram_type <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>date_range</dt>
 <dd><p>date range, can be length 1 or 2 (or more to use the min/max) to filter on the column <code>Ontvangstdatum</code>. Defaults to current year. Use <code>NULL</code> to set no date filter.</p></dd>
+
+
 <dt>where</dt>
 <dd><p>arguments to filter data on, will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>. <strong>Do not use <code>&amp;&amp;</code> or <code>||</code> but only <code>&amp;</code> or <code>|</code> in filtering.</strong></p></dd>
+
+
 <dt>diver_project</dt>
 <dd><p>name of the Diver project</p></dd>
+
+
 <dt>diver_cbase</dt>
 <dd><p>name of the Diver cbase, can be left blank to select using a popup window (using <code>""</code>, <code>NA</code>, <code>NULL</code> or <code>FALSE</code>)</p></dd>
+
+
 <dt>review_qry</dt>
 <dd><p>a <a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a> to indicate whether the query must be reviewed first, defaults to <code>TRUE</code> in interactive mode and <code>FALSE</code> otherwise</p></dd>
+
+
 <dt>antibiogram_type</dt>
 <dd><p>antibiotic transformation mode. Leave blank to strip antibiotic results from the data, <code>"rsi"</code> to keep RSI values, <code>"mic"</code> to keep MIC values or <code>"disk"</code> to keep disk diffusion values. Values will be cleaned with <code><a href="https://msberends.github.io/AMR/reference/as.rsi.html" class="external-link">as.rsi()</a></code>, <code><a href="https://msberends.github.io/AMR/reference/as.mic.html" class="external-link">as.mic()</a></code> or <code><a href="https://msberends.github.io/AMR/reference/as.disk.html" class="external-link">as.disk()</a></code>.</p></dd>
+
 </dl></div>
 
   </div>
@@ -115,7 +126,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>
