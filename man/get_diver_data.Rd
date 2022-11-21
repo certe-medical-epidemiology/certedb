@@ -11,13 +11,15 @@ get_diver_data(
   diver_project = read_secret("db.diver_project"),
   diver_cbase = read_secret("db.diver_cbase"),
   review_qry = interactive(),
-  antibiogram_type = NULL
+  select = "mmb",
+  antibiogram_type = "rsi",
+  distinct = TRUE
 )
 }
 \arguments{
-\item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column \code{Ontvangstdatum}. Defaults to current year. Use \code{NULL} to set no date filter.}
+\item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column \code{Ontvangstdatum}. Defaults to current year. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}.}
 
-\item{where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.}}
+\item{where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. Use \code{\link[=c]{c()}} to combine multiple search strings, see Examples. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.}}
 
 \item{diver_project}{name of the Diver project}
 
@@ -26,7 +28,38 @@ get_diver_data(
 \item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise}
 
 \item{antibiogram_type}{antibiotic transformation mode. Leave blank to strip antibiotic results from the data, \code{"rsi"} to keep RSI values, \code{"mic"} to keep MIC values or \code{"disk"} to keep disk diffusion values. Values will be cleaned with \code{\link[AMR:as.rsi]{as.rsi()}}, \code{\link[AMR:as.mic]{as.mic()}} or \code{\link[AMR:as.disk]{as.disk()}}.}
+
+\item{distinct}{logical to apply \code{\link[=distinct]{distinct()}} to the resulting data set}
 }
 \description{
 Download Data from Diver Server
+}
+\examples{
+\dontrun{
+
+get_diver_data(date_range = 2022, where = Bepalingcode == "PXNCOV")
+get_diver_data(2022, Bepalingcode == "PXNCOV")
+
+get_diver_data(last_month(),
+               Bepalingcode == "PXNCOV" & Zorglijn == "2e lijn")
+               
+get_diver_data(c(2020:2022),
+               where = c(Bepalingcode == "PXNCOV", Zorglijn == "2e lijn"))
+
+
+# USING R LANGUAGE -----------------------------------------------------
+
+# Use di to see variables after typing '$':
+get_diver_data(where = di$Materiaalcode \%like\% "bloed")
+
+
+# USING DIVER INTEGRATOR LANGUAGE --------------------------------------
+
+# Use Diver Integrator functions such as regexp() within EVAL():              
+get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^B")'))
+
+# With ignore case:
+get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^b", true)'))
+
+}
 }

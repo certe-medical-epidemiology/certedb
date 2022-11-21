@@ -19,7 +19,7 @@
 
 pkg_env <- new.env(hash = FALSE)
 
-#' @importFrom certestyle font_black font_blue font_red
+#' @importFrom certestyle font_black font_blue font_red font_green
 db_message <- function(...,
                        print = interactive() | Sys.getenv("IN_PKGDOWN") != "",
                        type = "info",
@@ -38,6 +38,8 @@ db_message <- function(...,
       icon <- ""
     } else if (type == "info") {
       icon <- font_blue(icon)
+    } else if (type == "ok") {
+      icon <- font_green(icon)
     } else if (type == "warning") {
       icon <- font_red(icon)
     }
@@ -54,23 +56,28 @@ msg_init <- function(...) {
   pkg_env$time <- Sys.time()
 }
 
+msg <- function(...) {
+  db_message(..., type = "ok", new_line = TRUE)
+}
+
 #' @importFrom certestyle font_green
 msg_ok <- function(time = TRUE, dimensions = NULL, ...) {
   time_diff <- Sys.time() - pkg_env$time
   if (is.null(dimensions)) {
     size <- ""
   } else {
-    na_as_question_marks <- function(x) {
-      x[is.na(x)] <- "??"
+    format_dim <- function(x) {
+      x <- format(x, big.mark = ",")
+      x[x == "NA"] <- "??"
       x
     }
     size <- paste0(", result: ",
-                   format(na_as_question_marks(dimensions[1]), big.mark = ","),
-                   "x",
-                   format(na_as_question_marks(dimensions[2]), big.mark = ","),
+                   format_dim(dimensions[1]),
+                   " x ",
+                   format_dim(dimensions[2]),
                    " observations")
   }
-  db_message(font_green("OK"),
+  db_message(font_green(" OK"),
              ifelse(isTRUE(time),
                     paste0(" (", format(round(time_diff, digits = 1)), size, ")"),
                     ""),
@@ -82,7 +89,7 @@ msg_ok <- function(time = TRUE, dimensions = NULL, ...) {
 #' @importFrom certestyle font_red
 msg_error <- function(time = TRUE, ...) {
   time_diff <- Sys.time() - pkg_env$time
-  db_message(font_red("ERROR"),
+  db_message(font_red(" ERROR"),
              ifelse(isTRUE(time),
                     paste0(" (", format(round(time_diff, digits = 1)), ")"),
                     ""),
