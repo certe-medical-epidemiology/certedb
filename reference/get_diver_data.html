@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3</span>
       </span>
     </div>
 
@@ -83,18 +83,20 @@
 <span>  diver_project <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_project"</span><span class="op">)</span>,</span>
 <span>  diver_cbase <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_cbase"</span><span class="op">)</span>,</span>
 <span>  review_qry <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  antibiogram_type <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  select <span class="op">=</span> <span class="st">"mmb"</span>,</span>
+<span>  antibiogram_type <span class="op">=</span> <span class="st">"rsi"</span>,</span>
+<span>  distinct <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>date_range</dt>
-<dd><p>date range, can be length 1 or 2 (or more to use the min/max) to filter on the column <code>Ontvangstdatum</code>. Defaults to current year. Use <code>NULL</code> to set no date filter.</p></dd>
+<dd><p>date range, can be length 1 or 2 (or more to use the min/max) to filter on the column <code>Ontvangstdatum</code>. Defaults to current year. Use <code>NULL</code> to set no date filter. Can also be years, or functions such as <code><a href="https://certe-medical-epidemiology.github.io/certetoolbox/reference/days_around_today.html" class="external-link">last_month()</a></code>.</p></dd>
 
 
 <dt>where</dt>
-<dd><p>arguments to filter data on, will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>. <strong>Do not use <code>&amp;&amp;</code> or <code>||</code> but only <code>&amp;</code> or <code>|</code> in filtering.</strong></p></dd>
+<dd><p>arguments to filter data on, will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>. Use <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> to combine multiple search strings, see Examples. <strong>Do not use <code>&amp;&amp;</code> or <code>||</code> but only <code>&amp;</code> or <code>|</code> in filtering.</strong></p></dd>
 
 
 <dt>diver_project</dt>
@@ -112,8 +114,43 @@
 <dt>antibiogram_type</dt>
 <dd><p>antibiotic transformation mode. Leave blank to strip antibiotic results from the data, <code>"rsi"</code> to keep RSI values, <code>"mic"</code> to keep MIC values or <code>"disk"</code> to keep disk diffusion values. Values will be cleaned with <code><a href="https://msberends.github.io/AMR/reference/as.rsi.html" class="external-link">as.rsi()</a></code>, <code><a href="https://msberends.github.io/AMR/reference/as.mic.html" class="external-link">as.mic()</a></code> or <code><a href="https://msberends.github.io/AMR/reference/as.disk.html" class="external-link">as.disk()</a></code>.</p></dd>
 
+
+<dt>distinct</dt>
+<dd><p>logical to apply <code>distinct()</code> to the resulting data set</p></dd>
+
 </dl></div>
 
+    <div id="ref-examples">
+    <h2>Examples</h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span>date_range <span class="op">=</span> <span class="fl">2022</span>, where <span class="op">=</span> <span class="va">Bepalingcode</span> <span class="op">==</span> <span class="st">"PXNCOV"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span><span class="fl">2022</span>, <span class="va">Bepalingcode</span> <span class="op">==</span> <span class="st">"PXNCOV"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span><span class="fu">last_month</span><span class="op">(</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>               <span class="va">Bepalingcode</span> <span class="op">==</span> <span class="st">"PXNCOV"</span> <span class="op">&amp;</span> <span class="va">Zorglijn</span> <span class="op">==</span> <span class="st">"2e lijn"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>               </span></span>
+<span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2020</span><span class="op">:</span><span class="fl">2022</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>               where <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">Bepalingcode</span> <span class="op">==</span> <span class="st">"PXNCOV"</span>, <span class="va">Zorglijn</span> <span class="op">==</span> <span class="st">"2e lijn"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># USING R LANGUAGE -----------------------------------------------------</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Use di to see variables after typing '$':</span></span></span>
+<span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span>where <span class="op">=</span> <span class="va">di</span><span class="op">$</span><span class="va">Materiaalcode</span> <span class="op">%like%</span> <span class="st">"bloed"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># USING DIVER INTEGRATOR LANGUAGE --------------------------------------</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Use Diver Integrator functions such as regexp() within EVAL():              </span></span></span>
+<span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span>where <span class="op">=</span> <span class="fu">EVAL</span><span class="op">(</span><span class="st">'regexp(value("Materiaalcode"),"^B")'</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># With ignore case:</span></span></span>
+<span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span>where <span class="op">=</span> <span class="fu">EVAL</span><span class="op">(</span><span class="st">'regexp(value("Materiaalcode"),"^b", true)'</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+</code></pre></div>
+    </div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top"><h2 data-toc-skip>Contents</h2>
@@ -126,7 +163,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>
