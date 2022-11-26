@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.4</span>
       </span>
     </div>
 
@@ -77,15 +77,15 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_diver_data</span><span class="op">(</span></span>
-<span>  date_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"%Y"</span><span class="op">)</span>, <span class="st">"-01-01"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>    <span class="st">"%Y"</span><span class="op">)</span>, <span class="st">"-12-31"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  date_range <span class="op">=</span> <span class="fu">this_year</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  where <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  diver_project <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_project"</span><span class="op">)</span>,</span>
-<span>  diver_cbase <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_cbase"</span><span class="op">)</span>,</span>
 <span>  review_qry <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  select <span class="op">=</span> <span class="st">"mmb"</span>,</span>
 <span>  antibiogram_type <span class="op">=</span> <span class="st">"rsi"</span>,</span>
-<span>  distinct <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  distinct <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  diver_cbase <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_cbase"</span><span class="op">)</span>,</span>
+<span>  diver_project <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_project"</span><span class="op">)</span>,</span>
+<span>  diver_dsn <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_dsn"</span><span class="op">)</span>,</span>
+<span>  diver_server <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_server"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,14 +99,6 @@
 <dd><p>arguments to filter data on, will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>. Use <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> to combine multiple search strings, see Examples. <strong>Do not use <code>&amp;&amp;</code> or <code>||</code> but only <code>&amp;</code> or <code>|</code> in filtering.</strong></p></dd>
 
 
-<dt>diver_project</dt>
-<dd><p>name of the Diver project</p></dd>
-
-
-<dt>diver_cbase</dt>
-<dd><p>name of the Diver cbase, can be left blank to select using a popup window (using <code>""</code>, <code>NA</code>, <code>NULL</code> or <code>FALSE</code>)</p></dd>
-
-
 <dt>review_qry</dt>
 <dd><p>a <a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a> to indicate whether the query must be reviewed first, defaults to <code>TRUE</code> in interactive mode and <code>FALSE</code> otherwise</p></dd>
 
@@ -117,6 +109,10 @@
 
 <dt>distinct</dt>
 <dd><p>logical to apply <code>distinct()</code> to the resulting data set</p></dd>
+
+
+<dt>diver_project, diver_cbase, diver_dsn, diver_server</dt>
+<dd><p>properties to set in <code>connect_db()</code>. The <code>diver_cbase</code> argument can be left blank (<code>""</code>, <code>NA</code>, <code>NULL</code> or <code>FALSE</code>) to select a CBase using popup window.</p></dd>
 
 </dl></div>
 
