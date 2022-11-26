@@ -21,14 +21,14 @@
 #' 
 #' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column `Ontvangstdatum`. Defaults to current year. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
 #' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. Use [c()] to combine multiple search strings, see Examples. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
-#' @param diver_project name of the Diver project
-#' @param diver_cbase name of the Diver cbase, can be left blank to select using a popup window (using `""`, `NA`, `NULL` or `FALSE`)
+#' @param diver_project,diver_cbase,diver_dsn,diver_server properties to set in [connect_db()]. The `diver_cbase` argument can be left blank (`""`, `NA`, `NULL` or `FALSE`) to select a CBase using popup window.
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise
 #' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"rsi"` to keep RSI values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.rsi()`][AMR::as.rsi()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
 #' @param distinct logical to apply [distinct()] to the resulting data set
 #' @importFrom dbplyr sql remote_query
 #' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc
 #' @importFrom certestyle format2
+#' @importFrom certetoolbox auto_transform this_year
 #' @importFrom tidyr pivot_wider
 #' @importFrom AMR as.rsi as.mic as.disk
 #' @export
@@ -60,19 +60,19 @@
 #' get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^b", true)'))
 #' 
 #' }
-get_diver_data <- function(date_range = c(paste0(format(Sys.Date(), "%Y"), "-01-01"),
-                                          paste0(format(Sys.Date(), "%Y"), "-12-31")),
+get_diver_data <- function(date_range = this_year(),
                            where = NULL,
-                           diver_project = read_secret("db.diver_project"),
-                           diver_cbase = read_secret("db.diver_cbase"),
                            review_qry = interactive(),
-                           select = "mmb",
                            antibiogram_type = "rsi",
-                           distinct = TRUE) {
-
+                           distinct = TRUE,
+                           diver_cbase = read_secret("db.diver_cbase"),
+                           diver_project = read_secret("db.diver_project"),
+                           diver_dsn = read_secret("db.diver_dsn"),
+                           diver_server = read_secret("db.diver_server")) {
+  
   conn <- db_connect(driver = odbc::odbc(),
-                     dsn = read_secret("db.diver_dsn"),
-                     server = read_secret("db.diver_server"),
+                     dsn = diver_dsn,
+                     server = diver_server,
                      project = diver_project,
                      cbase = ifelse(is_empty(diver_cbase), "", diver_cbase))
   
@@ -220,11 +220,15 @@ get_diver_data <- function(date_range = c(paste0(format(Sys.Date(), "%Y"), "-01-
     }
   }
   
+  msg_init("Transforming data set...")
   if ("Ordernummer" %in% colnames(out)) {
     out <- out |> arrange(desc(Ordernummer))
   } else {
     out <- out |> arrange(desc(Ontvangstdatum))
   }
+  # transform data, and update column names
+  out <- auto_transform(out, snake_case = TRUE)
+  msg_ok()
   
   out
 }

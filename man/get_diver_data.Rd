@@ -5,15 +5,15 @@
 \title{Download Data from Diver Server}
 \usage{
 get_diver_data(
-  date_range = c(paste0(format(Sys.Date(), "\%Y"), "-01-01"), paste0(format(Sys.Date(),
-    "\%Y"), "-12-31")),
+  date_range = this_year(),
   where = NULL,
-  diver_project = read_secret("db.diver_project"),
-  diver_cbase = read_secret("db.diver_cbase"),
   review_qry = interactive(),
-  select = "mmb",
   antibiogram_type = "rsi",
-  distinct = TRUE
+  distinct = TRUE,
+  diver_cbase = read_secret("db.diver_cbase"),
+  diver_project = read_secret("db.diver_project"),
+  diver_dsn = read_secret("db.diver_dsn"),
+  diver_server = read_secret("db.diver_server")
 )
 }
 \arguments{
@@ -21,15 +21,13 @@ get_diver_data(
 
 \item{where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. Use \code{\link[=c]{c()}} to combine multiple search strings, see Examples. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.}}
 
-\item{diver_project}{name of the Diver project}
-
-\item{diver_cbase}{name of the Diver cbase, can be left blank to select using a popup window (using \code{""}, \code{NA}, \code{NULL} or \code{FALSE})}
-
 \item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise}
 
 \item{antibiogram_type}{antibiotic transformation mode. Leave blank to strip antibiotic results from the data, \code{"rsi"} to keep RSI values, \code{"mic"} to keep MIC values or \code{"disk"} to keep disk diffusion values. Values will be cleaned with \code{\link[AMR:as.rsi]{as.rsi()}}, \code{\link[AMR:as.mic]{as.mic()}} or \code{\link[AMR:as.disk]{as.disk()}}.}
 
 \item{distinct}{logical to apply \code{\link[=distinct]{distinct()}} to the resulting data set}
+
+\item{diver_project, diver_cbase, diver_dsn, diver_server}{properties to set in \code{\link[=connect_db]{connect_db()}}. The \code{diver_cbase} argument can be left blank (\code{""}, \code{NA}, \code{NULL} or \code{FALSE}) to select a CBase using popup window.}
 }
 \description{
 Download Data from Diver Server

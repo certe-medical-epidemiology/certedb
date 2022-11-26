@@ -20,7 +20,7 @@
 #' Connect to a Certe Database
 #'
 #' Connect to an internal (yet remote) Certe database server using [DBI::dbConnect()].
-#' @param driver database driver to use
+#' @param driver database driver to use, such as [odbc::odbc()]
 #' @param ... database credentials
 #' @param info a logical to indicate whether info about the connection should be printed
 #' @rdname db_connect
