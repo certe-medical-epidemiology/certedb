@@ -220,7 +220,7 @@ get_diver_data <- function(date_range = this_year(),
   
   msg_init("Transforming data set...")
   if ("Ordernummer" %in% colnames(out)) {
-    out$ordernr[out$ordernr %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"] <- gsub(".", "", out$ordernr[out$ordernr %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"], fixed = TRUE)
+    out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"] <- gsub(".", "", out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"], fixed = TRUE)
     out <- out |> arrange(desc(Ordernummer))
   } else {
     out <- out |> arrange(desc(Ontvangstdatum))
