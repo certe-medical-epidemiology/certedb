@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.5</span>
       </span>
     </div>
 
@@ -84,8 +84,9 @@
 <span>  distinct <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  diver_cbase <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_cbase"</span><span class="op">)</span>,</span>
 <span>  diver_project <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_project"</span><span class="op">)</span>,</span>
-<span>  diver_dsn <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_dsn"</span><span class="op">)</span>,</span>
-<span>  diver_server <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_server"</span><span class="op">)</span></span>
+<span>  diver_dsn <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">diver_testserver</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_dsn"</span><span class="op">)</span> <span class="kw">else</span></span>
+<span>    <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_dsn_test"</span><span class="op">)</span>,</span>
+<span>  diver_testserver <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -111,8 +112,8 @@
 <dd><p>logical to apply <code>distinct()</code> to the resulting data set</p></dd>
 
 
-<dt>diver_project, diver_cbase, diver_dsn, diver_server</dt>
-<dd><p>properties to set in <code>connect_db()</code>. The <code>diver_cbase</code> argument can be left blank (<code>""</code>, <code>NA</code>, <code>NULL</code> or <code>FALSE</code>) to select a CBase using popup window.</p></dd>
+<dt>diver_cbase, diver_project, diver_dsn, diver_testserver</dt>
+<dd><p>properties to set in <code><a href="db_connect.html">db_connect()</a></code>. The <code>diver_cbase</code> argument can be left blank (<code>""</code>, <code>NA</code>, <code>NULL</code> or <code>FALSE</code>) to select a CBase in a popup window.</p></dd>
 
 </dl></div>
 
@@ -120,20 +121,15 @@
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># these two work identical:</span></span></span>
 <span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span>date_range <span class="op">=</span> <span class="fl">2022</span>, where <span class="op">=</span> <span class="va">Bepalingcode</span> <span class="op">==</span> <span class="st">"PXNCOV"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span><span class="fl">2022</span>, <span class="va">Bepalingcode</span> <span class="op">==</span> <span class="st">"PXNCOV"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># for the `where`, use `&amp;`, `|`, or `c()`:</span></span></span>
 <span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span><span class="fu">last_month</span><span class="op">(</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>               <span class="va">Bepalingcode</span> <span class="op">==</span> <span class="st">"PXNCOV"</span> <span class="op">&amp;</span> <span class="va">Zorglijn</span> <span class="op">==</span> <span class="st">"2e lijn"</span><span class="op">)</span></span></span>
-<span class="r-in"><span>               </span></span>
 <span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2020</span><span class="op">:</span><span class="fl">2022</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>               where <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">Bepalingcode</span> <span class="op">==</span> <span class="st">"PXNCOV"</span>, <span class="va">Zorglijn</span> <span class="op">==</span> <span class="st">"2e lijn"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># USING R LANGUAGE -----------------------------------------------------</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Use di to see variables after typing '$':</span></span></span>
-<span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span>where <span class="op">=</span> <span class="va">di</span><span class="op">$</span><span class="va">Materiaalcode</span> <span class="op">%like%</span> <span class="st">"bloed"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># USING DIVER INTEGRATOR LANGUAGE --------------------------------------</span></span></span>
