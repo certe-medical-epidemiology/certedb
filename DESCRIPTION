@@ -1,6 +1,6 @@
 Package: certedb
 Title: A Certe R Package for Connecting to Databases
-Version: 1.0.4
+Version: 1.0.5
 Authors@R: c(
   person(given = c("Matthijs", "S."), 
          family = "Berends",

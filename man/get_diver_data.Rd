@@ -12,8 +12,9 @@ get_diver_data(
   distinct = TRUE,
   diver_cbase = read_secret("db.diver_cbase"),
   diver_project = read_secret("db.diver_project"),
-  diver_dsn = read_secret("db.diver_dsn"),
-  diver_server = read_secret("db.diver_server")
+  diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else
+    read_secret("db.diver_dsn_test"),
+  diver_testserver = FALSE
 )
 }
 \arguments{
@@ -27,7 +28,7 @@ get_diver_data(
 
 \item{distinct}{logical to apply \code{\link[=distinct]{distinct()}} to the resulting data set}
 
-\item{diver_project, diver_cbase, diver_dsn, diver_server}{properties to set in \code{\link[=connect_db]{connect_db()}}. The \code{diver_cbase} argument can be left blank (\code{""}, \code{NA}, \code{NULL} or \code{FALSE}) to select a CBase using popup window.}
+\item{diver_cbase, diver_project, diver_dsn, diver_testserver}{properties to set in \code{\link[=db_connect]{db_connect()}}. The \code{diver_cbase} argument can be left blank (\code{""}, \code{NA}, \code{NULL} or \code{FALSE}) to select a CBase in a popup window.}
 }
 \description{
 Download Data from Diver Server
@@ -35,20 +36,15 @@ Download Data from Diver Server
 \examples{
 \dontrun{
 
+# these two work identical:
 get_diver_data(date_range = 2022, where = Bepalingcode == "PXNCOV")
 get_diver_data(2022, Bepalingcode == "PXNCOV")
 
+# for the `where`, use `&`, `|`, or `c()`:
 get_diver_data(last_month(),
                Bepalingcode == "PXNCOV" & Zorglijn == "2e lijn")
-               
 get_diver_data(c(2020:2022),
                where = c(Bepalingcode == "PXNCOV", Zorglijn == "2e lijn"))
-
-
-# USING R LANGUAGE -----------------------------------------------------
-
-# Use di to see variables after typing '$':
-get_diver_data(where = di$Materiaalcode \%like\% "bloed")
 
 
 # USING DIVER INTEGRATOR LANGUAGE --------------------------------------

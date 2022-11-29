@@ -21,7 +21,7 @@
 #' 
 #' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column `Ontvangstdatum`. Defaults to current year. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
 #' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. Use [c()] to combine multiple search strings, see Examples. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
-#' @param diver_project,diver_cbase,diver_dsn,diver_server properties to set in [connect_db()]. The `diver_cbase` argument can be left blank (`""`, `NA`, `NULL` or `FALSE`) to select a CBase using popup window.
+#' @param diver_cbase,diver_project,diver_dsn,diver_testserver properties to set in [db_connect()]. The `diver_cbase` argument can be left blank (`""`, `NA`, `NULL` or `FALSE`) to select a CBase in a popup window.
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise
 #' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"rsi"` to keep RSI values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.rsi()`][AMR::as.rsi()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
 #' @param distinct logical to apply [distinct()] to the resulting data set
@@ -35,20 +35,15 @@
 #' @examples 
 #' \dontrun{
 #' 
+#' # these two work identical:
 #' get_diver_data(date_range = 2022, where = Bepalingcode == "PXNCOV")
 #' get_diver_data(2022, Bepalingcode == "PXNCOV")
 #' 
+#' # for the `where`, use `&`, `|`, or `c()`:
 #' get_diver_data(last_month(),
 #'                Bepalingcode == "PXNCOV" & Zorglijn == "2e lijn")
-#'                
 #' get_diver_data(c(2020:2022),
 #'                where = c(Bepalingcode == "PXNCOV", Zorglijn == "2e lijn"))
-#' 
-#' 
-#' # USING R LANGUAGE -----------------------------------------------------
-#' 
-#' # Use di to see variables after typing '$':
-#' get_diver_data(where = di$Materiaalcode %like% "bloed")
 #' 
 #' 
 #' # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
@@ -67,14 +62,16 @@ get_diver_data <- function(date_range = this_year(),
                            distinct = TRUE,
                            diver_cbase = read_secret("db.diver_cbase"),
                            diver_project = read_secret("db.diver_project"),
-                           diver_dsn = read_secret("db.diver_dsn"),
-                           diver_server = read_secret("db.diver_server")) {
+                           diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else  read_secret("db.diver_dsn_test"),
+                           diver_testserver = FALSE) {
   
+  if (is_empty(diver_cbase)) {
+    diver_cbase <- ""
+  }
   conn <- db_connect(driver = odbc::odbc(),
                      dsn = diver_dsn,
-                     server = diver_server,
                      project = diver_project,
-                     cbase = ifelse(is_empty(diver_cbase), "", diver_cbase))
+                     cbase = diver_cbase)
   
   msg_init("Running query...")
   if (!is.null(date_range)) {
@@ -87,7 +84,8 @@ get_diver_data <- function(date_range = this_year(),
       date_range[1] <- paste0(date_range[1], "-01-01")
       date_range[2] <- paste0(date_range[2], "-12-31")
     }
-    date_range <- as.Date(date_range)
+    date_range <- tryCatch(as.Date(date_range),
+                           error = function(e) as.Date(date_range, origin = "1970-01-01"))
     out <- conn |>
       tbl(sql(paste0("select * from data where ",
                      "Ontvangstdatum BETWEEN ",
@@ -97,14 +95,14 @@ get_diver_data <- function(date_range = this_year(),
     out <- conn |> tbl("data")
   }
   # apply filters
-  where <- substitute(where)
-  for (i in seq_len(length(where))) {
-    where_txt <- deparse(where[[i]])
-    if (where_txt %like% "di[$]") {
-      where[[i]] <- str2lang(gsub("di$", "", where_txt, fixed = TRUE))
-    }
-  }
-  out <- out |> filter(where) |> R_to_DI()
+  # where <- substitute(where)
+  # for (i in seq_len(length(where))) {
+  #   where_txt <- deparse(where[[i]])
+  #   if (where_txt %like% "di[$]") {
+  #     where[[i]] <- str2lang(gsub("di$", "", where_txt, fixed = TRUE))
+  #   }
+  # }
+  out <- out |> filter({{ where }}) #|> R_to_DI()
   msg_ok(time = TRUE, dimensions = dim(out))
   
   if (isTRUE(review_qry)) {
@@ -222,6 +220,7 @@ get_diver_data <- function(date_range = this_year(),
   
   msg_init("Transforming data set...")
   if ("Ordernummer" %in% colnames(out)) {
+    out$ordernr[out$ordernr %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"] <- gsub(".", "", out$ordernr[out$ordernr %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"], fixed = TRUE)
     out <- out |> arrange(desc(Ordernummer))
   } else {
     out <- out |> arrange(desc(Ontvangstdatum))

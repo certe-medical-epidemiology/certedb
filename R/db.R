@@ -44,6 +44,9 @@ db_connect <- function(driver,
     } else {
       datasource <- paste0(" to cbase ", font_blue(dots$cbase))
     }
+    if ("dsn" %in% names(dots)) {
+      datasource <- paste0(datasource, font_blue(paste0(" @", dots$dsn)))
+    }
   }
   
   msg_init("Opening connection", datasource, "...")

@@ -19,6 +19,13 @@
 
 pkg_env <- new.env(hash = FALSE)
 
+globalVariables(c("Antibioticumcode",
+                  "MIC_gescreend",
+                  "Ontvangstdatum",
+                  "Ordernummer",
+                  "R_AB_Group",
+                  "RIS_gerapporteerd"))
+
 #' @importFrom certestyle font_black font_blue font_red font_green
 db_message <- function(...,
                        print = interactive() | Sys.getenv("IN_PKGDOWN") != "",
