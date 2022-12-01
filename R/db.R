@@ -40,12 +40,12 @@ db_connect <- function(driver,
   }
   if ("cbase" %in% names(dots)) {
     if ("project" %in% names(dots)) {
-      datasource <- paste0(" to cbase ", font_blue(paste0(dots$cbase, " [", dots$project, "]")))
+      datasource <- paste0(" to cbase ", font_blue(paste0("\"", dots$cbase, "\" [", dots$project, "]")))
     } else {
-      datasource <- paste0(" to cbase ", font_blue(dots$cbase))
+      datasource <- paste0(" to cbase ", font_blue(paste0("\"", dots$cbase, "\"")))
     }
     if ("dsn" %in% names(dots)) {
-      datasource <- paste0(datasource, font_blue(paste0(" @", dots$dsn)))
+      datasource <- paste0(datasource, font_black(paste0(" (", dots$dsn, ")")))
     }
   }
   

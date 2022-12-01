@@ -73,16 +73,14 @@ msg_ok <- function(time = TRUE, dimensions = NULL, ...) {
   if (is.null(dimensions)) {
     size <- ""
   } else {
-    format_dim <- function(x) {
-      x <- format(x, big.mark = ",")
-      x[x == "NA"] <- "??"
-      x
+    format_dim <- function(dimensions) {
+      if (is.na(dimensions[1])) {
+        paste0(format(dimensions[2], big.mark = ","), " columns")
+      } else {
+        paste0(format(dimensions[1], big.mark = ","), " \u00D7 ", format(dimensions[2], big.mark = ","), " observations")
+      }
     }
-    size <- paste0(", result: ",
-                   format_dim(dimensions[1]),
-                   " x ",
-                   format_dim(dimensions[2]),
-                   " observations")
+    size <- paste0("; ", format_dim(dimensions))
   }
   db_message(font_green(" OK"),
              ifelse(isTRUE(time),

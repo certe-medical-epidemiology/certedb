@@ -17,8 +17,43 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
-#' #' List with Variables
-#' #' 
-#' #' A list with variables to be used with [get_diver_data()].
-#' #' @format A [list] with `r length(di)` items.
-#' "di"
+#' @importFrom dplyr as_tibble
+as_diver_tibble <- function(tbl_df, cbase, qry, datetime, user) {
+  out <- as_tibble(tbl_df)
+  structure(out,
+            class = c("diver_tibble", class(out)),
+            cbase = cbase,
+            qry = qry,
+            datetime = datetime,
+            user = user)
+}
+
+#' @importFrom pillar tbl_sum dim_desc
+#' @importFrom certestyle format2
+#' @exportS3Method tbl_sum diver_tibble
+tbl_sum.diver_tibble <- function(x, ...) {
+  out <- c("A Diver tibble" = dim_desc(x))
+  if (!is.null(attributes(x)$cbase)) {
+    out <- c(out, "Retrieved from" = attributes(x)$cbase)
+  }
+  if (!is.null(attributes(x)$datetime)) {
+    out <- c(out, "Retrieved on" = format2(attributes(x)$datetime, "yyyy-mm-dd HH:MM"))
+  }
+  if (!is.null(attributes(x)$user)) {
+    out <- c(out, "Retrieved by" = attributes(x)$user)
+  }
+  out
+}
+
+#' @importFrom pillar tbl_format_footer style_subtle
+#' @importFrom cli symbol
+#' @exportS3Method tbl_format_footer diver_tibble
+tbl_format_footer.diver_tibble <- function(x, setup, ...) {
+  footer <- NextMethod()
+  if (is.null(attributes(x)$qry)) {
+    return(footer)
+  } else {
+    c(footer,
+      style_subtle(paste0("# ", cli::symbol$info, " Use `qry()` to get the original query of this Diver tibble")))
+  }
+}

@@ -19,18 +19,25 @@
 
 #' Download Data from Diver Server
 #' 
-#' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column `Ontvangstdatum`. Defaults to current year. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
-#' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. Use [c()] to combine multiple search strings, see Examples. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
-#' @param diver_cbase,diver_project,diver_dsn,diver_testserver properties to set in [db_connect()]. The `diver_cbase` argument can be left blank (`""`, `NA`, `NULL` or `FALSE`) to select a CBase in a popup window.
+#' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column `Ontvangstdatum`. Defaults to [this_year()]. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
+#' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
+#' @param diver_cbase,diver_project,diver_dsn,diver_testserver properties to set in [db_connect()]. The `diver_cbase` argument will be based on `preset`, but can also be set to blank `NULL` to manually select a cBase in a popup window.
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise
 #' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"rsi"` to keep RSI values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.rsi()`][AMR::as.rsi()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
-#' @param distinct logical to apply [distinct()] to the resulting data set
+#' @param preset a preset to choose from [presets()]. Will be ignored if `diver_cbase` is set, even if it is set to `NULL`.
+#' @param distinct [logical] to apply [distinct()] to the resulting data set
+#' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
+#' @param diver_data the data downloaded with [get_diver_data()]
+#' @details This function returns a 'Diver tibble', which prints information in the tibble header about the used cBase and current user.
+#' 
+#' Use [diver_query()] to retrieve the original query that was used to download the data.
 #' @importFrom dbplyr sql remote_query
 #' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc
-#' @importFrom certestyle format2
+#' @importFrom certestyle format2 font_blue font_black
 #' @importFrom certetoolbox auto_transform this_year
 #' @importFrom tidyr pivot_wider
 #' @importFrom AMR as.rsi as.mic as.disk
+#' @rdname get_diver_data
 #' @export
 #' @examples 
 #' \dontrun{
@@ -60,11 +67,20 @@ get_diver_data <- function(date_range = this_year(),
                            review_qry = interactive(),
                            antibiogram_type = "rsi",
                            distinct = TRUE,
-                           diver_cbase = read_secret("db.diver_cbase"),
+                           auto_transform = TRUE,
+                           preset = "mmb",
+                           diver_cbase = NULL,
                            diver_project = read_secret("db.diver_project"),
                            diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else  read_secret("db.diver_dsn_test"),
                            diver_testserver = FALSE) {
   
+  if (missing(diver_cbase)) {
+    # get preset
+    preset <- get_preset(preset)
+    diver_cbase <- preset$cbase
+  } else {
+    preset <- NULL
+  }
   if (is_empty(diver_cbase)) {
     diver_cbase <- ""
   }
@@ -72,8 +88,13 @@ get_diver_data <- function(date_range = this_year(),
                      dsn = diver_dsn,
                      project = diver_project,
                      cbase = diver_cbase)
+  user <- conn@info$username
   
-  msg_init("Running query...")
+  if (diver_cbase == "") {
+    diver_cbase <- "(manually selected)"
+  }
+  
+  msg_init("Retrieving initial cBase...")
   if (!is.null(date_range)) {
     if (length(date_range) == 1) {
       date_range <- rep(date_range, 2)
@@ -86,11 +107,16 @@ get_diver_data <- function(date_range = this_year(),
     }
     date_range <- tryCatch(as.Date(date_range),
                            error = function(e) as.Date(date_range, origin = "1970-01-01"))
-    out <- conn |>
-      tbl(sql(paste0("select * from data where ",
-                     "Ontvangstdatum BETWEEN ",
-                     "EVAL('date(\"", format2(date_range[1], "yyyy/mm/dd"), "\")') AND ",
-                     "EVAL('date(\"", format2(date_range[2], "yyyy/mm/dd"), "\")')")))
+    if (length(unique(date_range)) > 1) {
+      out <- conn |>
+        # from https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
+        tbl(sql(paste0("SELECT * FROM data WHERE Ontvangstdatum BETWEEN ",
+                       "{d '", format2(date_range[1], "yyyy-mm-dd"), "'} AND ",
+                       "{d '", format2(date_range[2], "yyyy-mm-dd"), "'}")))
+    } else {
+      out <- conn |>
+        tbl(sql(paste0("SELECT * FROM data WHERE Ontvangstdatum = {d '", format2(date_range[1], "yyyy-mm-dd"), "'}")))
+    }
   } else {
     out <- conn |> tbl("data")
   }
@@ -102,18 +128,21 @@ get_diver_data <- function(date_range = this_year(),
   #     where[[i]] <- str2lang(gsub("di$", "", where_txt, fixed = TRUE))
   #   }
   # }
-  out <- out |> filter({{ where }}) #|> R_to_DI()
+  if (!is.null(substitute(where))) {
+    out <- out |> filter({{ where }}) #|> R_to_DI()
+  }
   msg_ok(time = TRUE, dimensions = dim(out))
+  qry <- remote_query(out)
   
   if (isTRUE(review_qry)) {
-    choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", remote_query(out)),
+    choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry),
                           choices = c("Yes", "No", "Print column names"),
                           graphics = FALSE)
     if (choice == 3) {
       df <- collect(out, n = 1)
       cols <- vapply(FUN.VALUE = character(1), df, type_sum)
       print(paste0(names(cols), " <", cols, ">"), quote = FALSE)
-      choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", remote_query(out)),
+      choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry),
                             choices = c("Yes", "No"),
                             graphics = FALSE)
     }
@@ -218,19 +247,59 @@ get_diver_data <- function(date_range = this_year(),
     }
   }
   
-  msg_init("Transforming data set...")
-  if ("Ordernummer" %in% colnames(out)) {
-    out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"] <- gsub(".", "", out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"], fixed = TRUE)
-    out <- out |> arrange(desc(Ordernummer))
-  } else {
-    out <- out |> arrange(desc(Ontvangstdatum))
+  if (!is.null(preset) && !all(is.na(preset$columns))) {
+    msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")))
+    out <- out |> select(preset$columns)
+    msg_ok(dimensions = dim(out))
   }
-  # transform data, and update column names
-  out <- auto_transform(out, snake_case = TRUE)
-  msg_ok()
   
-  out
+  if (isTRUE(auto_transform)) {
+    msg_init("Transforming data set...")
+    if ("Ordernummer" %in% colnames(out)) {
+      out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"] <- gsub(".", "", out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"], fixed = TRUE)
+      out <- out |> arrange(desc(Ordernummer))
+    } else {
+      out <- out |> arrange(desc(Ontvangstdatum))
+    }
+    # transform data, and update column names
+    out <- auto_transform(out, snake_case = TRUE)
+    msg_ok()
+  }
+  
+  
+  as_diver_tibble(out,
+                  cbase = diver_cbase,
+                  qry = qry,
+                  datetime = Sys.time(),
+                  user = user)
 }
+
+#' @rdname get_diver_data
+#' @importFrom certestyle format2
+#' @importFrom pillar style_subtle
+#' @export
+diver_query <- function(diver_data) {
+  query <- attributes(diver_data)$qry
+  if (is.null(query)) {
+    message("No query found.")
+    invisible()
+  } else {
+    if (!is.null(attributes(diver_data)$cbase)) {
+      msg <- paste0("# This query was run on '", attributes(diver_data)$cbase, "'")
+      if (!is.null(attributes(diver_data)$datetime)) {
+        msg <- paste0(msg, " on ", format2(attributes(diver_data)$datetime, "yyyy-mm-dd HH:MM"))
+      }
+      if (!is.null(attributes(diver_data)$user)) {
+        msg <- paste0(msg, " by ", attributes(diver_data)$user)
+      }
+      cat(style_subtle(msg), "\n")
+    }
+    
+    cat(query)
+    invisible(q)
+  }
+}
+
 
 R_to_DI <- function(out) {
   # this transforms
