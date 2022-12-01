@@ -54,6 +54,6 @@ tbl_format_footer.diver_tibble <- function(x, setup, ...) {
     return(footer)
   } else {
     c(footer,
-      style_subtle(paste0("# ", cli::symbol$info, " Use `qry()` to get the original query of this Diver tibble")))
+      style_subtle(paste0("# ", cli::symbol$info, " Use `diver_query()` to get the original query of this Diver tibble")))
   }
 }
