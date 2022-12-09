@@ -49,16 +49,6 @@ This function returns a 'Diver tibble', which prints information in the tibble h
 
 Use \code{\link[=diver_query]{diver_query()}} to retrieve the original query that was used to download the data.
 }
-\section{Available ODBC Drivers}{
-
-The available ODBC drivers on this specific systems are:\tabular{lll}{
-   name \tab attribute \tab value \cr
-}
-
-
-See \url{https://r-dbi.github.io/odbc/} for more info about using ODBC in R.
-}
-
 \examples{
 \dontrun{
 

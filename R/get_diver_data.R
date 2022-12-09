@@ -32,15 +32,9 @@
 #' @details This function returns a 'Diver tibble', which prints information in the tibble header about the used cBase and current user.
 #' 
 #' Use [diver_query()] to retrieve the original query that was used to download the data.
-#' @section Available ODBC Drivers:
-#' The available ODBC drivers on this specific systems are:
-#' 
-#' `r knitr::kable(odbc::odbcListDrivers())`
-#' 
-#' See <https://r-dbi.github.io/odbc/> for more info about using ODBC in R.
 #' @importFrom dbplyr sql remote_query
 #' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc
-#' @importFrom certestyle format2 font_blue font_black
+#' @importFrom certestyle format2 font_blue font_black font_grey
 #' @importFrom certetoolbox auto_transform this_year
 #' @importFrom tidyr pivot_wider
 #' @importFrom AMR as.rsi as.mic as.disk
@@ -140,11 +134,19 @@ get_diver_data <- function(date_range = this_year(),
   if (!is.null(substitute(where))) {
     out <- out |> filter({{ where }}) #|> R_to_DI()
   }
+  if (!is.null(preset) && !all(is.na(preset$filter))) {
+    # apply filter from preset
+    preset_filter <- str2lang(preset$filter)
+    out <- out |> filter(preset_filter)
+  }
   msg_ok(time = TRUE, dimensions = dim(out))
   qry <- remote_query(out)
   
   if (isTRUE(review_qry)) {
-    choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry),
+    choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry,
+                                         ifelse(!is.null(preset) & !all(is.na(preset$filter)),
+                                                font_grey(paste0("\n(last part from preset \"", preset$name, "\")")),
+                                                "")),
                           choices = c("Yes", "No", "Print column names"),
                           graphics = FALSE)
     if (choice == 3) {
@@ -159,6 +161,10 @@ get_diver_data <- function(date_range = this_year(),
       db_close(conn)
       return(invisible())
     }
+  } else {
+    wh <- strsplit(unclass(remote_query(out)), "[ \n]WHERE[ \n]")[[1]]
+    wh <- paste0(trimws(gsub("\"q[0-9]+\"", "", wh[2:length(wh)])), collapse = " AND ")
+    msg("Applying filter: ", wh)
   }
   
   msg_init("Collecting data...")
@@ -262,13 +268,6 @@ get_diver_data <- function(date_range = this_year(),
     msg_ok(dimensions = dim(out))
   }
   
-  if (!is.null(preset) && !all(is.na(preset$filter))) {
-    msg_init(paste0("Filtering rows from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")))
-    tryCatch(out <- out |> filter(eval(str2expression(preset$filter))),
-             error = function(e) stop("The filtering in the preset '", preset$name, "' is invalid: ", e$message))
-    msg_ok(dimensions = dim(out))
-  }
-  
   if (isTRUE(auto_transform)) {
     msg_init("Transforming data set...")
     if ("Ordernummer" %in% colnames(out)) {
@@ -281,7 +280,6 @@ get_diver_data <- function(date_range = this_year(),
     out <- auto_transform(out, snake_case = TRUE)
     msg_ok()
   }
-  
   
   as_diver_tibble(out,
                   cbase = diver_cbase,

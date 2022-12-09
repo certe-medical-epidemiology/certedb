@@ -30,14 +30,15 @@ presets <- function() {
                 select = NA_character_)
   for (i in seq_len(length(p))) {
     out[i, "cbase"] <- p[[i]]$cbase
-    out[i, "filter"] <- p[[i]]$filter
-    if (!is.null(p[[i]]$filter)) {
-      out[i, "filter"] <- "(none)"
+    if (is.null(p[[i]]$filter)) {
+      out[i, "filter"] <- ""
+    } else {
+      out[i, "filter"] <- p[[i]]$filter
     }
     if (!is.null(p[[i]]$select)) {
       cols <- strsplit(p[[i]]$select, ", ?")[[1]]
-      if (length(cols) > 5) {
-        out[i, "select"] <- paste0(length(cols), ": ", paste(cols[1:5], collapse = ", "), ", ...")
+      if (length(cols) > 3) {
+        out[i, "select"] <- paste0(length(cols), ": ", paste(cols[1:3], collapse = ", "), ", ...")
       } else {
         out[i, "select"] <- paste0(length(cols), ": ", paste(cols, collapse = ", "))
       }
