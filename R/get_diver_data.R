@@ -19,6 +19,7 @@
 
 #' Download Data from Diver Server
 #' 
+#' This function can be used to download Spectre data from DiveLine on a Diver server (from [Dimensional Insight](https://www.dimins.com)). This function will set up an ODBC connection (using [db_connect()]), which requires their quite limited [DI-ODBC driver](https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html).
 #' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column `Ontvangstdatum`. Defaults to [this_year()]. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
 #' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
 #' @param diver_cbase,diver_project,diver_dsn,diver_testserver properties to set in [db_connect()]. The `diver_cbase` argument will be based on `preset`, but can also be set to blank `NULL` to manually select a cBase in a popup window.
@@ -33,7 +34,7 @@
 #' Use [diver_query()] to retrieve the original query that was used to download the data.
 #' @importFrom dbplyr sql remote_query
 #' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc
-#' @importFrom certestyle format2 font_blue font_black
+#' @importFrom certestyle format2 font_blue font_black font_grey
 #' @importFrom certetoolbox auto_transform this_year
 #' @importFrom tidyr pivot_wider
 #' @importFrom AMR as.rsi as.mic as.disk
@@ -58,7 +59,7 @@
 #' # Use Diver Integrator functions such as regexp() within EVAL():              
 #' get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^B")'))
 #' 
-#' # With ignore case:
+#' # With ignore case (defaults to false):
 #' get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^b", true)'))
 #' 
 #' }
@@ -68,13 +69,15 @@ get_diver_data <- function(date_range = this_year(),
                            antibiogram_type = "rsi",
                            distinct = TRUE,
                            auto_transform = TRUE,
-                           preset = "mmb",
+                           preset = read_secret("db.preset_default"),
                            diver_cbase = NULL,
                            diver_project = read_secret("db.diver_project"),
                            diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else  read_secret("db.diver_dsn_test"),
                            diver_testserver = FALSE) {
   
-  if (missing(diver_cbase)) {
+  if (is_empty(preset)) {
+    preset <- NULL
+  } else if (missing(diver_cbase)) {
     # get preset
     preset <- get_preset(preset)
     diver_cbase <- preset$cbase
@@ -131,11 +134,19 @@ get_diver_data <- function(date_range = this_year(),
   if (!is.null(substitute(where))) {
     out <- out |> filter({{ where }}) #|> R_to_DI()
   }
+  if (!is.null(preset) && !all(is.na(preset$filter))) {
+    # apply filter from preset
+    preset_filter <- str2lang(preset$filter)
+    out <- out |> filter(preset_filter)
+  }
   msg_ok(time = TRUE, dimensions = dim(out))
   qry <- remote_query(out)
   
   if (isTRUE(review_qry)) {
-    choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry),
+    choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry,
+                                         ifelse(!is.null(preset) & !all(is.na(preset$filter)),
+                                                font_grey(paste0("\n(last part from preset \"", preset$name, "\")")),
+                                                "")),
                           choices = c("Yes", "No", "Print column names"),
                           graphics = FALSE)
     if (choice == 3) {
@@ -150,6 +161,10 @@ get_diver_data <- function(date_range = this_year(),
       db_close(conn)
       return(invisible())
     }
+  } else {
+    wh <- strsplit(unclass(remote_query(out)), "[ \n]WHERE[ \n]")[[1]]
+    wh <- paste0(trimws(gsub("\"q[0-9]+\"", "", wh[2:length(wh)])), collapse = " AND ")
+    msg("Applying filter: ", wh)
   }
   
   msg_init("Collecting data...")
@@ -247,9 +262,9 @@ get_diver_data <- function(date_range = this_year(),
     }
   }
   
-  if (!is.null(preset) && !all(is.na(preset$columns))) {
+  if (!is.null(preset) && !all(is.na(preset$select))) {
     msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")))
-    out <- out |> select(preset$columns)
+    out <- out |> select(preset$select)
     msg_ok(dimensions = dim(out))
   }
   
@@ -265,7 +280,6 @@ get_diver_data <- function(date_range = this_year(),
     out <- auto_transform(out, snake_case = TRUE)
     msg_ok()
   }
-  
   
   as_diver_tibble(out,
                   cbase = diver_cbase,

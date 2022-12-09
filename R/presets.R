@@ -26,18 +26,24 @@ presets <- function() {
   p <- read_secret("db.presets")
   out <- tibble(preset = names(p),
                 cbase = NA_character_,
-                columns = NA_character_)
+                filter = NA_character_,
+                select = NA_character_)
   for (i in seq_len(length(p))) {
     out[i, "cbase"] <- p[[i]]$cbase
-    if (!is.null(p[[i]]$columns)) {
-      cols <- strsplit(p[[i]]$columns, ", ?")[[1]]
-      if (length(cols) > 5) {
-        out[i, "columns"] <- paste0(length(cols), ": ", paste(cols[1:5], collapse = ", "), ", ...")
+    if (is.null(p[[i]]$filter)) {
+      out[i, "filter"] <- ""
+    } else {
+      out[i, "filter"] <- p[[i]]$filter
+    }
+    if (!is.null(p[[i]]$select)) {
+      cols <- strsplit(p[[i]]$select, ", ?")[[1]]
+      if (length(cols) > 3) {
+        out[i, "select"] <- paste0(length(cols), ": ", paste(cols[1:3], collapse = ", "), ", ...")
       } else {
-        out[i, "columns"] <- paste0(length(cols), ": ", paste(cols, collapse = ", "))
+        out[i, "select"] <- paste0(length(cols), ": ", paste(cols, collapse = ", "))
       }
     } else {
-      out[i, "columns"] <- "(all)"
+      out[i, "select"] <- "(all)"
     }
   }
   out
@@ -53,8 +59,8 @@ get_preset <- function(preset) {
   }
   p <- p[which(tolower(names(p)) == tolower(preset))]
   p <- c(p[[1]], list(name = names(p)))
-  if (!all(is.na(p$columns))) {
-    p$columns <- strsplit(p$columns, ", ?")[[1]]
+  if (!all(is.na(p$select))) {
+    p$select <- strsplit(p$select, ", ?")[[1]]
   }
   p
 }
