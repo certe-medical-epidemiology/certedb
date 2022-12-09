@@ -12,7 +12,7 @@ get_diver_data(
   antibiogram_type = "rsi",
   distinct = TRUE,
   auto_transform = TRUE,
-  preset = "mmb",
+  preset = read_secret("db.preset_default"),
   diver_cbase = NULL,
   diver_project = read_secret("db.diver_project"),
   diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else
@@ -42,13 +42,23 @@ diver_query(diver_data)
 \item{diver_data}{the data downloaded with \code{\link[=get_diver_data]{get_diver_data()}}}
 }
 \description{
-Download Data from Diver Server
+This function can be used to download Spectre data from DiveLine on a Diver server (from \href{https://www.dimins.com}{Dimensional Insight}). This function will set up an ODBC connection (using \code{\link[=db_connect]{db_connect()}}), which requires their quite limited \href{https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html}{DI-ODBC driver}.
 }
 \details{
 This function returns a 'Diver tibble', which prints information in the tibble header about the used cBase and current user.
 
 Use \code{\link[=diver_query]{diver_query()}} to retrieve the original query that was used to download the data.
 }
+\section{Available ODBC Drivers}{
+
+The available ODBC drivers on this specific systems are:\tabular{lll}{
+   name \tab attribute \tab value \cr
+}
+
+
+See \url{https://r-dbi.github.io/odbc/} for more info about using ODBC in R.
+}
+
 \examples{
 \dontrun{
 
@@ -68,7 +78,7 @@ get_diver_data(c(2020:2022),
 # Use Diver Integrator functions such as regexp() within EVAL():              
 get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^B")'))
 
-# With ignore case:
+# With ignore case (defaults to false):
 get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^b", true)'))
 
 }
