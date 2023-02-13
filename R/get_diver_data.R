@@ -179,6 +179,13 @@ get_diver_data <- function(date_range = this_year(),
   
   db_close(conn)
   
+  for (i in seq_len(ncol(out))) {
+    # 2023-02-13 fix for Diver, logicals/booleans seem corrupt
+    if (is.logical(out[, i, drop = TRUE])) {
+      out[, i] <- as.logical(as.character(out[, i, drop = TRUE]))
+    }
+  }
+  
   if (isTRUE(distinct)) {
     out_distinct <- distinct(out)
     if (nrow(out_distinct) < nrow(out)) {
