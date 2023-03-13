@@ -9,7 +9,7 @@ get_diver_data(
   date_range = this_year(),
   where = NULL,
   review_qry = interactive(),
-  antibiogram_type = "rsi",
+  antibiogram_type = "sir",
   distinct = TRUE,
   auto_transform = TRUE,
   preset = read_secret("db.preset_default"),
@@ -29,7 +29,7 @@ diver_query(diver_data)
 
 \item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise}
 
-\item{antibiogram_type}{antibiotic transformation mode. Leave blank to strip antibiotic results from the data, \code{"rsi"} to keep RSI values, \code{"mic"} to keep MIC values or \code{"disk"} to keep disk diffusion values. Values will be cleaned with \code{\link[AMR:as.rsi]{as.rsi()}}, \code{\link[AMR:as.mic]{as.mic()}} or \code{\link[AMR:as.disk]{as.disk()}}.}
+\item{antibiogram_type}{antibiotic transformation mode. Leave blank to strip antibiotic results from the data, \code{"sir"} to keep SIR values, \code{"mic"} to keep MIC values or \code{"disk"} to keep disk diffusion values. Values will be cleaned with \code{\link[AMR:as.sir]{as.sir()}}, \code{\link[AMR:as.mic]{as.mic()}} or \code{\link[AMR:as.disk]{as.disk()}}.}
 
 \item{distinct}{\link{logical} to apply \code{\link[=distinct]{distinct()}} to the resulting data set}
 
