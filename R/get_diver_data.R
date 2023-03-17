@@ -24,7 +24,7 @@
 #' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
 #' @param diver_cbase,diver_project,diver_dsn,diver_testserver properties to set in [db_connect()]. The `diver_cbase` argument will be based on `preset`, but can also be set to blank `NULL` to manually select a cBase in a popup window.
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise
-#' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"rsi"` to keep RSI values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.rsi()`][AMR::as.rsi()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
+#' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"sir"` to keep SIR values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.sir()`][AMR::as.sir()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
 #' @param preset a preset to choose from [presets()]. Will be ignored if `diver_cbase` is set, even if it is set to `NULL`.
 #' @param distinct [logical] to apply [distinct()] to the resulting data set
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
@@ -37,7 +37,7 @@
 #' @importFrom certestyle format2 font_blue font_black font_grey
 #' @importFrom certetoolbox auto_transform this_year
 #' @importFrom tidyr pivot_wider
-#' @importFrom AMR as.rsi as.mic as.disk
+#' @importFrom AMR as.sir as.mic as.disk
 #' @rdname get_diver_data
 #' @export
 #' @examples 
@@ -66,7 +66,7 @@
 get_diver_data <- function(date_range = this_year(),
                            where = NULL,
                            review_qry = interactive(),
-                           antibiogram_type = "rsi",
+                           antibiogram_type = "sir",
                            distinct = TRUE,
                            auto_transform = TRUE,
                            preset = read_secret("db.preset_default"),
@@ -196,7 +196,7 @@ get_diver_data <- function(date_range = this_year(),
   
   if (diver_cbase %like% "MMBGL_Datamgnt_BepalingTotaalLevel") {
     out <- out |>
-      mutate(ABMC = Antibioticumcode, Ab_RSI = RIS_gerapporteerd, Ab_MIC = MIC_gescreend) |> 
+      mutate(ABMC = Antibioticumcode, Ab_SIR = RIS_gerapporteerd, Ab_MIC = MIC_gescreend) |> 
       select(-c(Antibioticumcode:R_AB_Group))
   }
   
@@ -208,19 +208,19 @@ get_diver_data <- function(date_range = this_year(),
       select(!matches("^(Ab_|ABMC$)")) |> 
       distinct()
     msg_ok(dimensions = dim(out))
-  } else if (isTRUE(antibiogram_type == "rsi")) {
-    msg_init("Transforming RSIs...")
+  } else if (isTRUE(antibiogram_type == "sir")) {
+    msg_init("Transforming SIRs...")
     ab_vars <- unique(out$ABMC)
     ab_vars <- ab_vars[!is.na(ab_vars)]
+    SIR_col <- ifelse("Ab_RSI" %in% colnames(out), "Ab_RSI", "Ab_SIR")
     out <- out |>
       pivot_wider(names_from = "ABMC",
-                  values_from = "Ab_RSI",
+                  values_from = SIR_col,
                   id_cols = !matches("^Ab_"),
-                  values_fill = list(Ab_RSI = NA),
                   values_fn = first) |> 
       mutate(across(ab_vars, function(x) {
         x[x %in% c("-", "NULL", "N", "NA")] <- NA
-        as.rsi(x)
+        as.sir(x)
       }))
     if ("NA" %in% colnames(out)) {
       out <- out |> select(-"NA")
@@ -234,7 +234,6 @@ get_diver_data <- function(date_range = this_year(),
       pivot_wider(names_from = "ABMC",
                   values_from = "Ab_MIC",
                   id_cols = !matches("^Ab_"),
-                  values_fill = list(Ab_RSI = NA),
                   values_fn = first) |> 
       mutate(across(ab_vars, function(x) {
         x[x %in% c("F", "Neg", "Pos")] <- NA
@@ -252,7 +251,6 @@ get_diver_data <- function(date_range = this_year(),
       pivot_wider(names_from = "ABMC",
                   values_from = "Ab_Diameter",
                   id_cols = !matches("^Ab_"),
-                  values_fill = list(Ab_RSI = NA),
                   values_fn = first) |> 
       mutate(across(ab_vars, as.disk))
     if ("NA" %in% colnames(out)) {
