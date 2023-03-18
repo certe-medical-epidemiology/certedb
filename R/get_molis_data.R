@@ -253,10 +253,6 @@ certedb_getmmb <- function(dates = NULL,
   qry <- remote_query(out)
   msg_ok(time = TRUE, dimensions = dim(out))
   
-  print("-------")
-  print(qry_beautify(query))
-  print("-------")
-  
   if (isTRUE(review_where) && interactive()) {
     choice <- utils::menu(title = paste0("\nCollect data with this WHERE? (0 for Cancel)\n\n",
                                          gsub("(.*)\nWHERE\n  (.*)", "\\2", qry_beautify(query))),
@@ -338,50 +334,50 @@ certedb_getmmb <- function(dates = NULL,
       
       if (isTRUE(first_isolates)) {
         patid <- colnames(out)[colnames(out) %in% c("patid", "patidnb")][1]
-        if (all(c("mo", "bacteriecode", "ontvangstdatum", patid) %in% colnames(out), na.rm = TRUE)) {
+        if (all(c("bacteriecode", "ontvangstdatum", patid) %in% colnames(out), na.rm = TRUE)) {
           msg_init("Applying first isolates...")
           out$eerste_isolaat <- first_isolate(
-            x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
+            x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
             method = "episode-based", episode_days = 365, specimen_group = NULL, info = FALSE)
           out$eerste_isolaat_gewogen <- first_isolate(
-            x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
+            x = iyt, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
             method = "phenotype-based", episode_days = 365, specimen_group = NULL, info = FALSE)
           
           if ("mtrlgroep" %in% colnames(out)) {
             # also add specimen-specific isolates
             out$eerste_urineisolaat <- first_isolate(
-              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "episode-based", episode_days = 365, specimen_group = "Urine", info = FALSE)
             out$eerste_urineisolaat_gewogen <- first_isolate(
-              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "phenotype-based", episode_days = 365, specimen_group = "Urine", info = FALSE)
             
             out$eerste_bloedisolaat <- first_isolate(
-              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "episode-based", episode_days = 365, specimen_group = "Bloed", info = FALSE)
             out$eerste_bloedisolaat_gewogen <- first_isolate(
-              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "phenotype-based", episode_days = 365, specimen_group = "Bloed", info = FALSE)
             
             out$eerste_pusisolaat <- first_isolate(
-              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "episode-based", episode_days = 365, specimen_group = "Pus", info = FALSE)
             out$eerste_pusisolaat_gewogen <- first_isolate(
-              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "phenotype-based", episode_days = 365, specimen_group = "Pus", info = FALSE)
             
             out$eerste_respisolaat <- first_isolate(
-              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "episode-based", episode_days = 365, specimen_group = "Respiratoir", info = FALSE)
             out$eerste_respisolaat_gewogen <- first_isolate(
-              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "phenotype-based", episode_days = 365, specimen_group = "Respiratoir", info = FALSE)
             
             out$eerste_fecesisolaat <- first_isolate(
-              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "episode-based", episode_days = 365, specimen_group = "Feces", info = FALSE)
             out$eerste_fecesisolaat_gewogen <- first_isolate(
-              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "phenotype-based", episode_days = 365, specimen_group = "Feces", info = FALSE)
             
           }
@@ -391,9 +387,9 @@ certedb_getmmb <- function(dates = NULL,
     }
   }
   
-  if (zipcodes == TRUE & ziplength < 6) {
+  if (zipcodes == TRUE && ziplength[1L] < 6) {
     msg_init("Transforming zip codes...")
-    out <- out |> mutate(postcode = postcode |> substr(1, ziplength))
+    out <- out |> mutate(postcode = postcode |> substr(1, ziplength[1L]))
     msg_ok()
   }
   
@@ -707,7 +703,7 @@ where_R2SQL <- function(where = NULL, info = TRUE) {
       }
       
       if (isTRUE(info)) {
-        msg(paste0("Replacing element `",
+        msg(paste0("Replaced element `",
                        trimws(obj),
                        "` with value: ",
                        ifelse(nchar(obj_evaluated) > 25,
@@ -740,7 +736,7 @@ where_R2SQL <- function(where = NULL, info = TRUE) {
         }
         
         if (isTRUE(info)) {
-          msg(paste0("Replacing object `",
+          msg(paste0("Replaced object `",
                          where_list[i],
                          "` with value: ",
                          ifelse(nchar(newval) > 25,
