@@ -101,7 +101,8 @@ get_diver_data <- function(date_range = this_year(),
   if (!is.null(date_range)) {
     if (length(date_range) == 1) {
       date_range <- rep(date_range, 2)
-    } else if (length(date_range) != 2) {
+    } else {
+      # always earliest first, newest second
       date_range <- c(min(date_range, na.rm = TRUE), max(date_range, na.rm = TRUE))
     }
     if (all(date_range %in% c(2000:2050), na.rm = TRUE)) {
@@ -142,7 +143,7 @@ get_diver_data <- function(date_range = this_year(),
   msg_ok(time = TRUE, dimensions = dim(out))
   qry <- remote_query(out)
   
-  if (isTRUE(review_qry)) {
+  if (isTRUE(review_qry) && interactive()) {
     choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry,
                                          ifelse(!is.null(preset) & !all(is.na(preset$filter)),
                                                 font_grey(paste0("\n(last part from preset \"", preset$name, "\")")),
