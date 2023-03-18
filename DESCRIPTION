@@ -1,6 +1,6 @@
 Package: certedb
 Title: A Certe R Package for Connecting to Databases
-Version: 1.2.0
+Version: 1.3.0
 Authors@R: c(
   person(given = c("Matthijs", "S."), 
          family = "Berends",
@@ -30,10 +30,10 @@ Imports:
   tidyr (>= 1.1.0),
   yaml (>= 2.2.1)
 Suggests:
+  RMariaDB,
   testthat (>= 2.0.0)
 License: GPL-2
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Config/testthat/edition: 2
-LazyData: true

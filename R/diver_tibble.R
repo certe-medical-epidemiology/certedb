@@ -18,10 +18,11 @@
 # ===================================================================== #
 
 #' @importFrom dplyr as_tibble
-as_diver_tibble <- function(tbl_df, cbase, qry, datetime, user) {
+as_diver_tibble <- function(tbl_df, cbase, qry, datetime, user, type = "Diver") {
   out <- as_tibble(tbl_df)
   structure(out,
             class = c("diver_tibble", class(out)),
+            type = type,
             cbase = cbase,
             qry = qry,
             datetime = datetime,
@@ -32,7 +33,8 @@ as_diver_tibble <- function(tbl_df, cbase, qry, datetime, user) {
 #' @importFrom certestyle format2
 #' @exportS3Method tbl_sum diver_tibble
 tbl_sum.diver_tibble <- function(x, ...) {
-  out <- c("A Diver tibble" = dim_desc(x))
+  out <- dim_desc(x)
+  names(out) <- paste("A", attributes(x)$type, "tibble")
   if (!is.null(attributes(x)$cbase)) {
     out <- c(out, "Retrieved from" = attributes(x)$cbase)
   }
@@ -54,6 +56,6 @@ tbl_format_footer.diver_tibble <- function(x, setup, ...) {
     return(footer)
   } else {
     c(footer,
-      style_subtle(paste0("# ", cli::symbol$info, " Use `diver_query()` to get the original query of this Diver tibble")))
+      style_subtle(paste0("# ", cli::symbol$info, " Use `diver_query()` to get the original query of this ", attributes(x)$type, " tibble")))
   }
 }
