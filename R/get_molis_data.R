@@ -340,7 +340,7 @@ certedb_getmmb <- function(dates = NULL,
             x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
             method = "episode-based", episode_days = 365, specimen_group = NULL, info = FALSE)
           out$eerste_isolaat_gewogen <- first_isolate(
-            x = iyt, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
+            x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
             method = "phenotype-based", episode_days = 365, specimen_group = NULL, info = FALSE)
           
           if ("mtrlgroep" %in% colnames(out)) {
@@ -401,6 +401,13 @@ certedb_getmmb <- function(dates = NULL,
       out <- out |> arrange(desc(ontvangstdatum))
     }
     out <- auto_transform(out)
+    # also transform 0/1 values to FALSE/TRUE
+    for (col in colnames(out)) {
+      vals <- out[, col, drop = TRUE]
+      if (is.integer(vals) && all(vals %in% c(0, 1, NA)) && !all(is.na(vals))) {
+        out[, col] <- as.logical(vals)
+      }
+    }
     msg_ok()
   }
   
