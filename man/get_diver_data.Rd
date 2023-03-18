@@ -44,6 +44,7 @@ certedb_getmmb(
   only_validated = FALSE,
   only_show_query = FALSE,
   review_where = interactive(),
+  auto_transform = TRUE,
   ...
 )
 

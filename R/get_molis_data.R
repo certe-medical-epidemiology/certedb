@@ -35,12 +35,13 @@
 #' @param only_conducted_tests settings for old `certedb_getmmb()` function
 #' @param only_validated settings for old `certedb_getmmb()` function
 #' @param only_show_query settings for old `certedb_getmmb()` function
+#' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
 #' @param ... settings for old `certedb_getmmb()` function
 #' @importFrom dplyr mutate arrange desc `%>%` rename
 #' @importFrom dbplyr sql remote_query
 #' @importFrom certestyle format2
 #' @importFrom certetoolbox auto_transform ref_dir
-#' @importFrom AMR as.mo eucast_rules
+#' @importFrom AMR as.mo eucast_rules first_isolate
 #' @export
 certedb_getmmb <- function(dates = NULL,
                            where = NULL,
@@ -61,6 +62,7 @@ certedb_getmmb <- function(dates = NULL,
                            only_validated = FALSE,
                            only_show_query = FALSE,
                            review_where = interactive(),
+                           auto_transform = TRUE,
                            ...) {
   eucast_rules_setting <- eucast_rules
   if (is.function(eucast_rules_setting)) {
@@ -246,6 +248,15 @@ certedb_getmmb <- function(dates = NULL,
     return(sql(paste0("\n", query, "\n")))
   }
   
+  msg_init("Retrieving initial data...")
+  out <- conn |> tbl(sql(query))
+  qry <- remote_query(out)
+  msg_ok(time = TRUE, dimensions = dim(out))
+  
+  print("-------")
+  print(qry_beautify(query))
+  print("-------")
+  
   if (isTRUE(review_where) && interactive()) {
     choice <- utils::menu(title = paste0("\nCollect data with this WHERE? (0 for Cancel)\n\n",
                                          gsub("(.*)\nWHERE\n  (.*)", "\\2", qry_beautify(query))),
@@ -261,10 +272,6 @@ certedb_getmmb <- function(dates = NULL,
       return(invisible())
     }
   }
-  
-  msg_init("Validating query...")
-  out <- conn |> tbl(sql(query))
-  qry <- remote_query(out)
   
   msg_init("Collecting data...")
   tryCatch({
@@ -320,17 +327,66 @@ certedb_getmmb <- function(dates = NULL,
         )
       }
     }
-    if (all(is.na(out$bacteriecode))) {
+    if (!"bacteriecode" %in% colnames(out)) {
       msg("Note: No isolates available.")
     } else {
-      if (!needs_mic & !needs_disk & eucast_rules_setting != FALSE & "bacteriecode" %in% colnames(out)) {
+      if (!needs_mic & !needs_disk && eucast_rules_setting != FALSE) {
         msg_init(paste("Applying EUCAST", eucast_rules_setting, "rules..."))
         out <- suppressMessages(suppressWarnings(eucast_rules(out, col_mo = "bacteriecode", rules = eucast_rules_setting, info = FALSE)))
         msg_ok()
       }
       
-      if (first_isolates == TRUE) {
-        db_warning("First isolates not (yet) implemented")
+      if (isTRUE(first_isolates)) {
+        patid <- colnames(out)[colnames(out) %in% c("patid", "patidnb")][1]
+        if (all(c("mo", "bacteriecode", "ontvangstdatum", patid) %in% colnames(out), na.rm = TRUE)) {
+          msg_init("Applying first isolates...")
+          out$eerste_isolaat <- first_isolate(
+            x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
+            method = "episode-based", episode_days = 365, specimen_group = NULL, info = FALSE)
+          out$eerste_isolaat_gewogen <- first_isolate(
+            x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
+            method = "phenotype-based", episode_days = 365, specimen_group = NULL, info = FALSE)
+          
+          if ("mtrlgroep" %in% colnames(out)) {
+            # also add specimen-specific isolates
+            out$eerste_urineisolaat <- first_isolate(
+              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              method = "episode-based", episode_days = 365, specimen_group = "Urine", info = FALSE)
+            out$eerste_urineisolaat_gewogen <- first_isolate(
+              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              method = "phenotype-based", episode_days = 365, specimen_group = "Urine", info = FALSE)
+            
+            out$eerste_bloedisolaat <- first_isolate(
+              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              method = "episode-based", episode_days = 365, specimen_group = "Bloed", info = FALSE)
+            out$eerste_bloedisolaat_gewogen <- first_isolate(
+              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              method = "phenotype-based", episode_days = 365, specimen_group = "Bloed", info = FALSE)
+            
+            out$eerste_pusisolaat <- first_isolate(
+              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              method = "episode-based", episode_days = 365, specimen_group = "Pus", info = FALSE)
+            out$eerste_pusisolaat_gewogen <- first_isolate(
+              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              method = "phenotype-based", episode_days = 365, specimen_group = "Pus", info = FALSE)
+            
+            out$eerste_respisolaat <- first_isolate(
+              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              method = "episode-based", episode_days = 365, specimen_group = "Respiratoir", info = FALSE)
+            out$eerste_respisolaat_gewogen <- first_isolate(
+              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              method = "phenotype-based", episode_days = 365, specimen_group = "Respiratoir", info = FALSE)
+            
+            out$eerste_fecesisolaat <- first_isolate(
+              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              method = "episode-based", episode_days = 365, specimen_group = "Feces", info = FALSE)
+            out$eerste_fecesisolaat_gewogen <- first_isolate(
+              x = x, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
+              method = "phenotype-based", episode_days = 365, specimen_group = "Feces", info = FALSE)
+            
+          }
+          msg_ok()
+        }
       }
     }
   }
@@ -408,8 +464,7 @@ select_translate_asterisk <- function(select) {
     if (select[i] %like% "[.][*]") {
       found <- gregexpr("[.][*]", select[i])
       select_tbl <- substr(select[i], 1, found |> as.integer() - 1)
-      select_items <-
-        certedb::db[names(certedb::db) %like% paste0("^", select_tbl, "[.][a-z]+")] |>
+      select_items <- certedb::db[names(certedb::db) %like% paste0("^", select_tbl, "[.][a-z]+")] |>
         unlist() |>
         unname()
       select_list[[i]] <- select_items
@@ -551,7 +606,6 @@ from_addjoins <- function(query, from) {
 }
 
 where_R2SQL <- function(where = NULL, info = TRUE) {
-  
   where <- where %>%
     paste0(" ", ., " ") %>%
     gsub('"', "'", ., fixed = TRUE) %>%
@@ -833,19 +887,19 @@ preset.thisfolder <- function(recursive = TRUE) {
 
 qry_beautify <- function(query) {
   query <- query %>%
-    strsplit('\n') %>%
+    strsplit("\n") %>%
     unlist()
   
   for (i in 1:length(query)) {
     query[i] <- query[i] %>%
       strsplit("(--|#)") %>%
       unlist() %>%
-      gsub(';', ' ;', ., fixed = TRUE) %>%
-      gsub(' {2,255}', ' ', ., fixed = FALSE) %>%
-      trimws('both')
+      gsub(";", " ;", ., fixed = TRUE) %>%
+      gsub(" {2,255}", " ", ., fixed = FALSE) %>%
+      trimws()
   }
-  query <- query[query != "" & !is.na(query)] %>% concat(' ')
-  if (query %>% substr(nchar(.), nchar(.)) == ';') {
+  query <- query[query != "" & !is.na(query)] %>% paste0(collapse = " ")
+  if (query %>% substr(nchar(.), nchar(.)) == ";") {
     query <- query %>% substr(0, nchar(.) - 1)
   }
   
