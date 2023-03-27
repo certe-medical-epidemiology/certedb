@@ -23,7 +23,7 @@
 #' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column `Ontvangstdatum`. Defaults to [this_year()]. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
 #' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
 #' @param diver_cbase,diver_project,diver_dsn,diver_testserver properties to set in [db_connect()]. The `diver_cbase` argument will be based on `preset`, but can also be set to blank `NULL` to manually select a cBase in a popup window.
-#' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise
+#' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise. This will always be `FALSE` in Quarto / R Markdown, since the output of [knitr::pandoc_to()] must be `NULL`.
 #' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"sir"` to keep SIR values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.sir()`][AMR::as.sir()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
 #' @param preset a preset to choose from [presets()]. Will be ignored if `diver_cbase` is set, even if it is set to `NULL`.
 #' @param distinct [logical] to apply [distinct()] to the resulting data set
@@ -38,6 +38,7 @@
 #' @importFrom certetoolbox auto_transform this_year
 #' @importFrom tidyr pivot_wider
 #' @importFrom AMR as.sir as.mic as.disk
+#' @importFrom knitr pandoc_to
 #' @rdname get_diver_data
 #' @export
 #' @examples 
@@ -143,7 +144,7 @@ get_diver_data <- function(date_range = this_year(),
   msg_ok(time = TRUE, dimensions = dim(out))
   qry <- remote_query(out)
   
-  if (isTRUE(review_qry) && interactive()) {
+  if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
     choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry,
                                          ifelse(!is.null(preset) & !all(is.na(preset$filter)),
                                                 font_grey(paste0("\n(last part from preset \"", preset$name, "\")")),

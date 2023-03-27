@@ -65,7 +65,7 @@ certedb_getmmb_tat(
 
 \item{where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.}}
 
-\item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise}
+\item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:output_type]{knitr::pandoc_to()}} must be \code{NULL}.}
 
 \item{antibiogram_type}{antibiotic transformation mode. Leave blank to strip antibiotic results from the data, \code{"sir"} to keep SIR values, \code{"mic"} to keep MIC values or \code{"disk"} to keep disk diffusion values. Values will be cleaned with \code{\link[AMR:as.sir]{as.sir()}}, \code{\link[AMR:as.mic]{as.mic()}} or \code{\link[AMR:as.disk]{as.disk()}}.}
 
@@ -111,7 +111,7 @@ certedb_getmmb_tat(
 
 \item{only_show_query}{settings for old \code{certedb_getmmb()} function}
 
-\item{review_where}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise}
+\item{review_where}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:output_type]{knitr::pandoc_to()}} must be \code{NULL}.}
 
 \item{...}{settings for old \code{certedb_getmmb()} function}
 }

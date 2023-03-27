@@ -19,7 +19,7 @@
 
 #' @rdname get_diver_data
 #' @param dates date range, can be length 1 or 2 (or more to use the min/max) to filter on the column `Ontvangstdatum`. Defaults to [this_year()]. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
-#' @param review_where a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise
+#' @param review_where a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise. This will always be `FALSE` in Quarto / R Markdown, since the output of [knitr::pandoc_to()] must be `NULL`.
 #' @param select_preset settings for old `certedb_getmmb()` function
 #' @param select settings for old `certedb_getmmb()` function
 #' @param add_cols settings for old `certedb_getmmb()` function
@@ -42,6 +42,7 @@
 #' @importFrom certestyle format2
 #' @importFrom certetoolbox auto_transform ref_dir
 #' @importFrom AMR as.mo eucast_rules first_isolate
+#' @importFrom knitr pandoc_to
 #' @export
 certedb_getmmb <- function(dates = NULL,
                            where = NULL,
@@ -253,7 +254,7 @@ certedb_getmmb <- function(dates = NULL,
   qry <- remote_query(out)
   msg_ok(time = TRUE, dimensions = dim(out))
   
-  if (isTRUE(review_where) && interactive()) {
+  if (isTRUE(review_where) && interactive() && is.null(pandoc_to())) {
     choice <- utils::menu(title = paste0("\nCollect data with this WHERE? (0 for Cancel)\n\n",
                                          gsub("(.*)\nWHERE\n  (.*)", "\\2", qry_beautify(query))),
                           choices = c("Yes", "No", "Print query"),
