@@ -22,14 +22,14 @@
 #' Connect to an internal (yet remote) Certe database server using [DBI::dbConnect()].
 #' @param driver database driver to use, such as [odbc::odbc()]
 #' @param ... database credentials
-#' @param info a logical to indicate whether info about the connection should be printed
+#' @param print a logical to indicate whether info about the connection should be printed
 #' @rdname db_connect
 #' @importFrom certestyle font_red font_green font_blue
 #' @importFrom DBI dbConnect
 #' @export
 db_connect <- function(driver,
                        ...,
-                       info = TRUE) {
+                       print = TRUE) {
   dots <- list(...)
   # remove empty values
   dots <- dots[!vapply(FUN.VALUE = logical(1), dots, is_empty)]
@@ -49,7 +49,7 @@ db_connect <- function(driver,
     }
   }
   
-  msg_init("Opening connection", datasource, "...")
+  msg_init("Opening connection", datasource, "...", print = print)
   tryCatch({
     if (inherits(driver, "DBIConnection")) {
       con <- driver
@@ -57,10 +57,10 @@ db_connect <- function(driver,
       con <- do.call(dbConnect, args = c(list(driver), dots))
     }},
     error = function(e) {
-      msg_error(time = FALSE)
+      msg_error(time = FALSE, print = print)
       stop(e$message, call. = FALSE)
     })
-  msg_ok(time = FALSE)
+  msg_ok(time = FALSE, print = print)
   invisible(con)
 }
 
@@ -70,17 +70,17 @@ db_connect <- function(driver,
 #' @importFrom certestyle font_red font_green
 #' @importFrom DBI dbDisconnect
 #' @export
-db_close <- function(conn, ...) {
-  db_message("Closing connection...", new_line = FALSE)
+db_close <- function(conn, ..., print = TRUE) {
+  db_message("Closing connection...", new_line = FALSE, print = print)
   tryCatch({
     dbDisconnect(conn, ...)
-    db_message(font_green("OK"), type = NULL)
+    db_message(font_green("OK"), type = NULL, print = print)
   }, error = function(e) {
-    db_message(font_red("ERROR\n"), type = NULL)
+    db_message(font_red("ERROR\n"), type = NULL, print = print)
     stop(e$message, call. = FALSE)
   },
   warning = function(e) {
-    db_message(font_red("WARNING\n"), type = NULL)
+    db_message(font_red("WARNING\n"), type = NULL, print = print)
     warning(e$message, call. = FALSE)
   })
   invisible(TRUE)

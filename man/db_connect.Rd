@@ -5,16 +5,16 @@
 \alias{db_close}
 \title{Connect to a Certe Database}
 \usage{
-db_connect(driver, ..., info = TRUE)
+db_connect(driver, ..., print = TRUE)
 
-db_close(conn, ...)
+db_close(conn, ..., print = TRUE)
 }
 \arguments{
 \item{driver}{database driver to use, such as \code{\link[odbc:odbc]{odbc::odbc()}}}
 
 \item{...}{arguments passed on to \code{\link[DBI:dbDisconnect]{DBI::dbDisconnect()}}}
 
-\item{info}{a logical to indicate whether info about the connection should be printed}
+\item{print}{a logical to indicate whether info about the connection should be printed}
 
 \item{conn}{connection to close, such as the output of \code{\link[=db_connect]{db_connect()}}}
 }

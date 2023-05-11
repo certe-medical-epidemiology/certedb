@@ -29,6 +29,7 @@
 #' @param distinct [logical] to apply [distinct()] to the resulting data set
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
 #' @param diver_data the data downloaded with [get_diver_data()]
+#' @param info a logical to indicate whether info about the connection should be printed
 #' @details This function returns a 'Diver tibble', which prints information in the tibble header about the used cBase and current user.
 #' 
 #' Use [diver_query()] to retrieve the original query that was used to download the data.
@@ -74,7 +75,8 @@ get_diver_data <- function(date_range = this_year(),
                            diver_cbase = NULL,
                            diver_project = read_secret("db.diver_project"),
                            diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else  read_secret("db.diver_dsn_test"),
-                           diver_testserver = FALSE) {
+                           diver_testserver = FALSE,
+                           info = interactive()) {
   
   if (is_empty(preset)) {
     preset <- NULL
@@ -91,14 +93,15 @@ get_diver_data <- function(date_range = this_year(),
   conn <- db_connect(driver = odbc::odbc(),
                      dsn = diver_dsn,
                      project = diver_project,
-                     cbase = diver_cbase)
+                     cbase = diver_cbase,
+                     print = info)
   user <- conn@info$username
   
   if (diver_cbase == "") {
     diver_cbase <- "(manually selected)"
   }
   
-  msg_init("Retrieving initial cBase...")
+  msg_init("Retrieving initial cBase...", print = info)
   if (!is.null(date_range)) {
     if (length(date_range) == 1) {
       date_range <- rep(date_range, 2)
@@ -141,7 +144,7 @@ get_diver_data <- function(date_range = this_year(),
     preset_filter <- str2lang(preset$filter)
     out <- out |> filter(preset_filter)
   }
-  msg_ok(time = TRUE, dimensions = dim(out))
+  msg_ok(time = TRUE, dimensions = dim(out), print = info)
   qry <- remote_query(out)
   
   if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
@@ -169,7 +172,7 @@ get_diver_data <- function(date_range = this_year(),
     msg("Applying filter: ", wh)
   }
   
-  msg_init("Collecting data...")
+  msg_init("Collecting data...", print = info)
   tryCatch({
     out <- collect(out)
   },
@@ -177,9 +180,9 @@ get_diver_data <- function(date_range = this_year(),
     msg_error()
     stop(e$message, call. = FALSE)
   })
-  msg_ok(time = TRUE, dimensions = dim(out))
+  msg_ok(time = TRUE, dimensions = dim(out), print = info)
   
-  db_close(conn)
+  db_close(conn, print = info)
   
   for (i in seq_len(ncol(out))) {
     # 2023-02-13 fix for Diver, logicals/booleans seem corrupt

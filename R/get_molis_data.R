@@ -36,7 +36,9 @@
 #' @param only_validated settings for old `certedb_getmmb()` function
 #' @param only_show_query settings for old `certedb_getmmb()` function
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
-#' @param ... settings for old `certedb_getmmb()` function
+#' @param query a character string to use as query. This will ignore all other arguments, except for `where`, `auto_transform` and `info`.
+#' @param ... not used anymore, previously settings for old `certetools::certedb_getmmb()` function
+#' @details Using `certedb_query("your qry here")` is identical to using `certedb_getmmb(query = "your qry here")`.
 #' @importFrom dplyr mutate arrange desc `%>%` rename
 #' @importFrom dbplyr sql remote_query
 #' @importFrom certestyle format2
@@ -64,195 +66,201 @@ certedb_getmmb <- function(dates = NULL,
                            only_show_query = FALSE,
                            review_where = interactive(),
                            auto_transform = TRUE,
+                           query = NULL,
                            ...) {
-  eucast_rules_setting <- eucast_rules
-  if (is.function(eucast_rules_setting)) {
-    eucast_rules_setting <- "all"
-  }
-  
-  dates_depsub <- deparse(substitute(dates))
-  where_depsub <- deparse(substitute(where))
-  if (all(gsub("-", "", where_depsub, fixed = TRUE) %like% "^[0-9]+$")) {
-    #stop("Invalid `where`, it contains a date or year. ")
-    warning("Using `where` as `dates[2]` (", where_depsub, ")", immediate. = TRUE, call. = FALSE)
-    where <- NULL
-    if (length(dates) == 1) {
-      dates <- c(dates, where_depsub)
-    } else if (length(dates) == 2) {
-      dates[2] <- where_depsub
-    }
-  }
-  
-  # date range
-  if (is.null(dates)) {
-    # take current year
-    dates <- c(format2(Sys.Date(), "yyyy"), "-01-01",
-               format2(Sys.Date(), "yyyy"), "-12-31")
-  } else {
-    # alleen jaar opgegeven
-    if (dates[1] %like% "^[12][90][0-9][0-9]$") {
-      dates[1] <- paste0(dates[1], "-01-01")
-    }
-    if (dates[2] %like% "^[12][90][0-9][0-9]$") {
-      dates[2] <- paste0(dates[2], "-12-31")
-    }
-    
-    dates <- as.character(dates)
-    dates_int <- suppressWarnings(as.integer(dates))
-    
-    if (!is.na(dates_int[1])) {
-      dates[1] <- as.character(as.Date(as.integer(dates[1]), origin = "1970-01-01"))
-    }
-    if (!is.na(dates_int[2])) {
-      dates[2] <- as.character(as.Date(as.integer(dates[2]), origin = "1970-01-01"))
-    }
-    
-    if (all(dates %unlike% "^[12][90][0-9][0-9]-[01][0-9]-[0123][0-9]$") & all(dates %in% c("", NA))) {
-      # bestaat nog niet uit yyyy-mm-dd
-      stop("Invalid value(s) for `dates`. Use format yyyy-mm-dd.")
-    }
-    if (length(dates) == 1 | (identical(dates[2], "") | identical(dates[2], NA_character_))) {
-      # datum tot einde van jaar
-      dates <- c(dates[1], paste0(format2(dates[1], "yyyy"), "-12-31"))
-    } else if (length(dates) > 2) {
-      stop("`dates` can have a maximum length of 2.")
-    }
-    
-    if (is.na(dates[1])) {
-      warning("First `dates` element is NA.", immediate. = TRUE, call. = FALSE)
-    }
-    if (is.na(dates[2])) {
-      warning("Second `dates` element is NA.", immediate. = TRUE, call. = FALSE)
-    }
-  }
-  dates <- paste0("'", gsub('["\']', "", dates), "'")
-  
-  if (is.null(select)) {
-    if (preset != "mmb") {
-      select <- preset.read(preset)
-    } else {
-      select <- preset.read(select_preset)
-    }
-  }
-  select <- select_translate_asterisk(select)
-  
-  if (!is.null(add_cols)) {
-    add_cols <- unlist(add_cols)
-    select <- c(select, select_translate_asterisk(add_cols))
-  }
-  
-  needs_mic <- mic == TRUE || isTRUE(list(...)$MIC)
-  needs_disk <- disk == TRUE || isTRUE(list(...)$DISK)
-  if (needs_mic) {
-    select <- c(select,
-                names(certedb::db)[which(names(certedb::db) %like% "^i_mic.*_mic$")])
-  }
-  if (needs_disk) {
-    select <- c(select,
-                names(certedb::db)[which(names(certedb::db) %like% "^i_disk.*_disk$")])
-  }
-  if (zipcodes == TRUE) {
-    select <- c(select, "p.postcode")
-    if (isTRUE(info)) {
-      msg("Note: Adding 'p.postcode'.")
-    }
-  }
-  
-  select <- gsub(",$", "", select)
-  select <- unique(select)
-  select <- select |> paste0(collapse = ",\n  ")
   
   # Connect to database
   conn <- db_connect(RMariaDB::MariaDB(),
-                     dbname = "certemmb",
-                     host = Sys.getenv("DB_HOST"),
-                     port = as.integer(Sys.getenv("DB_PORT")),
-                     username = Sys.getenv("DB_USERNAME"),
-                     password = Sys.getenv("DB_PASSWORD"))
+                     dbname = unlist(read_secret("db.certemmb"))["dbname"],
+                     host = unlist(read_secret("db.certemmb"))["host"],
+                     port = as.integer(unlist(read_secret("db.certemmb"))["port"]),
+                     username = unlist(read_secret("db.certemmb"))["username"],
+                     password = unlist(read_secret("db.certemmb"))["password"],
+                     print = info)
+  on.exit(suppressWarnings(suppressMessages(try(db_close(conn, print = info), silent = TRUE))))
   user <- paste0("CERTE\\", Sys.info()["user"])
   
-  query <- paste0("SELECT\n  ",
-                  select, "\n",
-                  "FROM\n  ",
-                  "{from}\n",
-                  "WHERE\n  ",
-                  "{datelimit}",
-                  "{additional_where}")
-  
-  ignore_start_stop <- FALSE
-  
-  if (tat_hours == FALSE) {
-    if (any(dates_depsub %like% "^where\\(")) {
-      where <- where_R2SQL(dates_depsub, info = info)
-    } else {
-      where <- where_R2SQL(deparse(substitute(where)), info = info)
+  if (is.null(query)) {
+    
+    eucast_rules_setting <- eucast_rules
+    if (is.function(eucast_rules_setting)) {
+      eucast_rules_setting <- "all"
     }
-    if (where == "enddate") {
-      where <- ""
-    }
-  }
-  
-  # extra where
-  if (where != "") {
-    if (where %like% "[.]ontvangstdatum " | where %like% "[.]jaar ") {
-      if (isTRUE(info)) {
-        warning("`dates` will be ignored because date criteria has been set with `where`.",
-                call. = FALSE,
-                immediate. = TRUE)
+    
+    dates_depsub <- deparse(substitute(dates))
+    where_depsub <- deparse(substitute(where))
+    if (all(gsub("-", "", where_depsub, fixed = TRUE) %like% "^[0-9]+$")) {
+      #stop("Invalid `where`, it contains a date or year. ")
+      warning("Using `where` as `dates[2]` (", where_depsub, ")", immediate. = TRUE, call. = FALSE)
+      where <- NULL
+      if (length(dates) == 1) {
+        dates <- c(dates, where_depsub)
+      } else if (length(dates) == 2) {
+        dates[2] <- where_depsub
       }
-      ignore_start_stop <- TRUE
-      query <- sub("{additional_where}", where, query, fixed = TRUE)
+    }
+    
+    # date range
+    if (is.null(dates)) {
+      # take current year
+      dates <- c(format2(Sys.Date(), "yyyy"), "-01-01",
+                 format2(Sys.Date(), "yyyy"), "-12-31")
     } else {
-      query <- sub("{additional_where}", paste0("\n  AND ", where), query, fixed = TRUE)
+      # alleen jaar opgegeven
+      if (dates[1] %like% "^[12][90][0-9][0-9]$") {
+        dates[1] <- paste0(dates[1], "-01-01")
+      }
+      if (dates[2] %like% "^[12][90][0-9][0-9]$") {
+        dates[2] <- paste0(dates[2], "-12-31")
+      }
+      
+      dates <- as.character(dates)
+      dates_int <- suppressWarnings(as.integer(dates))
+      
+      if (!is.na(dates_int[1])) {
+        dates[1] <- as.character(as.Date(as.integer(dates[1]), origin = "1970-01-01"))
+      }
+      if (!is.na(dates_int[2])) {
+        dates[2] <- as.character(as.Date(as.integer(dates[2]), origin = "1970-01-01"))
+      }
+      
+      if (all(dates %unlike% "^[12][90][0-9][0-9]-[01][0-9]-[0123][0-9]$") && all(dates %in% c("", NA))) {
+        # bestaat nog niet uit yyyy-mm-dd
+        stop("Invalid value(s) for `dates`. Use format yyyy-mm-dd.")
+      }
+      if (length(dates) == 1 || (identical(dates[2], "") || identical(dates[2], NA_character_))) {
+        # datum tot einde van jaar
+        dates <- c(dates[1], paste0(format2(dates[1], "yyyy"), "-12-31"))
+      } else if (length(dates) > 2) {
+        stop("`dates` can have a maximum length of 2.")
+      }
+      
+      if (is.na(dates[1])) {
+        warning("First `dates` element is NA.", immediate. = TRUE, call. = FALSE)
+      }
+      if (is.na(dates[2])) {
+        warning("Second `dates` element is NA.", immediate. = TRUE, call. = FALSE)
+      }
     }
-  } else {
-    query <- sub("{additional_where}", "", query, fixed = TRUE)
+    dates <- paste0("'", gsub('["\']', "", dates), "'")
+    
+    if (is.null(select)) {
+      if (preset != "mmb") {
+        select <- preset.read(preset)
+      } else {
+        select <- preset.read(select_preset)
+      }
+    }
+    select <- select_translate_asterisk(select)
+    
+    if (!is.null(add_cols)) {
+      add_cols <- unlist(add_cols)
+      select <- c(select, select_translate_asterisk(add_cols))
+    }
+    
+    needs_mic <- mic == TRUE || isTRUE(list(...)$MIC)
+    needs_disk <- disk == TRUE || isTRUE(list(...)$DISK)
+    if (needs_mic) {
+      select <- c(select,
+                  names(certedb::db)[which(names(certedb::db) %like% "^i_mic.*_mic$")])
+    }
+    if (needs_disk) {
+      select <- c(select,
+                  names(certedb::db)[which(names(certedb::db) %like% "^i_disk.*_disk$")])
+    }
+    if (zipcodes == TRUE) {
+      select <- c(select, "p.postcode")
+      msg("Note: Adding 'p.postcode'.", print = info)
+    }
+    
+    select <- gsub(",$", "", select)
+    select <- unique(select)
+    select <- select |> paste0(collapse = ",\n  ")
+    
+    query <- paste0("SELECT\n  ",
+                    select, "\n",
+                    "FROM\n  ",
+                    "{from}\n",
+                    "WHERE\n  ",
+                    "{datelimit}",
+                    "{additional_where}")
+    
+    ignore_start_stop <- FALSE
+    
+    if (tat_hours == FALSE) {
+      if (any(dates_depsub %like% "^where\\(")) {
+        where <- where_R2SQL(dates_depsub, info = info)
+      } else {
+        where <- where_R2SQL(deparse(substitute(where)), info = info)
+      }
+      if (where == "enddate") {
+        where <- ""
+      }
+    }
+    
+    # extra where
+    if (where != "") {
+      if (where %like% "[.]ontvangstdatum " || where %like% "[.]jaar ") {
+        if (isTRUE(info)) {
+          warning("`dates` will be ignored because date criteria has been set with `where`.",
+                  call. = FALSE,
+                  immediate. = TRUE)
+        }
+        ignore_start_stop <- TRUE
+        query <- sub("{additional_where}", where, query, fixed = TRUE)
+      } else {
+        query <- sub("{additional_where}", paste0("\n  AND ", where), query, fixed = TRUE)
+      }
+    } else {
+      query <- sub("{additional_where}", "", query, fixed = TRUE)
+    }
+    
+    if (ignore_start_stop == FALSE) {
+      query <- sub("{datelimit}", paste("o.ontvangstdatum BETWEEN", dates[1], "AND", dates[2]), query, fixed = TRUE)
+    } else {
+      query <- sub("{datelimit}", "", query, fixed = TRUE)
+    }
+    
+    if (only_real_patients == TRUE) {
+      if (query %like% "[.]is_echte_patient =") {
+        stop("`is_echte_patient` cannot be set while `only_real_patients = TRUE`.")
+      }
+      query <- paste(query, "\n  AND u.is_echte_patient = TRUE")
+    }
+    if (only_conducted_tests == TRUE) {
+      if (query %like% "[.]is_verricht =") {
+        stop("`is_verricht` cannot be set while `only_conducted_tests = TRUE`.")
+      }
+      query <- paste(query, "\n  AND u.is_verricht = TRUE")
+    }
+    if (!missing(only_validated)) {
+      if (query %like% "[.]uitslag_int =") {
+        stop("`uitslag_int` cannot be set while `only_validated` is set.")
+      }
+      if (only_validated == TRUE) {
+        query <- paste(query, "\n  AND uitslag_int <> '(in behandeling)'")
+      }
+    }
+    
+    # FROM clausule
+    # primair van uitslagen halen, orders eraan
+    from <- paste0("temporary_certemm_uitslagen AS u",
+                   "\n  LEFT JOIN\n  ",
+                   "temporary_certemm_orders AS o ON o.ordernr = u.ordernr")
+    from <- from_addjoins(query, from)
+    query <- sub("{from}", from, query, fixed = TRUE)
+    
+    if (only_show_query == TRUE) {
+      db_close(conn, print = info)
+      return(sql(paste0("\n", query, "\n")))
+    }
+    
   }
   
-  if (ignore_start_stop == FALSE) {
-    query <- sub("{datelimit}", paste("o.ontvangstdatum BETWEEN", dates[1], "AND", dates[2]), query, fixed = TRUE)
-  } else {
-    query <- sub("{datelimit}", "", query, fixed = TRUE)
-  }
-  
-  if (only_real_patients == TRUE) {
-    if (query %like% "[.]is_echte_patient =") {
-      stop("`is_echte_patient` cannot be set while `only_real_patients = TRUE`.")
-    }
-    query <- paste(query, "\n  AND u.is_echte_patient = TRUE")
-  }
-  if (only_conducted_tests == TRUE) {
-    if (query %like% "[.]is_verricht =") {
-      stop("`is_verricht` cannot be set while `only_conducted_tests = TRUE`.")
-    }
-    query <- paste(query, "\n  AND u.is_verricht = TRUE")
-  }
-  if (!missing(only_validated)) {
-    if (query %like% "[.]uitslag_int =") {
-      stop("`uitslag_int` cannot be set while `only_validated` is set.")
-    }
-    if (only_validated == TRUE) {
-      query <- paste(query, "\n  AND uitslag_int <> '(in behandeling)'")
-    }
-  }
-  
-  # FROM clausule
-  # primair van uitslagen halen, orders eraan
-  from <- paste0("temporary_certemm_uitslagen AS u",
-                 "\n  LEFT JOIN\n  ",
-                 "temporary_certemm_orders AS o ON o.ordernr = u.ordernr")
-  from <- from_addjoins(query, from)
-  query <- sub("{from}", from, query, fixed = TRUE)
-  
-  if (only_show_query == TRUE) {
-    db_close(conn)
-    return(sql(paste0("\n", query, "\n")))
-  }
-  
-  msg_init("Retrieving initial data...")
+  msg_init("Retrieving initial data...", print = info)
   out <- conn |> tbl(sql(query))
   qry <- remote_query(out)
-  msg_ok(time = TRUE, dimensions = dim(out))
+  msg_ok(time = TRUE, dimensions = dim(out), print = info)
   
   if (isTRUE(review_where) && interactive() && is.null(pandoc_to())) {
     choice <- utils::menu(title = paste0("\nCollect data with this WHERE? (0 for Cancel)\n\n",
@@ -270,19 +278,19 @@ certedb_getmmb <- function(dates = NULL,
     }
   }
   
-  msg_init("Collecting data...")
+  msg_init("Collecting data...", print = info)
   tryCatch({
     out <- collect(out)
   },
   error = function(e) {
-    msg_error()
+    msg_error(print = info)
     stop(e$message, call. = FALSE)
   })
-  msg_ok(time = TRUE, dimensions = dim(out))
-  db_close(conn)
+  msg_ok(time = TRUE, dimensions = dim(out), print = info)
+  db_close(conn, print = info)
   
-  if (tat_hours == TRUE & select %like% " dlt[.]") {
-    msg_init("Calculating time differences in hours...")
+  if (tat_hours == TRUE && select %like% " dlt[.]") {
+    msg_init("Calculating time differences in hours...", print = info)
     out <- out |>
       mutate(val1_usr_1e = val1_usr_1e |> as.character(),
              val2_usr_1e = val2_usr_1e |> as.character(),
@@ -306,15 +314,15 @@ certedb_getmmb <- function(dates = NULL,
              dgn_ontvangst.aut_def = as.integer(as.Date(aut_def) - ontvangstdatum),
              weekdag = weekdays(as.Date(ontvangstdatum), abbreviate = FALSE)
       )
-    msg_ok()
+    msg_ok(print = info)
     
-    msg_init("Adding region/year/quarter column `reg_jr_q`...")
+    msg_init("Adding region/year/quarter column `reg_jr_q`...", print = info)
     out <- out |>
       mutate(reg_jr_q = paste0(noord_zuid |> substr(1, 1), "|", format2(ontvangstdatum, "yyyy-QQ")))
-    msg_ok()
+    msg_ok(print = info)
   }
   
-  if (select %like% " i[.]" & nrow(out) > 0) {
+  if (!is.null(select) && select %like% " i[.]" && nrow(out) > 0) {
     if (!"mo" %in% colnames(out) && "bacteriecode" %in% colnames(out)) {
       if (!all(is.na(out$bacteriecode))) {
         suppressWarnings(
@@ -325,18 +333,18 @@ certedb_getmmb <- function(dates = NULL,
       }
     }
     if (!"bacteriecode" %in% colnames(out)) {
-      msg("Note: No isolates available.")
+      msg("Note: No isolates available.", print = info)
     } else {
-      if (!needs_mic & !needs_disk && eucast_rules_setting != FALSE) {
-        msg_init(paste("Applying EUCAST", eucast_rules_setting, "rules..."))
+      if (!needs_mic && !needs_disk && eucast_rules_setting != FALSE) {
+        msg_init(paste("Applying EUCAST", eucast_rules_setting, "rules..."), print = info)
         out <- suppressMessages(suppressWarnings(eucast_rules(out, col_mo = "bacteriecode", rules = eucast_rules_setting, info = FALSE)))
-        msg_ok()
+        msg_ok(print = info())
       }
       
       if (isTRUE(first_isolates)) {
         patid <- colnames(out)[colnames(out) %in% c("patid", "patidnb")][1]
         if (all(c("bacteriecode", "ontvangstdatum", patid) %in% colnames(out), na.rm = TRUE)) {
-          msg_init("Applying first isolates...")
+          msg_init("Applying first isolates...", print = info)
           out$eerste_isolaat <- first_isolate(
             x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
             method = "episode-based", episode_days = 365, specimen_group = NULL, info = FALSE)
@@ -382,23 +390,23 @@ certedb_getmmb <- function(dates = NULL,
               method = "phenotype-based", episode_days = 365, specimen_group = "Feces", info = FALSE)
             
           }
-          msg_ok()
+          msg_ok(print = info)
         }
       }
     }
   }
   
   if (zipcodes == TRUE && ziplength[1L] < 6) {
-    msg_init("Transforming zip codes...")
+    msg_init("Transforming zip codes...", print = info)
     out <- out |> mutate(postcode = postcode |> substr(1, ziplength[1L]))
-    msg_ok()
+    msg_ok(print = info)
   }
   
   if (isTRUE(auto_transform)) {
-    msg_init("Transforming data set...")
+    msg_init("Transforming data set...", print = info)
     if ("ordernr" %in% colnames(out)) {
       out <- out |> arrange(desc(ordernr))
-    } else {
+    } else if ("ontvangstdatum" %in% colnames(out)) {
       out <- out |> arrange(desc(ontvangstdatum))
     }
     out <- auto_transform(out)
@@ -409,7 +417,7 @@ certedb_getmmb <- function(dates = NULL,
         out[, col] <- as.logical(vals)
       }
     }
-    msg_ok()
+    msg_ok(print = info)
   }
   
   as_diver_tibble(out,
@@ -425,7 +433,7 @@ certedb_getmmb <- function(dates = NULL,
 certedb_getmmb_tat <- function(dates = NULL,
                                where = NULL,
                                add_cols = NULL,
-                               info = TRUE,
+                               info = interactive(),
                                only_real_patients = TRUE,
                                only_conducted_tests = TRUE,
                                only_validated = TRUE,
@@ -459,6 +467,32 @@ certedb_getmmb_tat <- function(dates = NULL,
                  tat_hours = TRUE,
                  ...)
 }
+
+#' @rdname get_diver_data
+#' @export
+certedb_query <- function(query,
+                          where = NULL,
+                          auto_transform = TRUE,
+                          info = interactive()) {
+  
+  where <- deparse(substitute(where))
+  if (!identical(where, "NULL")) {
+    where <- where_R2SQL(where, info = info)
+    query <- paste(query, "WHERE", where)
+  }
+  
+  certedb_getmmb(query = query,
+                 auto_transform = auto_transform,
+                 info = info,
+                 review_where = FALSE,
+                 only_show_query = FALSE,
+                 first_isolates = FALSE,
+                 eucast_rules = FALSE,
+                 mic = FALSE,
+                 rsi = FALSE,
+                 tat_hours = FALSE)
+}
+
 
 select_translate_asterisk <- function(select) {
   select.bak <- select
@@ -546,7 +580,7 @@ from_addjoins <- function(query, from) {
                    "LEFT JOIN\n  ",
                    "temporary_certemm_materiaalgroepen AS m ON m.mtrlcode = u.mtrlcode")
   }
-  if (query %like% " aanvr[.]" & query %like% " a[.]") {
+  if (query %like% " aanvr[.]" && query %like% " a[.]") {
     warning("Encountered table references `a.*` and `aanvr.*`. This will lead to an extra and unnecessary LEFT JOIN.",
             call. = FALSE,
             immediate. = TRUE)
@@ -709,15 +743,13 @@ where_R2SQL <- function(where = NULL, info = TRUE) {
           paste0(collapse = ", ") %>%
           paste0(" (", . , ")")
       }
-      
-      if (isTRUE(info)) {
-        msg(paste0("Replaced element `",
-                       trimws(obj),
-                       "` with value: ",
-                       ifelse(nchar(obj_evaluated) > 25,
-                              paste0(obj_evaluated |> substr(1, 25), "...)"),
-                              obj_evaluated)))
-      }
+      msg(paste0("Replaced element `",
+                 trimws(obj),
+                 "` with value: ",
+                 ifelse(nchar(obj_evaluated) > 25,
+                        paste0(obj_evaluated |> substr(1, 25), "...)"),
+                        obj_evaluated)),
+          print = info)
       
       # spatie toevoegen
       obj_evaluated <- paste0(obj_evaluated, " ")
@@ -742,15 +774,13 @@ where_R2SQL <- function(where = NULL, info = TRUE) {
             paste0(collapse = ", ") %>%
             paste0("(", . , ")")
         }
-        
-        if (isTRUE(info)) {
-          msg(paste0("Replaced object `",
-                         where_list[i],
-                         "` with value: ",
-                         ifelse(nchar(newval) > 25,
-                                paste0(newval |> substr(1, 25), "...)"),
-                                newval)))
-        }
+        msg(paste0("Replaced object `",
+                   where_list[i],
+                   "` with value: ",
+                   ifelse(nchar(newval) > 25,
+                          paste0(newval |> substr(1, 25), "...)"),
+                          newval)),
+            print = info)
         where_list[i] <- newval
       } else {
         stop(paste0("variable `",
@@ -779,7 +809,7 @@ where_R2SQL <- function(where = NULL, info = TRUE) {
     gsub(" {2,255}", " ", .) |>
     trimws()
   
-  if (where %like% "^['].+[']$" | where %like% '^["].+["]$') {
+  if (where %like% "^['].+[']$" || where %like% '^["].+["]$') {
     where <- where |> substr(2, nchar(.) - 1)
   }
   
@@ -851,21 +881,21 @@ preset.read <- function(name) {
              call. = FALSE)
       }
       lst[[i]] <- utils::read.table(file = ref_dir(paste0('preset_', name[i], '.sql')),
-                             sep = "\n",
-                             header = FALSE,
-                             stringsAsFactors = FALSE)[,1]
+                                    sep = "\n",
+                                    header = FALSE,
+                                    stringsAsFactors = FALSE)[,1]
     } else {
       # dan is het een volledige bestandsnaam
       if (file.exists(name[i])) {
         lst[[i]] <- utils::read.table(file = name[i],
-                               sep = "\n",
-                               header = FALSE,
-                               stringsAsFactors = FALSE)[,1]
+                                      sep = "\n",
+                                      header = FALSE,
+                                      stringsAsFactors = FALSE)[,1]
       } else if (file.exists(paste0(getwd(), '/', name[i]))) {
         lst[[i]] <- utils::read.table(file = paste0(getwd(), '/', name[i]),
-                               sep = "\n",
-                               header = FALSE,
-                               stringsAsFactors = FALSE)[,1]
+                                      sep = "\n",
+                                      header = FALSE,
+                                      stringsAsFactors = FALSE)[,1]
       } else {
         stop('File `', name[i], '` not found.', call. = FALSE)
       }

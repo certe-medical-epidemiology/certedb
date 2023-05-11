@@ -5,6 +5,7 @@
 \alias{diver_query}
 \alias{certedb_getmmb}
 \alias{certedb_getmmb_tat}
+\alias{certedb_query}
 \title{Download Data from Diver Server}
 \usage{
 get_diver_data(
@@ -19,7 +20,8 @@ get_diver_data(
   diver_project = read_secret("db.diver_project"),
   diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else
     read_secret("db.diver_dsn_test"),
-  diver_testserver = FALSE
+  diver_testserver = FALSE,
+  info = interactive()
 )
 
 diver_query(diver_data)
@@ -45,6 +47,7 @@ certedb_getmmb(
   only_show_query = FALSE,
   review_where = interactive(),
   auto_transform = TRUE,
+  query = NULL,
   ...
 )
 
@@ -52,13 +55,15 @@ certedb_getmmb_tat(
   dates = NULL,
   where = NULL,
   add_cols = NULL,
-  info = TRUE,
+  info = interactive(),
   only_real_patients = TRUE,
   only_conducted_tests = TRUE,
   only_validated = TRUE,
   only_show_query = FALSE,
   ...
 )
+
+certedb_query(query, where = NULL, auto_transform = TRUE, info = interactive())
 }
 \arguments{
 \item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column \code{Ontvangstdatum}. Defaults to \code{\link[=this_year]{this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}.}
@@ -77,6 +82,8 @@ certedb_getmmb_tat(
 
 \item{diver_cbase, diver_project, diver_dsn, diver_testserver}{properties to set in \code{\link[=db_connect]{db_connect()}}. The \code{diver_cbase} argument will be based on \code{preset}, but can also be set to blank \code{NULL} to manually select a cBase in a popup window.}
 
+\item{info}{settings for old \code{certedb_getmmb()} function}
+
 \item{diver_data}{the data downloaded with \code{\link[=get_diver_data]{get_diver_data()}}}
 
 \item{dates}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column \code{Ontvangstdatum}. Defaults to \code{\link[=this_year]{this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}.}
@@ -86,8 +93,6 @@ certedb_getmmb_tat(
 \item{select}{settings for old \code{certedb_getmmb()} function}
 
 \item{add_cols}{settings for old \code{certedb_getmmb()} function}
-
-\item{info}{settings for old \code{certedb_getmmb()} function}
 
 \item{first_isolates}{settings for old \code{certedb_getmmb()} function}
 
@@ -113,7 +118,9 @@ certedb_getmmb_tat(
 
 \item{review_where}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:output_type]{knitr::pandoc_to()}} must be \code{NULL}.}
 
-\item{...}{settings for old \code{certedb_getmmb()} function}
+\item{query}{a character string to use as query. This will ignore all other arguments, except for \code{where}, \code{auto_transform} and \code{info}.}
+
+\item{...}{not used anymore, previously settings for old \code{certetools::certedb_getmmb()} function}
 }
 \description{
 This function can be used to download Spectre data from DiveLine on a Diver server (from \href{https://www.dimins.com}{Dimensional Insight}). This function will set up an ODBC connection (using \code{\link[=db_connect]{db_connect()}}), which requires their quite limited \href{https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html}{DI-ODBC driver}.
@@ -122,6 +129,8 @@ This function can be used to download Spectre data from DiveLine on a Diver serv
 This function returns a 'Diver tibble', which prints information in the tibble header about the used cBase and current user.
 
 Use \code{\link[=diver_query]{diver_query()}} to retrieve the original query that was used to download the data.
+
+Using \code{certedb_query("your qry here")} is identical to using \code{certedb_getmmb(query = "your qry here")}.
 }
 \examples{
 \dontrun{

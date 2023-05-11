@@ -78,17 +78,17 @@ db_warning <- function(..., print = interactive() | Sys.getenv("IN_PKGDOWN") != 
   db_message(..., print = print, type = "warning")
 }
 
-msg_init <- function(...) {
-  db_message(..., type = "info", new_line = FALSE)
+msg_init <- function(..., print = interactive()) {
+  db_message(..., type = "info", new_line = FALSE, print = print)
   pkg_env$time <- Sys.time()
 }
 
-msg <- function(...) {
-  db_message(..., type = "ok", new_line = TRUE)
+msg <- function(..., print = interactive()) {
+  db_message(..., type = "ok", new_line = TRUE, print = print)
 }
 
 #' @importFrom certestyle font_green
-msg_ok <- function(time = TRUE, dimensions = NULL, ...) {
+msg_ok <- function(time = TRUE, dimensions = NULL, print = interactive(), ...) {
   time_diff <- Sys.time() - pkg_env$time
   if (is.null(dimensions)) {
     size <- ""
@@ -107,18 +107,20 @@ msg_ok <- function(time = TRUE, dimensions = NULL, ...) {
                     paste0(" (", format(round(time_diff, digits = 1)), size, ")"),
                     ""),
              type = NULL,
+             print = print,
              ...)
   pkg_env$time <- NULL
 }
 
 #' @importFrom certestyle font_red
-msg_error <- function(time = TRUE, ...) {
+msg_error <- function(time = TRUE, print = interactive(), ...) {
   time_diff <- Sys.time() - pkg_env$time
   db_message(font_red(" ERROR"),
              ifelse(isTRUE(time),
                     paste0(" (", format(round(time_diff, digits = 1)), ")"),
                     ""),
              type = NULL,
+             print = print,
              ...)
   pkg_env$time <- NULL
 }
