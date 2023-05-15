@@ -338,7 +338,7 @@ certedb_getmmb <- function(dates = NULL,
       if (!needs_mic && !needs_disk && eucast_rules_setting != FALSE) {
         msg_init(paste("Applying EUCAST", eucast_rules_setting, "rules..."), print = info)
         out <- suppressMessages(suppressWarnings(eucast_rules(out, col_mo = "bacteriecode", rules = eucast_rules_setting, info = FALSE)))
-        msg_ok(print = info())
+        msg_ok(print = info)
       }
       
       if (isTRUE(first_isolates)) {
