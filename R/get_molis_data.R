@@ -840,7 +840,7 @@ diff_min_sec <- function(diff) {
 }
 
 preset.list <- function(fullname = FALSE, recursive = FALSE) {
-  lst <- list.files(path = Sys.getenv("R_REFMAP"),
+  lst <- list.files(path = read_secret("path.refmap"),
                     pattern = "^(preset_).*(.sql)$",
                     ignore.case = FALSE,
                     recursive = recursive)
@@ -876,7 +876,7 @@ preset.read <- function(name) {
   lst <- list(0)
   for (i in 1:length(name)) {
     if (gsub("\\+", "/", name[i]) %unlike% "/") {
-      # controleer Sys.getenv("R_REFMAP")
+      # check read_secret("path.refmap")
       if (!preset.exists(name[i])) {
         stop('Preset `', name[i], '` not found, file does not exist: ',
              preset.exists(name[i], returnlocation = TRUE), '.',
