@@ -258,6 +258,8 @@ certedb_getmmb <- function(dates = NULL,
   }
   
   msg_init("Retrieving initial data...", print = info)
+  # remove last semicolon, otherwise returns error
+  query <- gsub(";$", "", query)
   out <- conn |> tbl(sql(query))
   qry <- remote_query(out)
   msg_ok(time = TRUE, dimensions = dim(out), print = info)
