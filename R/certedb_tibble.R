@@ -18,10 +18,11 @@
 # ===================================================================== #
 
 #' @importFrom dplyr as_tibble
-as_diver_tibble <- function(tbl_df, cbase, qry, datetime, user, type = "Diver") {
+as_certedb_tibble <- function(tbl_df, cbase, qry, datetime, user, type) {
   out <- as_tibble(tbl_df)
   structure(out,
-            class = c("diver_tibble", class(out)),
+            class = c("certedb_tibble", class(out)),
+            dims = dim(out),
             type = type,
             cbase = cbase,
             qry = qry,
@@ -31,31 +32,41 @@ as_diver_tibble <- function(tbl_df, cbase, qry, datetime, user, type = "Diver") 
 
 #' @importFrom pillar tbl_sum dim_desc
 #' @importFrom certestyle format2
-#' @exportS3Method tbl_sum diver_tibble
-tbl_sum.diver_tibble <- function(x, ...) {
+#' @exportS3Method tbl_sum certedb_tibble
+tbl_sum.certedb_tibble <- function(x, ...) {
   out <- dim_desc(x)
   names(out) <- paste("A", attributes(x)$type, "tibble")
-  if (!is.null(attributes(x)$cbase)) {
-    out <- c(out, "Retrieved from" = attributes(x)$cbase)
-  }
-  if (!is.null(attributes(x)$datetime)) {
-    out <- c(out, "Retrieved on" = format2(attributes(x)$datetime, "yyyy-mm-dd HH:MM"))
-  }
-  if (!is.null(attributes(x)$user)) {
-    out <- c(out, "Retrieved by" = attributes(x)$user)
+  if (identical(attributes(x)$dims, dim(x))) {
+    if (!is.null(attributes(x)$cbase)) {
+      out <- c(out, "Retrieved from" = attributes(x)$cbase)
+    }
+    if (!is.null(attributes(x)$datetime)) {
+      out <- c(out, "Retrieved on" = format2(attributes(x)$datetime, "yyyy-mm-dd HH:MM"))
+    }
+    if (!is.null(attributes(x)$user)) {
+      out <- c(out, "Retrieved by" = attributes(x)$user)
+    }
   }
   out
 }
 
 #' @importFrom pillar tbl_format_footer style_subtle
 #' @importFrom cli symbol
-#' @exportS3Method tbl_format_footer diver_tibble
-tbl_format_footer.diver_tibble <- function(x, setup, ...) {
+#' @exportS3Method tbl_format_footer certedb_tibble
+tbl_format_footer.certedb_tibble <- function(x, setup, ...) {
   footer <- NextMethod()
   if (is.null(attributes(x)$qry)) {
     return(footer)
   } else {
-    c(footer,
-      style_subtle(paste0("# ", cli::symbol$info, " Use `diver_query()` to get the original query of this ", attributes(x)$type, " tibble")))
+    old_dims <- attributes(x)$dims
+    if (identical(old_dims, dim(x))) {
+      c(footer,
+        style_subtle(paste0("# ", cli::symbol$info, " Use `certedb_query()` to get the query of this ", attributes(x)$type, " tibble")))
+    } else {
+      c(footer,
+        style_subtle(paste0("# ", cli::symbol$info, " Use `certedb_query()` to get the query of the original ", 
+                            dim_desc(as.data.frame(matrix(0, nrow = old_dims[1], ncol = old_dims[2]))), " ",
+                            attributes(x)$type, " tibble")))
+    }
   }
 }

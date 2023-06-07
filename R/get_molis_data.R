@@ -36,7 +36,6 @@
 #' @param only_validated settings for old `certedb_getmmb()` function
 #' @param only_show_query settings for old `certedb_getmmb()` function
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
-#' @param query a character string to use as query. This will ignore all other arguments, except for `where`, `auto_transform` and `info`.
 #' @param ... not used anymore, previously settings for old `certetools::certedb_getmmb()` function
 #' @details Using `certedb_query("your qry here")` is identical to using `certedb_getmmb(query = "your qry here")`.
 #' @importFrom dplyr mutate arrange desc `%>%` rename
@@ -422,7 +421,7 @@ certedb_getmmb <- function(dates = NULL,
     msg_ok(print = info)
   }
   
-  as_diver_tibble(out,
+  as_certedb_tibble(out,
                   type = "MOLIS",
                   cbase = "certemmb",
                   qry = qry,
@@ -469,32 +468,6 @@ certedb_getmmb_tat <- function(dates = NULL,
                  tat_hours = TRUE,
                  ...)
 }
-
-#' @rdname get_diver_data
-#' @export
-certedb_query <- function(query,
-                          where = NULL,
-                          auto_transform = TRUE,
-                          info = interactive()) {
-  
-  where <- deparse(substitute(where))
-  if (!identical(where, "NULL")) {
-    where <- where_R2SQL(where, info = info)
-    query <- paste(query, "WHERE", where)
-  }
-  
-  certedb_getmmb(query = query,
-                 auto_transform = auto_transform,
-                 info = info,
-                 review_where = FALSE,
-                 only_show_query = FALSE,
-                 first_isolates = FALSE,
-                 eucast_rules = FALSE,
-                 mic = FALSE,
-                 rsi = FALSE,
-                 tat_hours = FALSE)
-}
-
 
 select_translate_asterisk <- function(select) {
   select.bak <- select
@@ -767,7 +740,7 @@ where_R2SQL <- function(where = NULL, info = TRUE) {
     if (where_list[i] %in% ls(envir = .GlobalEnv)) {
       newval <- eval(parse(text = where_list[i]))
       if (NCOL(newval) == 1) {
-        if (!all(newval %like% "[0-9.,]")) {
+        if (!all(newval %like% "^[0-9.,]+$")) {
           newval <- paste0("'", newval, "'")
         }
         if (length(newval) > 1) {

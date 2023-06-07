@@ -28,11 +28,11 @@
 #' @param preset a preset to choose from [presets()]. Will be ignored if `diver_cbase` is set, even if it is set to `NULL`.
 #' @param distinct [logical] to apply [distinct()] to the resulting data set
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
-#' @param diver_data the data downloaded with [get_diver_data()]
 #' @param info a logical to indicate whether info about the connection should be printed
-#' @details This function returns a 'Diver tibble', which prints information in the tibble header about the used cBase and current user.
+#' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
+#' @details These functions return a 'certedb tibble' from Diver or MOLIS, which prints information in the tibble header about the used cBase and current user.
 #' 
-#' Use [diver_query()] to retrieve the original query that was used to download the data.
+#' Use [certedb_query()] to retrieve the original query that was used to download the data.
 #' @importFrom dbplyr sql remote_query
 #' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc
 #' @importFrom certestyle format2 font_blue font_black font_grey
@@ -291,39 +291,62 @@ get_diver_data <- function(date_range = this_year(),
     msg_ok()
   }
   
-  as_diver_tibble(out,
-                  cbase = diver_cbase,
-                  qry = qry,
-                  datetime = Sys.time(),
-                  user = user)
+  as_certedb_tibble(out,
+                    cbase = diver_cbase,
+                    qry = qry,
+                    datetime = Sys.time(),
+                    user = user,
+                    type = "Diver")
 }
 
 #' @rdname get_diver_data
 #' @importFrom certestyle format2
 #' @importFrom pillar style_subtle
 #' @export
-diver_query <- function(diver_data) {
-  query <- attributes(diver_data)$qry
-  if (is.null(query)) {
-    message("No query found.")
-    invisible()
-  } else {
-    if (!is.null(attributes(diver_data)$cbase)) {
-      msg <- paste0("# This query was run on '", attributes(diver_data)$cbase, "'")
-      if (!is.null(attributes(diver_data)$datetime)) {
-        msg <- paste0(msg, " on ", format2(attributes(diver_data)$datetime, "yyyy-mm-dd HH:MM"))
+certedb_query <- function(query,
+                          where = NULL,
+                          auto_transform = TRUE,
+                          info = interactive()) {
+  
+  if (is.data.frame(query)) {
+    diver_data <- query
+    query <- attributes(diver_data)$qry
+    if (is.null(query)) {
+      message("No query found.")
+    } else {
+      if (!is.null(attributes(diver_data)$cbase)) {
+        msg <- paste0("# This query was run on '", attributes(diver_data)$cbase, "'")
+        if (!is.null(attributes(diver_data)$datetime)) {
+          msg <- paste0(msg, " on ", format2(attributes(diver_data)$datetime, "yyyy-mm-dd HH:MM"))
+        }
+        if (!is.null(attributes(diver_data)$user)) {
+          msg <- paste0(msg, " by ", attributes(diver_data)$user)
+        }
+        cat(style_subtle(msg), "\n")
       }
-      if (!is.null(attributes(diver_data)$user)) {
-        msg <- paste0(msg, " by ", attributes(diver_data)$user)
-      }
-      cat(style_subtle(msg), "\n")
+      cat(query)
     }
-    
-    cat(query)
-    invisible(q)
+    return(invisible(q))
   }
+  
+  # OLD part for get_mmb, remove later when certedb_getmmb() is obsolete
+  where <- deparse(substitute(where))
+  if (!identical(where, "NULL")) {
+    where <- where_R2SQL(where, info = info)
+    query <- paste(query, "WHERE", where)
+  }
+  
+  certedb_getmmb(query = query,
+                 auto_transform = auto_transform,
+                 info = info,
+                 review_where = FALSE,
+                 only_show_query = FALSE,
+                 first_isolates = FALSE,
+                 eucast_rules = FALSE,
+                 mic = FALSE,
+                 rsi = FALSE,
+                 tat_hours = FALSE)
 }
-
 
 R_to_DI <- function(out) {
   # this transforms
@@ -354,5 +377,5 @@ R_to_DI <- function(out) {
     }
   }
   out$lazy_query$where <- wheres
-out
+  out
 }
