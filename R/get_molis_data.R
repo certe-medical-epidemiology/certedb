@@ -131,7 +131,7 @@ certedb_getmmb <- function(dates = NULL,
         # datum tot einde van jaar
         dates <- c(dates[1], paste0(format2(dates[1], "yyyy"), "-12-31"))
       } else if (length(dates) > 2) {
-        stop("`dates` can have a maximum length of 2.")
+        dates <- c(min(as.Date(dates)), max(as.Date(dates)))
       }
       
       if (is.na(dates[1])) {
