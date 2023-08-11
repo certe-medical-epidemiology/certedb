@@ -26,6 +26,7 @@
 #' @param info settings for old `certedb_getmmb()` function
 #' @param first_isolates settings for old `certedb_getmmb()` function
 #' @param eucast_rules settings for old `certedb_getmmb()` function
+#' @inheritParams AMR::as.mo
 #' @param mic settings for old `certedb_getmmb()` function
 #' @param disk settings for old `certedb_getmmb()` function
 #' @param zipcodes settings for old `certedb_getmmb()` function
@@ -54,6 +55,7 @@ certedb_getmmb <- function(dates = NULL,
                            info = interactive(),
                            first_isolates = FALSE,
                            eucast_rules = "all",
+                           keep_synonyms = getOption("AMR_keep_synonyms", FALSE),
                            mic = FALSE,
                            disk = FALSE,
                            zipcodes = FALSE,
@@ -323,13 +325,13 @@ certedb_getmmb <- function(dates = NULL,
     msg_ok(print = info)
   }
   
-  if (!is.null(select) && select %like% " i[.]" && nrow(out) > 0) {
+  if ((isTRUE(auto_transform) || isTRUE(first_isolates) || !isFALSE(eucast_rules_setting)) && !is.null(select) && select %like% " i[.]" && nrow(out) > 0) {
     if (!"mo" %in% colnames(out) && "bacteriecode" %in% colnames(out)) {
       if (!all(is.na(out$bacteriecode))) {
         suppressWarnings(
           out <- out |>
             rename(bacteriecode_oud = bacteriecode) |>
-            mutate(bacteriecode = as.mo(bacteriecode_oud))
+            mutate(bacteriecode = as.mo(bacteriecode_oud, keep_synonyms = keep_synonyms))
         )
       }
     }
@@ -472,7 +474,7 @@ certedb_getmmb_tat <- function(dates = NULL,
 select_translate_asterisk <- function(select) {
   select.bak <- select
   select_list <- select |> as.list()
-  for (i in 1:length(select)) {
+  for (i in seq_len(length(select))) {
     # alle tabel.* uitschrijven naar c(tabel.a, tabel.b, ...)
     if (select[i] %like% "[.][*]") {
       found <- gregexpr("[.][*]", select[i])
@@ -485,7 +487,7 @@ select_translate_asterisk <- function(select) {
   }
   select_list <- select_list |> unlist()
   # ondersteuning voor add_cols = c("test" = db$m.mtrlcode) -> "m.mtrlcode AS test"
-  for (i in 1:length(select.bak)) {
+  for (i in seq_len(length(select.bak))) {
     if (!is.null(names(select.bak)[i])) {
       if (names(select.bak)[i] != "") {
         select_list[i] <- paste(select_list[i], "AS", names(select.bak)[i])
@@ -676,7 +678,7 @@ where_R2SQL <- function(where = NULL, info = TRUE) {
     starts <- eval_num |> unlist()
     lengths <- attributes(eval_num[[1]])$match.length
     where_backup <- where
-    for (i in 1:length(starts)) {
+    for (i in seq_len(length(starts))) {
       # getallen als 2015:2017 zoeken
       nums_old <- where_backup |>
         substr(starts[i] + 1,
@@ -698,7 +700,7 @@ where_R2SQL <- function(where = NULL, info = TRUE) {
     starts <- obj_refs |> unlist()
     lengths <- attributes(obj_refs[[1]])$match.length
     where_backup <- where
-    for (i in 1:length(starts)) {
+    for (i in seq_len(length(starts))) {
       # objecten als mtcars$mpg zoeken
       obj <- where_backup |>
         substr(starts[i],
@@ -736,7 +738,7 @@ where_R2SQL <- function(where = NULL, info = TRUE) {
   
   # ondersteuning voor variabelen uit Global Environment
   where_list <- where |> strsplit(" ") |> unlist()
-  for (i in 1:length(where_list)) {
+  for (i in seq_len(length(where_list))) {
     if (where_list[i] %in% ls(envir = .GlobalEnv)) {
       newval <- eval(parse(text = where_list[i]))
       if (NCOL(newval) == 1) {
@@ -771,7 +773,7 @@ where_R2SQL <- function(where = NULL, info = TRUE) {
   
   # proberen om expressie te evalueren als er een functie voorkomt (dus met haakje)
   where_list <- where |> strsplit("=") |> unlist()
-  for (i in 1:length(where_list)) {
+  for (i in seq_len(length(where_list))) {
     if (where_list[i] %like% "[(]") {
       where_list[i] <- tryCatch(paste0("'",
                                        eval(parse(text = trimws(where_list[i]))),
@@ -847,7 +849,7 @@ preset.exists <- function(name, returnlocation = FALSE) {
 
 preset.read <- function(name) {
   lst <- list(0)
-  for (i in 1:length(name)) {
+  for (i in seq_len(length(name))) {
     if (gsub("\\+", "/", name[i]) %unlike% "/") {
       # check read_secret("path.refmap")
       if (!preset.exists(name[i])) {
@@ -899,7 +901,7 @@ qry_beautify <- function(query) {
     strsplit("\n") %>%
     unlist()
   
-  for (i in 1:length(query)) {
+  for (i in seq_len(length(query))) {
     query[i] <- query[i] %>%
       strsplit("(--|#)") %>%
       unlist() %>%

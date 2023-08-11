@@ -24,4 +24,5 @@ coverage:
 
 ignore:
   - "R/get_diver_data.R"
+  - "R/get_molis_data.R"
   - "R/universal.R"

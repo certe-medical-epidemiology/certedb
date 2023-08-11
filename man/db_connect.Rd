@@ -10,7 +10,7 @@ db_connect(driver, ..., print = TRUE)
 db_close(conn, ..., print = TRUE)
 }
 \arguments{
-\item{driver}{database driver to use, such as \code{\link[odbc:odbc]{odbc::odbc()}}}
+\item{driver}{database driver to use, such as \code{\link[odbc:odbc]{odbc::odbc()}} and \code{\link[duckdb:duckdb]{duckdb::duckdb()}}}
 
 \item{...}{arguments passed on to \code{\link[DBI:dbDisconnect]{DBI::dbDisconnect()}}}
 
@@ -19,5 +19,30 @@ db_close(conn, ..., print = TRUE)
 \item{conn}{connection to close, such as the output of \code{\link[=db_connect]{db_connect()}}}
 }
 \description{
-Connect to an internal (yet remote) Certe database server using \code{\link[DBI:dbConnect]{DBI::dbConnect()}}.
+Connect to an internal (yet remote) Certe database server using \code{\link[DBI:dbConnect]{DBI::dbConnect()}}, or any other database.
+}
+\examples{
+# create a local duckdb database
+db <- db_connect(duckdb::duckdb(), "~/my_duck.db")
+db
+
+db |> db_write_table("my_iris_table", values = iris)
+db |> db_list_tables()
+db |> db_has_table("my_iris_table")
+
+if (requireNamespace("dplyr")) {
+  db |> 
+    tbl("my_iris_table") |> 
+    filter(Species == "setosa", Sepal.Width > 3) |> 
+    collect() |> 
+    as_tibble()
+}
+
+db |> db_drop_table("my_iris_table")
+db |> db_list_tables()
+
+db |> db_close()
+
+# remove the database
+unlink("~/my_duck.db")
 }

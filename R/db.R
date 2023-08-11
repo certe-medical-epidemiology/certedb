@@ -19,14 +19,39 @@
 
 #' Connect to a Certe Database
 #'
-#' Connect to an internal (yet remote) Certe database server using [DBI::dbConnect()].
-#' @param driver database driver to use, such as [odbc::odbc()]
+#' Connect to an internal (yet remote) Certe database server using [DBI::dbConnect()], or any other database.
+#' @param driver database driver to use, such as [odbc::odbc()] and [duckdb::duckdb()]
 #' @param ... database credentials
 #' @param print a logical to indicate whether info about the connection should be printed
 #' @rdname db_connect
 #' @importFrom certestyle font_red font_green font_blue
+#' @importFrom duckdb duckdb
 #' @importFrom DBI dbConnect
 #' @export
+#' @examples
+#' # create a local duckdb database
+#' db <- db_connect(duckdb::duckdb(), "~/my_duck.db")
+#' db
+#' 
+#' db |> db_write_table("my_iris_table", values = iris)
+#' db |> db_list_tables()
+#' db |> db_has_table("my_iris_table")
+#' 
+#' if (requireNamespace("dplyr")) {
+#'   db |> 
+#'     tbl("my_iris_table") |> 
+#'     filter(Species == "setosa", Sepal.Width > 3) |> 
+#'     collect() |> 
+#'     as_tibble()
+#' }
+#' 
+#' db |> db_drop_table("my_iris_table")
+#' db |> db_list_tables()
+#' 
+#' db |> db_close()
+#' 
+#' # remove the database
+#' unlink("~/my_duck.db")
 db_connect <- function(driver,
                        ...,
                        print = TRUE) {
@@ -72,8 +97,13 @@ db_connect <- function(driver,
 #' @export
 db_close <- function(conn, ..., print = TRUE) {
   db_message("Closing connection...", new_line = FALSE, print = print)
+  dots <- list(...)
+  if (inherits(conn, "duckdb_connection") && !"shutdown" %in% names(dots)) {
+    # for duckdb, `shutdown = TRUE` closes the connection in the right way
+    dots <- c(dots, list(shutdown = TRUE))
+  }
   tryCatch({
-    dbDisconnect(conn, ...)
+    do.call(dbDisconnect, c(conn, dots))
     db_message(font_green("OK"), type = NULL, print = print)
   }, error = function(e) {
     db_message(font_red("ERROR\n"), type = NULL, print = print)
@@ -84,4 +114,48 @@ db_close <- function(conn, ..., print = TRUE) {
     warning(e$message, call. = FALSE)
   })
   invisible(TRUE)
+}
+
+# methods for duckdb ----
+
+#' @method db_list_tables duckdb_connection
+#' @importFrom DBI dbListTables
+#' @noRd
+#' @export
+db_list_tables.duckdb_connection <- function(con) {
+  dbListTables(con)
+}
+
+#' @method copy_to duckdb_connection
+#' @importFrom dplyr copy_to
+#' @importFrom dbplyr src_dbi
+#' @noRd
+#' @export
+copy_to.duckdb_connection <- function(dest, df, name = deparse(substitute(df)), overwrite = FALSE, ...) {
+  print("jere")
+  copy_to(src_dbi(dest, auto_disconnect = FALSE), df = df, 
+          name = name, overwrite = overwrite, ...)
+}
+
+#' @method db_write_table duckdb_connection
+#' @importFrom DBI dbWriteTable
+#' @noRd
+#' @export
+db_write_table.duckdb_connection <- function(con, table, types, values, temporary = FALSE, ...) {
+  dbWriteTable(conn = con, name = table, value = values, temporary =temporary, ...)
+}
+
+#' @method db_drop_table duckdb_connection
+#' @importFrom DBI dbRemoveTable
+#' @noRd
+#' @export
+db_drop_table.duckdb_connection <- function(con, table, force = FALSE, ...) {
+  dbRemoveTable(conn = con, name = table, ...)
+}
+
+#' @method db_has_table duckdb_connection
+#' @noRd
+#' @export
+db_has_table.duckdb_connection <- function(con, table) {
+  table %in% db_list_tables(con)
 }

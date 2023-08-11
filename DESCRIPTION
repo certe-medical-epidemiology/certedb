@@ -1,6 +1,6 @@
 Package: certedb
 Title: A Certe R Package for Connecting to Databases
-Version: 1.5.1
+Version: 1.6.0
 Authors@R: c(
   person(given = c("Matthijs", "S."), 
          family = "Berends",
@@ -25,6 +25,7 @@ Imports:
   DBI (>= 1.0.0),
   dbplyr (>= 2.1.0),
   dplyr (>= 1.0.0),
+  duckdb (>= 0.8.0),
   knitr (>= 1.40),
   odbc (>= 1.3.0),
   pillar (>= 1.8.0),

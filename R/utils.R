@@ -19,6 +19,22 @@
 
 pkg_env <- new.env(hash = FALSE)
 
+#' @importFrom dplyr db_list_tables
+#' @export
+dplyr::db_list_tables
+
+#' @importFrom dplyr db_drop_table
+#' @export
+dplyr::db_drop_table
+
+#' @importFrom dplyr db_write_table
+#' @export
+dplyr::db_write_table
+
+#' @importFrom dplyr db_has_table
+#' @export
+dplyr::db_has_table
+
 globalVariables(c("Antibioticumcode",
                   "MIC_gescreend",
                   "Ontvangstdatum",

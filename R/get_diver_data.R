@@ -109,7 +109,7 @@ get_diver_data <- function(date_range = this_year(),
       # always earliest first, newest second
       date_range <- c(min(date_range, na.rm = TRUE), max(date_range, na.rm = TRUE))
     }
-    if (all(date_range %in% c(2000:2050), na.rm = TRUE)) {
+    if (all(date_range %in% 2000:2050, na.rm = TRUE)) {
       date_range[1] <- paste0(date_range[1], "-01-01")
       date_range[2] <- paste0(date_range[2], "-12-31")
     }
