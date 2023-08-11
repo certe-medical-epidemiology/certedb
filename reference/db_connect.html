@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.1</span>
       </span>
     </div>
 
@@ -107,7 +107,7 @@
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #008787;">i</span> <span style="color: #080808;">Opening connection...</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #AFAF5F;"> OK</span></span>
 <span class="r-in"><span><span class="va">db</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> &lt;duckdb_connection c0c30 driver=&lt;duckdb_driver 2bc60 dbdir='/home/runner/my_duck.db' read_only=FALSE bigint=numeric&gt;&gt;</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> &lt;duckdb_connection c95c0 driver=&lt;duckdb_driver 39180 dbdir='/home/runner/my_duck.db' read_only=FALSE bigint=numeric&gt;&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">db</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/backend_dbplyr.html" class="external-link">db_write_table</a></span><span class="op">(</span><span class="st">"my_iris_table"</span>, values <span class="op">=</span> <span class="va">iris</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">db</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/backend_dbplyr.html" class="external-link">db_list_tables</a></span><span class="op">(</span><span class="op">)</span></span></span>
@@ -115,14 +115,28 @@
 <span class="r-in"><span><span class="va">db</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/backend_dbplyr.html" class="external-link">db_has_table</a></span><span class="op">(</span><span class="st">"my_iris_table"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"dplyr"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span>, warn.conflicts <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="va">db</span> <span class="op">|&gt;</span> </span></span>
-<span class="r-in"><span>    <span class="fu">tbl</span><span class="op">(</span><span class="st">"my_iris_table"</span><span class="op">)</span> <span class="op">|&gt;</span> </span></span>
-<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">Species</span> <span class="op">==</span> <span class="st">"setosa"</span>, <span class="va">Sepal.Width</span> <span class="op">&gt;</span> <span class="fl">3</span><span class="op">)</span> <span class="op">|&gt;</span> </span></span>
-<span class="r-in"><span>    <span class="fu">collect</span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> </span></span>
-<span class="r-in"><span>    <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="st">"my_iris_table"</span><span class="op">)</span> <span class="op">|&gt;</span> </span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">Species</span> <span class="op">==</span> <span class="st">"setosa"</span>, <span class="va">Sepal.Width</span> <span class="op">&gt;</span> <span class="fl">3</span><span class="op">)</span> <span class="op">|&gt;</span> </span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> </span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in as_tibble(collect(filter(tbl(db, "my_iris_table"), Species ==     "setosa", Sepal.Width &gt; 3))):</span> could not find function "as_tibble"</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: dplyr</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 42 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Sepal.Length Sepal.Width Petal.Length Petal.Width Species</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>          5.1         3.5          1.4         0.2 setosa </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>          4.7         3.2          1.3         0.2 setosa </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>          4.6         3.1          1.5         0.2 setosa </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>          5           3.6          1.4         0.2 setosa </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>          5.4         3.9          1.7         0.4 setosa </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>          4.6         3.4          1.4         0.3 setosa </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>          5           3.4          1.5         0.2 setosa </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>          4.9         3.1          1.5         0.1 setosa </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>          5.4         3.7          1.5         0.2 setosa </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>          4.8         3.4          1.6         0.2 setosa </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 32 more rows</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">db</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/backend_dbplyr.html" class="external-link">db_drop_table</a></span><span class="op">(</span><span class="st">"my_iris_table"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">db</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/backend_dbplyr.html" class="external-link">db_list_tables</a></span><span class="op">(</span><span class="op">)</span></span></span>
