@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.5.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
       </span>
     </div>
 
@@ -104,6 +104,7 @@
 <span>  info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  first_isolates <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  eucast_rules <span class="op">=</span> <span class="st">"all"</span>,</span>
+<span>  keep_synonyms <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"AMR_keep_synonyms"</span>, <span class="cn">FALSE</span><span class="op">)</span>,</span>
 <span>  mic <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  disk <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  zipcodes <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -196,6 +197,10 @@
 
 <dt>eucast_rules</dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
+
+
+<dt>keep_synonyms</dt>
+<dd><p>a <a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a> to indicate if old, previously valid taxonomic names must be preserved and not be corrected to currently accepted names. The default is <code>FALSE</code>, which will return a note if old taxonomic names were processed. The default can be set with the <a href="https://msberends.github.io/AMR/reference/AMR-options.html" class="external-link">package option</a> <code><a href="https://msberends.github.io/AMR/reference/AMR-options.html" class="external-link">AMR_keep_synonyms</a></code>, i.e. <code>options(AMR_keep_synonyms = TRUE)</code> or <code>options(AMR_keep_synonyms = FALSE)</code>.</p></dd>
 
 
 <dt>mic</dt>
