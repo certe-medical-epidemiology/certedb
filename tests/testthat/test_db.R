@@ -33,6 +33,29 @@ test_that("utils work", {
   expect_message(msg_ok(dimensions = c(NA, 6), print = TRUE))
   expect_message(msg_init("test", print = TRUE))
   expect_message(msg_error(print = TRUE))
+  
+  out <- as_certedb_tibble(iris,
+                           cbase = "Source",
+                           qry = "SELECT * FROM test",
+                           datetime = Sys.time(),
+                           user = "User",
+                           type = "Test DB")
+  expect_output(print(out))
+  expect_output(print(certedb_query(out)))
+})
+
+test_that("db works", {
+  # create a local duckdb database
+  db <- db_connect(duckdb::duckdb(), "my_duck.db")
+  db |> db_write_table("my_iris_table", values = iris, overwrite = TRUE)
+  expect_true("my_iris_table" %in% db_list_tables(db))
+  expect_true(db_has_table(db, "my_iris_table"))
+  db |> db_drop_table("my_iris_table")
+  expect_false("my_iris_table" %in% db_list_tables(db))
+  db |> db_close()
+  # remove the database
+  unlink("my_duck.db")
+  
 })
 
 test_that("utils work", {

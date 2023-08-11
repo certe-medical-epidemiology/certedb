@@ -326,7 +326,7 @@ certedb_query <- function(query,
       }
       cat(query)
     }
-    return(invisible(q))
+    return(invisible(query))
   }
   
   # OLD part for get_mmb, remove later when certedb_getmmb() is obsolete

@@ -30,7 +30,7 @@ db |> db_write_table("my_iris_table", values = iris)
 db |> db_list_tables()
 db |> db_has_table("my_iris_table")
 
-if (requireNamespace("dplyr")) {
+if (require(dplyr, warn.conflicts = FALSE)) {
   db |> 
     tbl("my_iris_table") |> 
     filter(Species == "setosa", Sepal.Width > 3) |> 

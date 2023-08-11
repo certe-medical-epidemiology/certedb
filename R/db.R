@@ -37,7 +37,7 @@
 #' db |> db_list_tables()
 #' db |> db_has_table("my_iris_table")
 #' 
-#' if (requireNamespace("dplyr")) {
+#' if (require(dplyr, warn.conflicts = FALSE)) {
 #'   db |> 
 #'     tbl("my_iris_table") |> 
 #'     filter(Species == "setosa", Sepal.Width > 3) |> 
@@ -132,7 +132,6 @@ db_list_tables.duckdb_connection <- function(con) {
 #' @noRd
 #' @export
 copy_to.duckdb_connection <- function(dest, df, name = deparse(substitute(df)), overwrite = FALSE, ...) {
-  print("jere")
   copy_to(src_dbi(dest, auto_disconnect = FALSE), df = df, 
           name = name, overwrite = overwrite, ...)
 }
