@@ -35,7 +35,7 @@ test_that("utils work", {
   expect_message(msg_error(print = TRUE))
   
   out <- as_certedb_tibble(iris,
-                           cbase = "Source",
+                           source = "Source",
                            qry = "SELECT * FROM test",
                            datetime = Sys.time(),
                            user = "User",
@@ -50,9 +50,15 @@ test_that("db works", {
   db |> db_write_table("my_iris_table", values = iris, overwrite = TRUE)
   expect_true("my_iris_table" %in% db_list_tables(db))
   expect_true(db_has_table(db, "my_iris_table"))
+  
+  df <- get_duckdb_data(NULL, Species == "setosa", duckdb_path = "my_duck.db", duckdb_table = "my_iris_table")
+  expect_output(print(df))
+  expect_output(print(certedb_query(df)))
+  
   db |> db_drop_table("my_iris_table")
   expect_false("my_iris_table" %in% db_list_tables(db))
   db |> db_close()
+  
   # remove the database
   unlink("my_duck.db")
   

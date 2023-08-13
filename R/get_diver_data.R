@@ -17,9 +17,9 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
-#' Download Data from Diver Server
+#' Download Data from a Local or Remote Database
 #' 
-#' This function can be used to download Spectre data from DiveLine on a Diver server (from [Dimensional Insight](https://www.dimins.com)). This function will set up an ODBC connection (using [db_connect()]), which requires their quite limited [DI-ODBC driver](https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html).
+#' Thes functions can be used to download local or remote database data, e.g. Spectre data from DiveLine on a Diver server (from [Dimensional Insight](https://www.dimins.com)). The [get_diver_data()] function sets up an ODBC connection (using [db_connect()]), which requires their quite limited [DI-ODBC driver](https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html).
 #' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column `Ontvangstdatum`. Defaults to [this_year()]. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
 #' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
 #' @param diver_cbase,diver_project,diver_dsn,diver_testserver properties to set in [db_connect()]. The `diver_cbase` argument will be based on `preset`, but can also be set to blank `NULL` to manually select a cBase in a popup window.
@@ -292,7 +292,7 @@ get_diver_data <- function(date_range = this_year(),
   }
   
   as_certedb_tibble(out,
-                    cbase = diver_cbase,
+                    source = diver_cbase,
                     qry = qry,
                     datetime = Sys.time(),
                     user = user,
@@ -314,8 +314,8 @@ certedb_query <- function(query,
     if (is.null(query)) {
       message("No query found.")
     } else {
-      if (!is.null(attributes(diver_data)$cbase)) {
-        msg <- paste0("# This query was run on '", attributes(diver_data)$cbase, "'")
+      if (!is.null(attributes(diver_data)$source)) {
+        msg <- paste0("# This query was run on '", attributes(diver_data)$source, "'")
         if (!is.null(attributes(diver_data)$datetime)) {
           msg <- paste0(msg, " on ", format2(attributes(diver_data)$datetime, "yyyy-mm-dd HH:MM"))
         }

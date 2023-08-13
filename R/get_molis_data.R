@@ -424,11 +424,11 @@ certedb_getmmb <- function(dates = NULL,
   }
   
   as_certedb_tibble(out,
-                  type = "MOLIS",
-                  cbase = "certemmb",
-                  qry = qry,
-                  datetime = Sys.time(),
-                  user = user)
+                    type = "MOLIS",
+                    source = "certemmb",
+                    qry = qry,
+                    datetime = Sys.time(),
+                    user = user)
 }
 
 #' @rdname get_diver_data

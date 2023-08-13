@@ -18,13 +18,13 @@
 # ===================================================================== #
 
 #' @importFrom dplyr as_tibble
-as_certedb_tibble <- function(tbl_df, cbase, qry, datetime, user, type) {
+as_certedb_tibble <- function(tbl_df, source, qry, datetime, user, type) {
   out <- as_tibble(tbl_df)
   structure(out,
             class = c("certedb_tibble", class(out)),
             dims = dim(out),
             type = type,
-            cbase = cbase,
+            source = source,
             qry = qry,
             datetime = datetime,
             user = user)
@@ -37,8 +37,8 @@ tbl_sum.certedb_tibble <- function(x, ...) {
   out <- dim_desc(x)
   names(out) <- paste("A", attributes(x)$type, "tibble")
   if (identical(attributes(x)$dims, dim(x))) {
-    if (!is.null(attributes(x)$cbase)) {
-      out <- c(out, "Retrieved from" = attributes(x)$cbase)
+    if (!is.null(attributes(x)$source)) {
+      out <- c(out, "Retrieved from" = attributes(x)$source)
     }
     if (!is.null(attributes(x)$datetime)) {
       out <- c(out, "Retrieved on" = format2(attributes(x)$datetime, "yyyy-mm-dd HH:MM"))

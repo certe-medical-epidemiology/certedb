@@ -65,9 +65,9 @@ db_connect <- function(driver,
   }
   if ("cbase" %in% names(dots)) {
     if ("project" %in% names(dots)) {
-      datasource <- paste0(" to cbase ", font_blue(paste0("\"", dots$cbase, "\" [", dots$project, "]")))
+      datasource <- paste0(" to cBase ", font_blue(paste0("\"", dots$cbase, "\" [", dots$project, "]")))
     } else {
-      datasource <- paste0(" to cbase ", font_blue(paste0("\"", dots$cbase, "\"")))
+      datasource <- paste0(" to cBase ", font_blue(paste0("\"", dots$cbase, "\"")))
     }
     if ("dsn" %in% names(dots)) {
       datasource <- paste0(datasource, font_black(paste0(" (", dots$dsn, ")")))
@@ -140,8 +140,8 @@ copy_to.duckdb_connection <- function(dest, df, name = deparse(substitute(df)), 
 #' @importFrom DBI dbWriteTable
 #' @noRd
 #' @export
-db_write_table.duckdb_connection <- function(con, table, types, values, temporary = FALSE, ...) {
-  dbWriteTable(conn = con, name = table, value = values, temporary =temporary, ...)
+db_write_table.duckdb_connection <- function(con, table, types, values, temporary = FALSE, append = FALSE, ...) {
+  dbWriteTable(conn = con, name = table, value = values, temporary = temporary, append = append, ...)
 }
 
 #' @method db_drop_table duckdb_connection
