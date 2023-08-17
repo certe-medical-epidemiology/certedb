@@ -64,6 +64,7 @@ get_duckdb_data <- function(date_range = this_year(),
   }
   conn <- db_connect(driver = duckdb::duckdb(),
                      dbdir = duckdb_path,
+                     read_only = TRUE,
                      print = info)
   on.exit(suppressWarnings(suppressMessages(try(db_close(conn, print = info), silent = TRUE))))
   user <- paste0("CERTE\\", Sys.info()["user"])

@@ -315,13 +315,19 @@ certedb_query <- function(query,
       message("No query found.")
     } else {
       if (!is.null(attributes(diver_data)$source)) {
-        msg <- paste0("# This query was run on '", attributes(diver_data)$source, "'")
+        msg <- paste0("# This query was run on ", attributes(diver_data)$source)
         if (!is.null(attributes(diver_data)$datetime)) {
           msg <- paste0(msg, " on ", format2(attributes(diver_data)$datetime, "yyyy-mm-dd HH:MM"))
         }
         if (!is.null(attributes(diver_data)$user)) {
           msg <- paste0(msg, " by ", attributes(diver_data)$user)
         }
+        if (!is.null(attributes(diver_data)$dims)) {
+          msg <- paste0(msg, ", yielding a ", 
+                        ifelse(is.null(attributes(diver_data)$type), " ", paste(attributes(diver_data)$type, "tibble ")),
+                        "of ", format_dimensions(attributes(diver_data)$dims))
+        }
+        
         cat(style_subtle(msg), "\n")
       }
       cat(query)

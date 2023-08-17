@@ -41,7 +41,7 @@ tbl_sum.certedb_tibble <- function(x, ...) {
       out <- c(out, "Retrieved from" = attributes(x)$source)
     }
     if (!is.null(attributes(x)$datetime)) {
-      out <- c(out, "Retrieved on" = format2(attributes(x)$datetime, "yyyy-mm-dd HH:MM"))
+      out <- c(out, "Retrieved on" = format2(attributes(x)$datetime, "d mmm yyyy HH:MM"))
     }
     if (!is.null(attributes(x)$user)) {
       out <- c(out, "Retrieved by" = attributes(x)$user)
@@ -61,12 +61,11 @@ tbl_format_footer.certedb_tibble <- function(x, setup, ...) {
     old_dims <- attributes(x)$dims
     if (identical(old_dims, dim(x))) {
       c(footer,
-        style_subtle(paste0("# ", cli::symbol$info, " Use `certedb_query()` to get the query of this ", attributes(x)$type, " tibble")))
+        style_subtle(paste0("# ", symbol$info, " Use `certedb_query()` to get the query of this ", attributes(x)$type, " tibble")))
     } else {
       c(footer,
-        style_subtle(paste0("# ", cli::symbol$info, " Use `certedb_query()` to get the query of the original ", 
-                            dim_desc(as.data.frame(matrix(0, nrow = old_dims[1], ncol = old_dims[2]))), " ",
-                            attributes(x)$type, " tibble")))
+        style_subtle(paste0("# ", symbol$info, " Use `certedb_query()` to get the query of the original ", 
+                            format_dimensions(old_dims), " ", attributes(x)$type, " tibble")))
     }
   }
 }

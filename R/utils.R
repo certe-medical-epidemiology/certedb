@@ -62,6 +62,16 @@ globalVariables(c("Antibioticumcode",
                   "val2_usr_1e",
                   "val2_usr_def"))
 
+#' @importFrom cli symbol
+format_dimensions <- function(dims) {
+  dims <- c(dims[1], dims[2])
+  dims <- formatC(dims, 
+                  big.mark = ifelse(identical(getOption("OutDec"), ","), ".", ","),
+                  format = "d",
+                  preserve.width = "individual")
+  dims <- trimws(paste0(" ", dims, " ", collapse = symbol$times))
+}
+
 #' @importFrom certestyle font_black font_blue font_red font_green
 db_message <- function(...,
                        print = interactive() | Sys.getenv("IN_PKGDOWN") != "",
