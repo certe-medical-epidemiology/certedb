@@ -98,7 +98,7 @@ db_connect <- function(driver,
 db_close <- function(conn, ..., print = TRUE) {
   db_message("Closing connection...", new_line = FALSE, print = print)
   dots <- list(...)
-  if (inherits(conn, "duckdb_connection") && !"shutdown" %in% names(dots)) {
+  if (any(class(conn) %like% "duckdb") && !"shutdown" %in% names(dots)) {
     # for duckdb, `shutdown = TRUE` closes the connection in the right way
     dots <- c(dots, list(shutdown = TRUE))
   }

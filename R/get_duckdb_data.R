@@ -66,7 +66,7 @@ get_duckdb_data <- function(date_range = this_year(),
                      dbdir = duckdb_path,
                      read_only = TRUE,
                      print = info)
-  on.exit(suppressWarnings(suppressMessages(try(db_close(conn, print = info), silent = TRUE))))
+  on.exit(suppressWarnings(suppressMessages(try(db_close(conn, shutdown = TRUE, print = info), silent = TRUE))))
   user <- paste0("CERTE\\", Sys.info()["user"])
   
   msg_init("Retrieving initial cBase...", print = info)
@@ -124,7 +124,7 @@ get_duckdb_data <- function(date_range = this_year(),
                             graphics = FALSE)
     }
     if (choice != 1) {
-      db_close(conn)
+      db_close(conn, shutdown = TRUE)
       return(invisible())
     }
   } else {
@@ -143,7 +143,7 @@ get_duckdb_data <- function(date_range = this_year(),
   })
   msg_ok(time = TRUE, dimensions = dim(out), print = info)
   
-  db_close(conn, print = info)
+  db_close(conn, shutdown = TRUE, print = info)
   
   if (!is.null(preset) && !all(is.na(preset$select))) {
     msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")))
