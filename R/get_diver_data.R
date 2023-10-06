@@ -30,7 +30,7 @@
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
 #' @param info a logical to indicate whether info about the connection should be printed
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
-#' @details These functions return a 'certedb tibble' from Diver or MOLIS, which prints information in the tibble header about the used cBase and current user.
+#' @details These functions return a 'certedb tibble' from Diver or MOLIS, which prints information in the tibble header about the used source and current user.
 #' 
 #' Use [certedb_query()] to retrieve the original query that was used to download the data.
 #' @importFrom dbplyr sql remote_query
@@ -46,24 +46,38 @@
 #' \dontrun{
 #' 
 #' # these two work identical:
-#' get_diver_data(date_range = 2022, where = Bepalingcode == "PXNCOV")
-#' get_diver_data(2022, Bepalingcode == "PXNCOV")
+#' get_diver_data(date_range = 2023, where = BepalingCode == "PXNCOV")
+#' get_diver_data(2023, BepalingCode == "PXNCOV")
 #' 
 #' # for the `where`, use `&`, `|`, or `c()`:
 #' get_diver_data(last_month(),
-#'                Bepalingcode == "PXNCOV" & Zorglijn == "2e lijn")
-#' get_diver_data(c(2020:2022),
-#'                where = c(Bepalingcode == "PXNCOV", Zorglijn == "2e lijn"))
+#'                BepalingCode == "PXNCOV" & Zorglijn == "2e lijn")
+#' get_diver_data(c(2020:2023),
+#'                where = c(BepalingCode == "PXNCOV", Zorglijn == "2e lijn"))
 #' 
+#' 
+#' # use %like%, %unlike%, %like_case% or %unlike_case% for regular expressions
+#' get_diver_data(2023, where = MateriaalNaam %like% "Bloed")
+#' get_diver_data(2023, where = MateriaalNaam %unlike% "Bloed")
+#' get_diver_data(2023, where = MateriaalNaam %like_case% "bloed")
+#' get_diver_data(2023, where = MateriaalNaam %unlike_case% "Bloed")
+#' 
+#' get_diver_data(2023,
+#'                where = c(BepalingNaam %like% "Noro",
+#'                          PatientLeeftijd >= 75))
 #' 
 #' # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
 #' 
-#' # Use Diver Integrator functions such as regexp() within EVAL():              
-#' get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^B")'))
+#' # Use Diver Integrator functions within EVAL():              
+#' get_diver_data(2023, where = EVAL('regexp(value("MateriaalCode"),"^B")'))
 #' 
-#' # With ignore case (defaults to false):
-#' get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^b", true)'))
+#' get_diver_data(
+#'   2023,
+#'   where = EVAL('rolling(12, value("OntvangstDatum"), date("2023/11/27"))')
+#' )
 #' 
+#' # See the website for an overview of allowed functions:
+#' # https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
 #' }
 get_diver_data <- function(date_range = this_year(),
                            where = NULL,
@@ -128,6 +142,7 @@ get_diver_data <- function(date_range = this_year(),
   } else {
     out <- conn |> tbl("data")
   }
+  out_bak <- out
   # apply filters
   # where <- substitute(where)
   # for (i in seq_len(length(where))) {
@@ -137,7 +152,7 @@ get_diver_data <- function(date_range = this_year(),
   #   }
   # }
   if (!is.null(substitute(where))) {
-    out <- out |> filter({{ where }}) #|> R_to_DI()
+    out <- out |> filter({{ where }}) |> R_to_DI()
   }
   if (!is.null(preset) && !all(is.na(preset$filter))) {
     # apply filter from preset
@@ -155,8 +170,9 @@ get_diver_data <- function(date_range = this_year(),
                           choices = c("Yes", "No", "Print column names"),
                           graphics = FALSE)
     if (choice == 3) {
-      df <- collect(out, n = 1)
+      df <- collect(out_bak, n = 1)
       cols <- vapply(FUN.VALUE = character(1), df, type_sum)
+      # print column names with their class in <..> brackets
       print(paste0(names(cols), " <", cols, ">"), quote = FALSE)
       choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry),
                             choices = c("Yes", "No"),
@@ -354,6 +370,7 @@ certedb_query <- function(query,
                  tat_hours = FALSE)
 }
 
+#' @importFrom rlang is_quosure quo_get_expr
 R_to_DI <- function(out) {
   # this transforms
   # where = Materiaalnaam %like% "bloed"
@@ -361,26 +378,85 @@ R_to_DI <- function(out) {
   # WHERE (EVAL('regexp(value("Materiaalnaam"),"bloed", true)')) 
   
   wheres <- out$lazy_query$where
-  
+
   for (i in seq_len(length(wheres))) {
-    elements <- as.character(wheres[[i]][[2]])
-    if (length(elements) == 0) {
+    elements <- wheres[[i]]
+    if (rlang::is_quosure(elements)) {
+      elements <- rlang::quo_get_expr(elements)
+    }
+    if (length(elements) < 2) {
+      # contains no 'like' statements
       next
     }
-    if (elements[1] == "%like%") {
-      wheres[[i]][[2]][[1]] <- as.symbol("EVAL")
-      wheres[[i]][[2]][[2]] <- paste0("regexp(value(\"", elements[2], "\"), \"", elements[3], "\", true)")
-      wheres[[i]][[2]] <- wheres[[i]][[2]][1:2]
-    } else if (elements[1] == "%like_case%") {
-      wheres[[i]][[2]][[1]] <- as.symbol("EVAL")
-      wheres[[i]][[2]][[2]] <- paste0("regexp(value(\"", elements[2], "\"), \"", elements[3], "\", false)")
-      wheres[[i]][[2]] <- wheres[[i]][[2]][1:2]
-    } else {
-      for (j in seq_len(length(elements))) {
-        elements[j] <- gsub("(.*) %like% (.*)", "EVAL('regexp(value(\"\\1\"), \"\\2\", true)')", elements[j])
+    
+    if (is.call(elements[[2]])) {
+      
+      # has multiple filters, so go over each filter, look for 'like' statements and replace them
+      for (j in 2:length(elements)) {
+        el <- elements[[j]]
+        
+        if (length(as.character(el)) == 0 ||
+            !any(as.character(el) %in% c("%like%", "%like_case%", "%unlike%", "%unlike_case%"),
+                 na.rm = TRUE)) {
+          # contains no 'like' statements
+          next
+        }
+        
+        if (as.character(el[[1]]) == "%like%") {
+          wheres[[i]][[2]][[j]] <- str2lang(paste0("EVAL('regexp(value(\"",
+                                                   el[[2]], "\"), \"",
+                                                   el[[3]], "\", true)')"))
+          
+        } else if (as.character(el[[1]]) == "%unlike%") {
+          wheres[[i]][[2]][[j]] <- str2lang(paste0("!EVAL('regexp(value(\"",
+                                                   el[[2]], "\"), \"",
+                                                   el[[3]], "\", true)')"))
+          
+        } else if (as.character(el[[1]]) == "%like_case%") {
+          wheres[[i]][[2]][[j]] <- str2lang(paste0("EVAL('regexp(value(\"",
+                                                   el[[2]], "\"), \"",
+                                                   el[[3]], "\", false)')"))
+          
+        } else if (as.character(el[[1]]) == "%unlike_case%") {
+          wheres[[i]][[2]][[j]] <- str2lang(paste0("!EVAL('regexp(value(\"",
+                                                   el[[2]], "\"), \"",
+                                                   el[[3]], "\", false)')"))
+        }
       }
-      wheres[[i]][[2]] <- paste0(elements[2], elements[1], elements[3])
+      
+    } else {
+      
+      # has only 1 filter, so do it directly
+      if (length(as.character(elements)) == 0 ||
+          !any(as.character(elements) %in% c("%like%", "%like_case%", "%unlike%", "%unlike_case%"),
+               na.rm = TRUE)) {
+        # contains no 'like' statements
+        next
+      }
+      
+      
+      if (as.character(elements[[1]]) == "%like%") {
+        wheres[[i]][[2]] <- str2lang(paste0("EVAL('regexp(value(\"",
+                                            elements[[2]], "\"), \"",
+                                            elements[[3]], "\", true)')"))
+        
+      } else if (as.character(elements[[1]]) == "%unlike%") {
+        wheres[[i]][[2]] <- str2lang(paste0("!EVAL('regexp(value(\"",
+                                            elements[[2]], "\"), \"",
+                                            elements[[3]], "\", true)')"))
+        
+      } else if (as.character(elements[[1]]) == "%like_case%") {
+        wheres[[i]][[2]] <- str2lang(paste0("EVAL('regexp(value(\"",
+                                            elements[[2]], "\"), \"",
+                                            elements[[3]], "\", false)')"))
+        
+      } else if (as.character(elements[[1]]) == "%unlike_case%") {
+        wheres[[i]][[2]] <- str2lang(paste0("!EVAL('regexp(value(\"",
+                                            elements[[2]], "\"), \"",
+                                            elements[[3]], "\", false)')"))
+      }
     }
+    
   }
   out$lazy_query$where <- wheres
   out

@@ -141,7 +141,7 @@ certedb_getmmb_tat(
 Thes functions can be used to download local or remote database data, e.g. Spectre data from DiveLine on a Diver server (from \href{https://www.dimins.com}{Dimensional Insight}). The \code{\link[=get_diver_data]{get_diver_data()}} function sets up an ODBC connection (using \code{\link[=db_connect]{db_connect()}}), which requires their quite limited \href{https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html}{DI-ODBC driver}.
 }
 \details{
-These functions return a 'certedb tibble' from Diver or MOLIS, which prints information in the tibble header about the used cBase and current user.
+These functions return a 'certedb tibble' from Diver or MOLIS, which prints information in the tibble header about the used source and current user.
 
 Use \code{\link[=certedb_query]{certedb_query()}} to retrieve the original query that was used to download the data.
 
@@ -151,24 +151,38 @@ Using \code{certedb_query("your qry here")} is identical to using \code{certedb_
 \dontrun{
 
 # these two work identical:
-get_diver_data(date_range = 2022, where = Bepalingcode == "PXNCOV")
-get_diver_data(2022, Bepalingcode == "PXNCOV")
+get_diver_data(date_range = 2023, where = BepalingCode == "PXNCOV")
+get_diver_data(2023, BepalingCode == "PXNCOV")
 
 # for the `where`, use `&`, `|`, or `c()`:
 get_diver_data(last_month(),
-               Bepalingcode == "PXNCOV" & Zorglijn == "2e lijn")
-get_diver_data(c(2020:2022),
-               where = c(Bepalingcode == "PXNCOV", Zorglijn == "2e lijn"))
+               BepalingCode == "PXNCOV" & Zorglijn == "2e lijn")
+get_diver_data(c(2020:2023),
+               where = c(BepalingCode == "PXNCOV", Zorglijn == "2e lijn"))
 
+
+# use \%like\%, \%unlike\%, \%like_case\% or \%unlike_case\% for regular expressions
+get_diver_data(2023, where = MateriaalNaam \%like\% "Bloed")
+get_diver_data(2023, where = MateriaalNaam \%unlike\% "Bloed")
+get_diver_data(2023, where = MateriaalNaam \%like_case\% "bloed")
+get_diver_data(2023, where = MateriaalNaam \%unlike_case\% "Bloed")
+
+get_diver_data(2023,
+               where = c(BepalingNaam \%like\% "Noro",
+                         PatientLeeftijd >= 75))
 
 # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
 
-# Use Diver Integrator functions such as regexp() within EVAL():              
-get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^B")'))
+# Use Diver Integrator functions within EVAL():              
+get_diver_data(2023, where = EVAL('regexp(value("MateriaalCode"),"^B")'))
 
-# With ignore case (defaults to false):
-get_diver_data(where = EVAL('regexp(value("Materiaalcode"),"^b", true)'))
+get_diver_data(
+  2023,
+  where = EVAL('rolling(12, value("OntvangstDatum"), date("2023/11/27"))')
+)
 
+# See the website for an overview of allowed functions:
+# https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
 }
 
 
