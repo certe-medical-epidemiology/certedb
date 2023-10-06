@@ -49,22 +49,25 @@
 #' get_diver_data(date_range = 2023, where = BepalingCode == "PXNCOV")
 #' get_diver_data(2023, BepalingCode == "PXNCOV")
 #' 
+#' # use di$ to pull a list with column names while you type
+#' get_diver_data(2023, di$BepalingCode == "PXNCOV")
+#' 
 #' # for the `where`, use `&`, `|`, or `c()`:
 #' get_diver_data(last_month(),
-#'                BepalingCode == "PXNCOV" & Zorglijn == "2e lijn")
+#'                di$BepalingCode == "PXNCOV" & di$Zorglijn == "2e lijn")
 #' get_diver_data(c(2020:2023),
-#'                where = c(BepalingCode == "PXNCOV", Zorglijn == "2e lijn"))
+#'                where = c(di$BepalingCode == "PXNCOV", di$Zorglijn == "2e lijn"))
 #' 
 #' 
 #' # use %like%, %unlike%, %like_case% or %unlike_case% for regular expressions
-#' get_diver_data(2023, where = MateriaalNaam %like% "Bloed")
-#' get_diver_data(2023, where = MateriaalNaam %unlike% "Bloed")
-#' get_diver_data(2023, where = MateriaalNaam %like_case% "bloed")
-#' get_diver_data(2023, where = MateriaalNaam %unlike_case% "Bloed")
+#' get_diver_data(2023, where = di$MateriaalNaam %like% "Bloed")
+#' get_diver_data(2023, where = di$MateriaalNaam %unlike% "Bloed")
+#' get_diver_data(2023, where = di$MateriaalNaam %like_case% "bloed")
+#' get_diver_data(2023, where = di$MateriaalNaam %unlike_case% "Bloed")
 #' 
 #' get_diver_data(2023,
-#'                where = c(BepalingNaam %like% "Noro",
-#'                          PatientLeeftijd >= 75))
+#'                where = c(di$BepalingNaam %like% "Noro",
+#'                          di$PatientLeeftijd >= 75))
 #' 
 #' # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
 #' 
@@ -143,14 +146,10 @@ get_diver_data <- function(date_range = this_year(),
     out <- conn |> tbl("data")
   }
   out_bak <- out
-  # apply filters
-  # where <- substitute(where)
-  # for (i in seq_len(length(where))) {
-  #   where_txt <- deparse(where[[i]])
-  #   if (where_txt %like% "di[$]") {
-  #     where[[i]] <- str2lang(gsub("di$", "", where_txt, fixed = TRUE))
-  #   }
-  # }
+  
+  # fill in columns from the 'di' object
+  where <- where_convert_di(substitute(where))
+  
   if (!is.null(substitute(where))) {
     out <- out |> filter({{ where }}) |> R_to_DI()
   }
@@ -368,6 +367,16 @@ certedb_query <- function(query,
                  mic = FALSE,
                  rsi = FALSE,
                  tat_hours = FALSE)
+}
+
+where_convert_di <- function(where) {
+  for (i in seq_len(length(where))) {
+    where_txt <- deparse(where[[i]])
+    if (where_txt %like% "di[$]") {
+      where[[i]] <- str2lang(gsub("di$", "", where_txt, fixed = TRUE))
+    }
+  }
+  where
 }
 
 #' @importFrom rlang is_quosure quo_get_expr

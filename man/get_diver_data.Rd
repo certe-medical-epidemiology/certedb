@@ -154,22 +154,25 @@ Using \code{certedb_query("your qry here")} is identical to using \code{certedb_
 get_diver_data(date_range = 2023, where = BepalingCode == "PXNCOV")
 get_diver_data(2023, BepalingCode == "PXNCOV")
 
+# use di$ to pull a list with column names while you type
+get_diver_data(2023, di$BepalingCode == "PXNCOV")
+
 # for the `where`, use `&`, `|`, or `c()`:
 get_diver_data(last_month(),
-               BepalingCode == "PXNCOV" & Zorglijn == "2e lijn")
+               di$BepalingCode == "PXNCOV" & di$Zorglijn == "2e lijn")
 get_diver_data(c(2020:2023),
-               where = c(BepalingCode == "PXNCOV", Zorglijn == "2e lijn"))
+               where = c(di$BepalingCode == "PXNCOV", di$Zorglijn == "2e lijn"))
 
 
 # use \%like\%, \%unlike\%, \%like_case\% or \%unlike_case\% for regular expressions
-get_diver_data(2023, where = MateriaalNaam \%like\% "Bloed")
-get_diver_data(2023, where = MateriaalNaam \%unlike\% "Bloed")
-get_diver_data(2023, where = MateriaalNaam \%like_case\% "bloed")
-get_diver_data(2023, where = MateriaalNaam \%unlike_case\% "Bloed")
+get_diver_data(2023, where = di$MateriaalNaam \%like\% "Bloed")
+get_diver_data(2023, where = di$MateriaalNaam \%unlike\% "Bloed")
+get_diver_data(2023, where = di$MateriaalNaam \%like_case\% "bloed")
+get_diver_data(2023, where = di$MateriaalNaam \%unlike_case\% "Bloed")
 
 get_diver_data(2023,
-               where = c(BepalingNaam \%like\% "Noro",
-                         PatientLeeftijd >= 75))
+               where = c(di$BepalingNaam \%like\% "Noro",
+                         di$PatientLeeftijd >= 75))
 
 # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
 
