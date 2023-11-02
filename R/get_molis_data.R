@@ -81,12 +81,12 @@ certedb_getmmb <- function(dates = NULL,
   on.exit(suppressWarnings(suppressMessages(try(db_close(conn, print = info), silent = TRUE))))
   user <- paste0("CERTE\\", Sys.info()["user"])
   
+  eucast_rules_setting <- eucast_rules
+  if (is.function(eucast_rules_setting)) {
+    eucast_rules_setting <- "all"
+  }
+  
   if (is.null(query)) {
-    
-    eucast_rules_setting <- eucast_rules
-    if (is.function(eucast_rules_setting)) {
-      eucast_rules_setting <- "all"
-    }
     
     dates_depsub <- deparse(substitute(dates))
     where_depsub <- deparse(substitute(where))
