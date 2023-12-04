@@ -115,7 +115,7 @@ msg <- function(..., print = interactive()) {
 
 #' @importFrom certestyle font_green
 msg_ok <- function(time = TRUE, dimensions = NULL, print = interactive(), ...) {
-  time_diff <- Sys.time() - pkg_env$time
+  time_diff <- difftime(Sys.time(), pkg_env$time)
   if (is.null(dimensions)) {
     size <- ""
   } else {
@@ -132,22 +132,22 @@ msg_ok <- function(time = TRUE, dimensions = NULL, print = interactive(), ...) {
              ifelse(isTRUE(time),
                     paste0(" (", format(round(time_diff, digits = 1)), size, ")"),
                     ""),
+             ...,
              type = NULL,
-             print = print,
-             ...)
+             print = print)
   pkg_env$time <- NULL
 }
 
 #' @importFrom certestyle font_red
 msg_error <- function(time = TRUE, print = interactive(), ...) {
-  time_diff <- Sys.time() - pkg_env$time
+  time_diff <- difftime(Sys.time(), pkg_env$time)
   db_message(font_red(" ERROR"),
              ifelse(isTRUE(time),
                     paste0(" (", format(round(time_diff, digits = 1)), ")"),
                     ""),
+             ...,
              type = NULL,
-             print = print,
-             ...)
+             print = print)
   pkg_env$time <- NULL
 }
 

@@ -21,8 +21,10 @@
 #' 
 #' Thes functions can be used to download local or remote database data, e.g. Spectre data from DiveLine on a Diver server (from [Dimensional Insight](https://www.dimins.com)). The [get_diver_data()] function sets up an ODBC connection (using [db_connect()]), which requires their quite limited [DI-ODBC driver](https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html).
 #' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column `Ontvangstdatum`. Defaults to [this_year()]. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
+#' @param date_column column name to filter `date_range` on, will be determined automatically if using `NULL`.
 #' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
 #' @param diver_cbase,diver_project,diver_dsn,diver_testserver properties to set in [db_connect()]. The `diver_cbase` argument will be based on `preset`, but can also be set to blank `NULL` to manually select a cBase in a popup window.
+#' @param diver_tablename name of the database table to download data from. This is hard-coded by DI and should normally never be changed.
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise. This will always be `FALSE` in Quarto / R Markdown, since the output of [knitr::pandoc_to()] must be `NULL`.
 #' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"sir"` to keep SIR values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.sir()`][AMR::as.sir()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
 #' @param preset a preset to choose from [presets()]. Will be ignored if `diver_cbase` is set, even if it is set to `NULL`.
@@ -68,6 +70,13 @@
 #' get_diver_data(2023,
 #'                where = c(di$BepalingNaam %like% "Noro",
 #'                          di$PatientLeeftijd >= 75))
+#'                          
+#' # R objects will be converted
+#' materialen <- c("A", "B", "C")
+#' get_diver_data(2023, where = di$MateriaalNaam %in% materialen)
+#' leeftijden <- 65:85
+#' get_diver_data(2023, where = di$PatientLeeftijd %in% leeftijden)
+#' 
 #' 
 #' # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
 #' 
@@ -84,6 +93,7 @@
 #' }
 get_diver_data <- function(date_range = this_year(),
                            where = NULL,
+                           date_column = read_secret("db.diver_date_column"),
                            review_qry = interactive(),
                            antibiogram_type = "sir",
                            distinct = TRUE,
@@ -93,7 +103,9 @@ get_diver_data <- function(date_range = this_year(),
                            diver_project = read_secret("db.diver_project"),
                            diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else  read_secret("db.diver_dsn_test"),
                            diver_testserver = FALSE,
-                           info = interactive()) {
+                           diver_tablename = "data",
+                           info = interactive(),
+                           ...) {
   
   if (is_empty(preset)) {
     preset <- NULL
@@ -118,8 +130,31 @@ get_diver_data <- function(date_range = this_year(),
     diver_cbase <- "(manually selected)"
   }
   
-  msg_init("Retrieving initial cBase...", print = info)
   if (!is.null(date_range)) {
+    
+    msg_init("Checking date columns...", print = info)
+    case_row1 <- conn |> tbl(diver_tablename) |> utils::head(1) |> collect()
+    cbase_columns <- case_row1 |> colnames()
+    date_cols <- cbase_columns[which(vapply(FUN.VALUE = logical(1), case_row1, inherits, c("Date", "POSIXct")))]
+    
+    if (!is.null(date_column) && !identical(date_column, "") && !date_column %in% cbase_columns) {
+      msg_error(time = FALSE, print = info,
+                paste0("\n  Column \"", date_column, "\" does not exist in this cBase, change argument `date_column` to one of: ",
+                       paste0('\n  - "', date_cols, '"', collapse = "")))
+      db_close(conn, print = info)
+      return(invisible())
+    } else if (is.null(date_column) || identical(date_column, "")) {
+      if (length(date_cols) == 0) {
+        msg_error(time = FALSE, print = info, "No date column found in this cBase")
+        db_close(conn, print = info)
+        return(invisible())
+      }
+      date_column <- date_cols[1]
+      msg_ok(time = FALSE, dimensions = NULL, print = info, paste0("; Picked column ", font_blue(paste0('"', date_column, '"'))))
+    } else {
+      msg_ok(time = FALSE, dimensions = NULL, print = info) 
+    }
+    
     if (length(date_range) == 1) {
       date_range <- rep(date_range, 2)
     } else {
@@ -132,33 +167,40 @@ get_diver_data <- function(date_range = this_year(),
     }
     date_range <- tryCatch(as.Date(date_range),
                            error = function(e) as.Date(date_range, origin = "1970-01-01"))
+    msg_init("Retrieving initial cBase...", print = info)
     if (length(unique(date_range)) > 1) {
       out <- conn |>
         # from https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
-        tbl(sql(paste0("SELECT * FROM data WHERE Ontvangstdatum BETWEEN ",
+        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " BETWEEN ",
                        "{d '", format2(date_range[1], "yyyy-mm-dd"), "'} AND ",
                        "{d '", format2(date_range[2], "yyyy-mm-dd"), "'}")))
     } else {
       out <- conn |>
-        tbl(sql(paste0("SELECT * FROM data WHERE Ontvangstdatum = {d '", format2(date_range[1], "yyyy-mm-dd"), "'}")))
+        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " = {d '", format2(date_range[1], "yyyy-mm-dd"), "'}")))
     }
   } else {
-    out <- conn |> tbl("data")
+    msg_init("Retrieving initial cBase...", print = info)
+    out <- conn |> tbl(diver_tablename)
   }
   out_bak <- out
+  msg_ok(dimensions = dim(out), print = info)
   
+  msg_init("Validating WHERE statement...", print = info)
   # fill in columns from the 'di' object
   where <- where_convert_di(substitute(where))
+  # convert objects, this will return OK
+  where <- where_convert_objects(deparse(substitute(where)), info = info)
   
   if (!is.null(substitute(where))) {
     out <- out |> filter({{ where }}) |> R_to_DI()
   }
   if (!is.null(preset) && !all(is.na(preset$filter))) {
     # apply filter from preset
+    msg_init(paste0("Validating WHERE statement from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")))
     preset_filter <- str2lang(preset$filter)
     out <- out |> filter(preset_filter)
+    msg_ok(dimensions = dim(out))
   }
-  msg_ok(time = TRUE, dimensions = dim(out), print = info)
   qry <- remote_query(out)
   
   if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
@@ -195,7 +237,7 @@ get_diver_data <- function(date_range = this_year(),
     msg_error()
     stop(e$message, call. = FALSE)
   })
-  msg_ok(time = TRUE, dimensions = dim(out), print = info)
+  msg_ok(dimensions = dim(out), print = info)
   
   db_close(conn, print = info)
   
@@ -227,7 +269,7 @@ get_diver_data <- function(date_range = this_year(),
     out <- out |>
       select(!matches("^(Ab_|ABMC$)")) |> 
       distinct()
-    msg_ok(dimensions = dim(out))
+    msg_ok(time = FALSE, dimensions = dim(out))
   } else if (isTRUE(antibiogram_type == "sir")) {
     msg_init("Transforming SIRs...")
     ab_vars <- unique(out$ABMC)
@@ -369,9 +411,45 @@ certedb_query <- function(query,
                  tat_hours = FALSE)
 }
 
+#' @importFrom certestyle font_blue font_black
+where_convert_objects <- function(where, info) {
+  where_split <- strsplit(where, " ", fixed = TRUE)[[1]]
+  converted <- list()
+  
+  for (i in seq_len(length(where_split))) {
+    old <- where_split[i]
+    if (old %unlike% "^[A-Za-z0-9.]") {
+      next
+    }
+    evaluated <- tryCatch(eval(parse(text = old)), error = function(e) NULL)
+    if (!is.null(evaluated)) {
+      new <- paste0(trimws(deparse(evaluated)), collapse = "")
+      if (!identical(new, old)) {
+        converted <- c(converted,
+                       stats::setNames(list(new), old))
+        where_split[i] <- new
+      }
+    }
+  }
+  
+  if (length(converted) > 0) {
+    msg_txt <- character(0)
+    for (i in seq_len(length(converted))) {
+      msg_txt <- c(msg_txt,
+                   paste0("\n  - Replaced ", font_blue(names(converted)[i]), font_black(" with "), font_blue(converted[[i]])))
+    }
+    converted <- paste0(msg_txt, collapse = "")
+  } else {
+    converted <- ""
+  }
+  msg_ok(time = FALSE, dimensions = NULL, print = info, converted)
+  where_split <- paste0(trimws(where_split), collapse = "")
+  str2lang(where_split)
+}
+
 where_convert_di <- function(where) {
   for (i in seq_len(length(where))) {
-    where_txt <- deparse(where[[i]])
+    where_txt <- paste0(trimws(deparse(where[[i]])), collapse = "")
     if (where_txt %like% "di[$]") {
       where[[i]] <- str2lang(gsub("di$", "", where_txt, fixed = TRUE))
     }

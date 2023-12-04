@@ -12,6 +12,7 @@
 get_diver_data(
   date_range = this_year(),
   where = NULL,
+  date_column = read_secret("db.diver_date_column"),
   review_qry = interactive(),
   antibiogram_type = "sir",
   distinct = TRUE,
@@ -22,7 +23,9 @@ get_diver_data(
   diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else
     read_secret("db.diver_dsn_test"),
   diver_testserver = FALSE,
-  info = interactive()
+  diver_tablename = "data",
+  info = interactive(),
+  ...
 )
 
 certedb_query(query, where = NULL, auto_transform = TRUE, info = interactive())
@@ -81,6 +84,8 @@ certedb_getmmb_tat(
 
 \item{where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.}}
 
+\item{date_column}{column name to filter \code{date_range} on, will be determined automatically if using \code{NULL}.}
+
 \item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:output_type]{knitr::pandoc_to()}} must be \code{NULL}.}
 
 \item{antibiogram_type}{antibiotic transformation mode. Leave blank to strip antibiotic results from the data, \code{"sir"} to keep SIR values, \code{"mic"} to keep MIC values or \code{"disk"} to keep disk diffusion values. Values will be cleaned with \code{\link[AMR:as.sir]{as.sir()}}, \code{\link[AMR:as.mic]{as.mic()}} or \code{\link[AMR:as.disk]{as.disk()}}.}
@@ -93,7 +98,11 @@ certedb_getmmb_tat(
 
 \item{diver_cbase, diver_project, diver_dsn, diver_testserver}{properties to set in \code{\link[=db_connect]{db_connect()}}. The \code{diver_cbase} argument will be based on \code{preset}, but can also be set to blank \code{NULL} to manually select a cBase in a popup window.}
 
+\item{diver_tablename}{name of the database table to download data from. This is hard-coded by DI and should normally never be changed.}
+
 \item{info}{settings for old \code{certedb_getmmb()} function}
+
+\item{...}{not used anymore, previously settings for old \code{certetools::certedb_getmmb()} function}
 
 \item{query}{a \link{data.frame} to view the query of, or a \link{character} string to run as query in \code{\link[=certedb_getmmb]{certedb_getmmb()}} (which will ignore all other arguments, except for \code{where}, \code{auto_transform} and \code{info}).}
 
@@ -134,8 +143,6 @@ certedb_getmmb_tat(
 \item{only_show_query}{settings for old \code{certedb_getmmb()} function}
 
 \item{review_where}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:output_type]{knitr::pandoc_to()}} must be \code{NULL}.}
-
-\item{...}{not used anymore, previously settings for old \code{certetools::certedb_getmmb()} function}
 }
 \description{
 Thes functions can be used to download local or remote database data, e.g. Spectre data from DiveLine on a Diver server (from \href{https://www.dimins.com}{Dimensional Insight}). The \code{\link[=get_diver_data]{get_diver_data()}} function sets up an ODBC connection (using \code{\link[=db_connect]{db_connect()}}), which requires their quite limited \href{https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html}{DI-ODBC driver}.
@@ -173,6 +180,13 @@ get_diver_data(2023, where = di$MateriaalNaam \%unlike_case\% "Bloed")
 get_diver_data(2023,
                where = c(di$BepalingNaam \%like\% "Noro",
                          di$PatientLeeftijd >= 75))
+                         
+# R objects will be converted
+materialen <- c("A", "B", "C")
+get_diver_data(2023, where = di$MateriaalNaam \%in\% materialen)
+leeftijden <- 65:85
+get_diver_data(2023, where = di$PatientLeeftijd \%in\% leeftijden)
+
 
 # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
 
