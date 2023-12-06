@@ -413,7 +413,7 @@ certedb_query <- function(query,
 
 #' @importFrom certestyle font_blue font_black
 where_convert_objects <- function(where, info) {
-  where_split <- strsplit(where, " ", fixed = TRUE)[[1]]
+  where_split <- strsplit(paste0(trimws(where), collapse = " "), " ", fixed = TRUE)[[1]]
   converted <- list()
   
   for (i in seq_len(length(where_split))) {
@@ -423,7 +423,7 @@ where_convert_objects <- function(where, info) {
     }
     evaluated <- tryCatch(eval(parse(text = old)), error = function(e) NULL)
     if (!is.null(evaluated)) {
-      new <- paste0(trimws(deparse(evaluated)), collapse = "")
+      new <- paste0(trimws(deparse(evaluated)), collapse = " ")
       if (!identical(new, old)) {
         converted <- c(converted,
                        stats::setNames(list(new), old))
@@ -443,13 +443,13 @@ where_convert_objects <- function(where, info) {
     converted <- ""
   }
   msg_ok(time = FALSE, dimensions = NULL, print = info, converted)
-  where_split <- paste0(trimws(where_split), collapse = "")
+  where_split <- paste0(trimws(where_split), collapse = " ")
   str2lang(where_split)
 }
 
 where_convert_di <- function(where) {
   for (i in seq_len(length(where))) {
-    where_txt <- paste0(trimws(deparse(where[[i]])), collapse = "")
+    where_txt <- paste0(trimws(deparse(where[[i]])), collapse = " ")
     if (where_txt %like% "di[$]") {
       where[[i]] <- str2lang(gsub("di$", "", where_txt, fixed = TRUE))
     }
