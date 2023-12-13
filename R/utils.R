@@ -72,11 +72,12 @@ format_dimensions <- function(dims) {
   dims <- trimws(paste0(" ", dims, " ", collapse = symbol$times))
 }
 
-#' @importFrom certestyle font_black font_blue font_red font_green
+#' @importFrom certestyle font_black font_blue font_red font_green font_grey
 db_message <- function(...,
                        print = interactive() | Sys.getenv("IN_PKGDOWN") != "",
                        type = "info",
-                       new_line = TRUE) {
+                       new_line = TRUE,
+                       prefix_time = FALSE) {
   # at default, only prints in interactive mode and for the website generation
   if (isTRUE(print)) {
     msg <- paste0(font_black(c(...), collapse = NULL), collapse = "")
@@ -96,7 +97,10 @@ db_message <- function(...,
     } else if (type == "warning") {
       icon <- font_red(icon)
     }
-    message(trimws(paste(icon, font_black(msg))), appendLF = new_line)
+    message(trimws(paste0(icon, " ",
+                         ifelse(prefix_time == TRUE, font_grey(paste0("[", format(Sys.time()), "] ")), ""),
+                         font_black(msg))),
+            appendLF = new_line)
   }
 }
 
@@ -104,8 +108,8 @@ db_warning <- function(..., print = interactive() | Sys.getenv("IN_PKGDOWN") != 
   db_message(..., print = print, type = "warning")
 }
 
-msg_init <- function(..., print = interactive()) {
-  db_message(..., type = "info", new_line = FALSE, print = print)
+msg_init <- function(..., print = interactive(), prefix_time = FALSE) {
+  db_message(..., type = "info", new_line = FALSE, print = print, prefix_time = prefix_time)
   pkg_env$time <- Sys.time()
 }
 

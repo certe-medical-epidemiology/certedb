@@ -78,7 +78,7 @@ certedb_getmmb <- function(dates = NULL,
                      username = unlist(read_secret("db.certemmb"))["username"],
                      password = unlist(read_secret("db.certemmb"))["password"],
                      print = info)
-  on.exit(suppressWarnings(suppressMessages(try(db_close(conn, print = info), silent = TRUE))))
+  on.exit(db_close(conn, print = info))
   user <- paste0("CERTE\\", Sys.info()["user"])
   
   eucast_rules_setting <- eucast_rules
@@ -252,7 +252,6 @@ certedb_getmmb <- function(dates = NULL,
     query <- sub("{from}", from, query, fixed = TRUE)
     
     if (only_show_query == TRUE) {
-      db_close(conn, print = info)
       return(sql(paste0("\n", query, "\n")))
     }
     
@@ -281,7 +280,7 @@ certedb_getmmb <- function(dates = NULL,
     }
   }
   
-  msg_init("Collecting data...", print = info)
+  msg_init("Collecting data...", print = info, prefix_time = TRUE)
   tryCatch({
     out <- collect(out)
   },
@@ -290,10 +289,9 @@ certedb_getmmb <- function(dates = NULL,
     stop(e$message, call. = FALSE)
   })
   msg_ok(time = TRUE, dimensions = dim(out), print = info)
-  db_close(conn, print = info)
   
   if (tat_hours == TRUE && select %like% " dlt[.]") {
-    msg_init("Calculating time differences in hours...", print = info)
+    msg_init("Calculating time differences in hours...", print = info, prefix_time = TRUE)
     out <- out |>
       mutate(val1_usr_1e = val1_usr_1e |> as.character(),
              val2_usr_1e = val2_usr_1e |> as.character(),
@@ -319,7 +317,7 @@ certedb_getmmb <- function(dates = NULL,
       )
     msg_ok(print = info)
     
-    msg_init("Adding region/year/quarter column `reg_jr_q`...", print = info)
+    msg_init("Adding region/year/quarter column `reg_jr_q`...", print = info, prefix_time = TRUE)
     out <- out |>
       mutate(reg_jr_q = paste0(noord_zuid |> substr(1, 1), "|", format2(ontvangstdatum, "yyyy-QQ")))
     msg_ok(print = info)
@@ -339,7 +337,7 @@ certedb_getmmb <- function(dates = NULL,
       msg("Note: No isolates available.", print = info)
     } else {
       if (!needs_mic && !needs_disk && eucast_rules_setting != FALSE) {
-        msg_init(paste("Applying EUCAST", eucast_rules_setting, "rules..."), print = info)
+        msg_init(paste("Applying EUCAST", eucast_rules_setting, "rules..."), print = info, prefix_time = TRUE)
         out <- suppressMessages(suppressWarnings(eucast_rules(out, col_mo = "bacteriecode", rules = eucast_rules_setting, info = FALSE)))
         msg_ok(print = info)
       }
@@ -347,7 +345,7 @@ certedb_getmmb <- function(dates = NULL,
       if (isTRUE(first_isolates)) {
         patid <- colnames(out)[colnames(out) %in% c("patid", "patidnb")][1]
         if (all(c("bacteriecode", "ontvangstdatum", patid) %in% colnames(out), na.rm = TRUE)) {
-          msg_init("Applying first isolates...", print = info)
+          msg_init("Determining first isolates...", print = info, prefix_time = TRUE)
           out$eerste_isolaat <- first_isolate(
             x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
             method = "episode-based", episode_days = 365, specimen_group = NULL, info = FALSE)
@@ -400,13 +398,13 @@ certedb_getmmb <- function(dates = NULL,
   }
   
   if (zipcodes == TRUE && ziplength[1L] < 6) {
-    msg_init("Transforming zip codes...", print = info)
+    msg_init("Transforming zip codes...", print = info, prefix_time = TRUE)
     out <- out |> mutate(postcode = postcode |> substr(1, ziplength[1L]))
     msg_ok(print = info)
   }
   
   if (isTRUE(auto_transform)) {
-    msg_init("Transforming data set...", print = info)
+    msg_init("Transforming data set...", print = info, prefix_time = TRUE)
     if ("ordernr" %in% colnames(out)) {
       out <- out |> arrange(desc(ordernr))
     } else if ("ontvangstdatum" %in% colnames(out)) {

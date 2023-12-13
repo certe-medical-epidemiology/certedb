@@ -109,11 +109,15 @@ get_diver_data <- function(date_range = this_year(),
   
   if (is_empty(preset)) {
     preset <- NULL
-  } else if (missing(diver_cbase)) {
+  }
+  if (missing(diver_cbase)) {
     # get preset
     preset <- get_preset(preset)
     diver_cbase <- preset$cbase
   } else {
+    if (!is.null(preset)) {
+      msg("Ignoring `preset = \"", preset, "\"` since `diver_cbase` is set")
+    }
     preset <- NULL
   }
   if (is_empty(diver_cbase)) {
@@ -124,6 +128,7 @@ get_diver_data <- function(date_range = this_year(),
                      project = diver_project,
                      cbase = diver_cbase,
                      print = info)
+  on.exit(db_close(conn, print = info))
   user <- conn@info$username
   
   if (diver_cbase == "") {
@@ -141,12 +146,10 @@ get_diver_data <- function(date_range = this_year(),
       msg_error(time = FALSE, print = info,
                 paste0("\n  Column \"", date_column, "\" does not exist in this cBase, change argument `date_column` to one of: ",
                        paste0('\n  - "', date_cols, '"', collapse = "")))
-      db_close(conn, print = info)
       return(invisible())
     } else if (is.null(date_column) || identical(date_column, "")) {
       if (length(date_cols) == 0) {
         msg_error(time = FALSE, print = info, "No date column found in this cBase")
-        db_close(conn, print = info)
         return(invisible())
       }
       date_column <- date_cols[1]
@@ -196,10 +199,11 @@ get_diver_data <- function(date_range = this_year(),
   }
   if (!is.null(preset) && !all(is.na(preset$filter))) {
     # apply filter from preset
-    msg_init(paste0("Validating WHERE statement from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")))
+    msg_init(paste0("Validating WHERE statement from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
+             print = info)
     preset_filter <- str2lang(preset$filter)
     out <- out |> filter(preset_filter)
-    msg_ok(dimensions = dim(out))
+    msg_ok(print = info, dimensions = dim(out))
   }
   qry <- remote_query(out)
   
@@ -220,7 +224,6 @@ get_diver_data <- function(date_range = this_year(),
                             graphics = FALSE)
     }
     if (choice != 1) {
-      db_close(conn)
       return(invisible())
     }
   } else {
@@ -229,7 +232,7 @@ get_diver_data <- function(date_range = this_year(),
     msg("Applying filter: ", wh)
   }
   
-  msg_init("Collecting data...", print = info)
+  msg_init("Collecting data...", print = info, prefix_time = TRUE)
   tryCatch({
     out <- collect(out)
   },
@@ -238,8 +241,6 @@ get_diver_data <- function(date_range = this_year(),
     stop(e$message, call. = FALSE)
   })
   msg_ok(dimensions = dim(out), print = info)
-  
-  db_close(conn, print = info)
   
   for (i in seq_len(ncol(out))) {
     # 2023-02-13 fix for Diver, logicals/booleans seem corrupt
@@ -265,13 +266,13 @@ get_diver_data <- function(date_range = this_year(),
   if (!any(colnames(out) %like% "^(Ab_|ABMC$)")) {
     # do nothing
   } else if (isTRUE(is_empty(antibiogram_type))) {
-    msg_init("Removing AB columns...")
+    msg_init("Removing AB columns...", print = info, prefix_time = TRUE)
     out <- out |>
       select(!matches("^(Ab_|ABMC$)")) |> 
       distinct()
-    msg_ok(time = FALSE, dimensions = dim(out))
+    msg_ok(time = FALSE, print = info, dimensions = dim(out))
   } else if (isTRUE(antibiogram_type == "sir")) {
-    msg_init("Transforming SIRs...")
+    msg_init("Transforming SIRs...", print = info, prefix_time = TRUE)
     ab_vars <- unique(out$ABMC)
     ab_vars <- ab_vars[!is.na(ab_vars)]
     SIR_col <- ifelse("Ab_RSI" %in% colnames(out), "Ab_RSI", "Ab_SIR")
@@ -287,9 +288,9 @@ get_diver_data <- function(date_range = this_year(),
     if ("NA" %in% colnames(out)) {
       out <- out |> select(-"NA")
     }
-    msg_ok(dimensions = dim(out))
+    msg_ok(print = info, dimensions = dim(out))
   } else if (isTRUE(antibiogram_type == "mic")) {
-    msg_init("Transforming MICs...")
+    msg_init("Transforming MICs...", print = info, prefix_time = TRUE)
     ab_vars <- unique(out$ABMC)
     ab_vars <- ab_vars[!is.na(ab_vars)]
     out <- out |>
@@ -304,9 +305,9 @@ get_diver_data <- function(date_range = this_year(),
     if ("NA" %in% colnames(out)) {
       out <- out |> select(-"NA")
     }
-    msg_ok(dimensions = dim(out))
+    msg_ok(print = info, dimensions = dim(out))
   } else if (isTRUE(antibiogram_type == "disk")) {
-    msg_init("Transforming disk diameters...")
+    msg_init("Transforming disk diameters...", print = info, prefix_time = TRUE)
     ab_vars <- unique(out$ABMC)
     ab_vars <- ab_vars[!is.na(ab_vars)]
     out <- out |>
@@ -318,7 +319,7 @@ get_diver_data <- function(date_range = this_year(),
     if ("NA" %in% colnames(out)) {
       out <- out |> select(-"NA")
     }
-    msg_ok(dimensions = dim(out))
+    msg_ok(print = info, dimensions = dim(out))
   }
   
   if (isTRUE(distinct)) {
@@ -330,13 +331,15 @@ get_diver_data <- function(date_range = this_year(),
   }
   
   if (!is.null(preset) && !all(is.na(preset$select))) {
-    msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")))
+    msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
+             print = info,
+             prefix_time = TRUE)
     out <- out |> select(preset$select)
-    msg_ok(dimensions = dim(out))
+    msg_ok(print = info, dimensions = dim(out))
   }
   
   if (isTRUE(auto_transform)) {
-    msg_init("Transforming data set...")
+    msg_init("Transforming data set...", print = info, prefix_time = TRUE)
     if ("Ordernummer" %in% colnames(out)) {
       out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"] <- gsub(".", "", out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"], fixed = TRUE)
       out <- out |> arrange(desc(Ordernummer))
@@ -345,7 +348,7 @@ get_diver_data <- function(date_range = this_year(),
     }
     # transform data, and update column names
     out <- auto_transform(out, snake_case = TRUE)
-    msg_ok()
+    msg_ok(print = info)
   }
   
   as_certedb_tibble(out,
