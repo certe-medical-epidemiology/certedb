@@ -37,7 +37,7 @@
 #' Use [certedb_query()] to retrieve the original query that was used to download the data.
 #' @importFrom dbplyr sql remote_query
 #' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc
-#' @importFrom certestyle format2 font_blue font_black font_grey
+#' @importFrom certestyle format2 font_black font_blue font_bold font_green font_grey font_italic
 #' @importFrom certetoolbox auto_transform this_year
 #' @importFrom tidyr pivot_wider
 #' @importFrom AMR as.sir as.mic as.disk
@@ -191,7 +191,7 @@ get_diver_data <- function(date_range = this_year(),
   msg_init("Validating WHERE statement...", print = info)
   # fill in columns from the 'di' object
   where <- where_convert_di(substitute(where))
-  # convert objects, this will return OK
+  # convert objects, this will return msg "OK"
   where <- where_convert_objects(deparse(substitute(where)), info = info)
   
   if (!is.null(substitute(where))) {
@@ -206,9 +206,14 @@ get_diver_data <- function(date_range = this_year(),
     msg_ok(print = info, dimensions = dim(out))
   }
   qry <- remote_query(out)
+  qry_print <- gsub(paste0("(", paste0("\"?", colnames(out), "\"?", collapse = "|"), ")"), font_italic(font_green("\\1")),
+                    gsub("( AND | OR |NOT| IN |EVAL| BETWEEN )", font_blue("\\1"),
+                         gsub("(SELECT|FROM|WHERE)", font_bold(font_blue("\\1")),
+                              gsub("}\n  AND ", "} AND ", 
+                                   gsub(" AND ", "\n  AND ", qry)))))
   
   if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
-    choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry,
+    choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry_print,
                                          ifelse(!is.null(preset) & !all(is.na(preset$filter)),
                                                 font_grey(paste0("\n(last part from preset \"", preset$name, "\")")),
                                                 "")),
@@ -219,7 +224,7 @@ get_diver_data <- function(date_range = this_year(),
       cols <- vapply(FUN.VALUE = character(1), df, type_sum)
       # print column names with their class in <..> brackets
       print(paste0(names(cols), " <", cols, ">"), quote = FALSE)
-      choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry),
+      choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry_print),
                             choices = c("Yes", "No"),
                             graphics = FALSE)
     }
@@ -483,34 +488,44 @@ R_to_DI <- function(out) {
       
       # has multiple filters, so go over each filter, look for 'like' statements and replace them
       for (j in 2:length(elements)) {
-        el <- elements[[j]]
-        
-        if (length(as.character(el)) == 0 ||
-            !any(as.character(el) %in% c("%like%", "%like_case%", "%unlike%", "%unlike_case%"),
-                 na.rm = TRUE)) {
-          # contains no 'like' statements
-          next
+        if (length(elements[[j]]) > 0 &&
+            !any(as.character(elements[[j]]) %in% c("%like%", "%like_case%", "%unlike%", "%unlike_case%")) &&
+            any(as.character(elements[[j]]) %like% "%(like|like_case|unlike|unlike_case)%")) {
+          # contains multiple elements with at least one having a like statement
+          el_length <- seq_len(length(elements[[j]]))
+        } else {
+          el_length <- 1
         }
         
-        if (as.character(el[[1]]) == "%like%") {
-          wheres[[i]][[2]][[j]] <- str2lang(paste0("EVAL('regexp(value(\"",
-                                                   el[[2]], "\"), \"",
-                                                   el[[3]], "\", true)')"))
+        for (k in el_length) {
           
-        } else if (as.character(el[[1]]) == "%unlike%") {
-          wheres[[i]][[2]][[j]] <- str2lang(paste0("!EVAL('regexp(value(\"",
-                                                   el[[2]], "\"), \"",
-                                                   el[[3]], "\", true)')"))
+          if (length(as.character(elements[[j]][[k]])) == 0 ||
+              !any(as.character(elements[[j]][[k]]) %in% c("%like%", "%like_case%", "%unlike%", "%unlike_case%"),
+                   na.rm = TRUE)) {
+            # contains no 'like' statements
+            next
+          }
           
-        } else if (as.character(el[[1]]) == "%like_case%") {
-          wheres[[i]][[2]][[j]] <- str2lang(paste0("EVAL('regexp(value(\"",
-                                                   el[[2]], "\"), \"",
-                                                   el[[3]], "\", false)')"))
-          
-        } else if (as.character(el[[1]]) == "%unlike_case%") {
-          wheres[[i]][[2]][[j]] <- str2lang(paste0("!EVAL('regexp(value(\"",
-                                                   el[[2]], "\"), \"",
-                                                   el[[3]], "\", false)')"))
+          if (as.character(elements[[j]][[k]][[1]]) == "%like%") {
+            wheres[[i]][[2]][[k]][[j]] <- str2lang(paste0("EVAL('regexp(value(\"",
+                                                          elements[[j]][[k]][[2]], "\"), \"",
+                                                          elements[[j]][[k]][[3]], "\", true)')"))
+            
+          } else if (as.character(elements[[j]][[1]]) == "%unlike%") {
+            wheres[[i]][[2]][[k]][[j]] <- str2lang(paste0("!EVAL('regexp(value(\"",
+                                                          elements[[j]][[k]][[2]], "\"), \"",
+                                                          elements[[j]][[k]][[3]], "\", true)')"))
+            
+          } else if (as.character(elements[[j]][[1]]) == "%like_case%") {
+            wheres[[i]][[2]][[k]][[j]] <- str2lang(paste0("EVAL('regexp(value(\"",
+                                                          elements[[j]][[k]][[2]], "\"), \"",
+                                                          elements[[j]][[k]][[3]], "\", false)')"))
+            
+          } else if (as.character(elements[[j]][[1]]) == "%unlike_case%") {
+            wheres[[i]][[2]][[k]][[j]] <- str2lang(paste0("!EVAL('regexp(value(\"",
+                                                          elements[[j]][[k]][[2]], "\"), \"",
+                                                          elements[[j]][[k]][[3]], "\", false)')"))
+          }
         }
       }
       
