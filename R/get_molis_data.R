@@ -285,8 +285,8 @@ certedb_getmmb <- function(dates = NULL,
     out <- collect(out)
   },
   error = function(e) {
-    msg_error(print = info)
-    stop(e$message, call. = FALSE)
+    msg_error(time = FALSE, print = info)
+    stop(format_error(e), call. = FALSE)
   })
   msg_ok(time = TRUE, dimensions = dim(out), print = info)
   

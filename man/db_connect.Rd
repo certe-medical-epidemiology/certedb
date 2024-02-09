@@ -10,7 +10,7 @@ db_connect(driver, ..., print = TRUE)
 db_close(conn, ..., print = TRUE)
 }
 \arguments{
-\item{driver}{database driver to use, such as \code{\link[odbc:odbc]{odbc::odbc()}} and \code{\link[duckdb:duckdb]{duckdb::duckdb()}}}
+\item{driver}{database driver to use, such as \code{\link[odbc:dbConnect-OdbcDriver-method]{odbc::odbc()}} and \code{\link[duckdb:duckdb]{duckdb::duckdb()}}}
 
 \item{...}{arguments passed on to \code{\link[DBI:dbDisconnect]{DBI::dbDisconnect()}}}
 

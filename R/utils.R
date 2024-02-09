@@ -72,6 +72,31 @@ format_dimensions <- function(dims) {
   dims <- trimws(paste0(" ", dims, " ", collapse = symbol$times))
 }
 
+#' @importFrom rlang cnd_message
+#' @importFrom certestyle font_stripstyle
+format_error <- function(e, replace = character(0), by = character(0)) {
+  if (inherits(e, "rlang_error")) {
+    txt <- cnd_message(e)
+    txt <- font_stripstyle(txt)
+    txt <- gsub(".*Caused by error[:](\n!)?", "", txt)
+  } else {
+    txt <- c(e$message, e$parent$message, e$parent$parent$message, e$parent$parent$parent$message, e$call)
+  }
+  txt <- txt[txt %unlike% "^Problem while"]
+  if (length(txt) == 0) {
+    # return original error
+    stop(e, call. = FALSE)
+  }
+  for (i in seq_len(length(replace))) {
+    txt <- gsub(replace[i], by[i], txt)
+  }
+  if (all(txt == "")) {
+    txt <- "Unknown error"
+  }
+  txt <- trimws(txt)
+  paste0(txt, collapse = "\n")
+}
+
 #' @importFrom certestyle font_black font_blue font_red font_green font_grey
 db_message <- function(...,
                        print = interactive() | Sys.getenv("IN_PKGDOWN") != "",

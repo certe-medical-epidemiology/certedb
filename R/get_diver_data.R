@@ -234,6 +234,7 @@ get_diver_data <- function(date_range = this_year(),
   } else {
     wh <- strsplit(unclass(remote_query(out)), "[ \n]WHERE[ \n]")[[1]]
     wh <- paste0(trimws(gsub("\"q[0-9]+\"", "", wh[2:length(wh)])), collapse = " AND ")
+    wh <- gsub(" AND ", "\n  AND ", wh, fixed = TRUE)
     msg("Applying filter: ", wh)
   }
   
@@ -242,8 +243,8 @@ get_diver_data <- function(date_range = this_year(),
     out <- collect(out)
   },
   error = function(e) {
-    msg_error()
-    stop(e$message, call. = FALSE)
+    msg_error(time = FALSE, print = info)
+    stop(format_error(e), call. = FALSE)
   })
   msg_ok(dimensions = dim(out), print = info)
   
@@ -507,22 +508,22 @@ R_to_DI <- function(out) {
           }
           
           if (as.character(elements[[j]][[k]][[1]]) == "%like%") {
-            wheres[[i]][[2]][[k]][[j]] <- str2lang(paste0("EVAL('regexp(value(\"",
+            wheres[[i]][[2]][[j]][[k]] <- str2lang(paste0("EVAL('regexp(value(\"",
                                                           elements[[j]][[k]][[2]], "\"), \"",
                                                           elements[[j]][[k]][[3]], "\", true)')"))
             
           } else if (as.character(elements[[j]][[1]]) == "%unlike%") {
-            wheres[[i]][[2]][[k]][[j]] <- str2lang(paste0("!EVAL('regexp(value(\"",
+            wheres[[i]][[2]][[j]][[k]] <- str2lang(paste0("!EVAL('regexp(value(\"",
                                                           elements[[j]][[k]][[2]], "\"), \"",
                                                           elements[[j]][[k]][[3]], "\", true)')"))
             
           } else if (as.character(elements[[j]][[1]]) == "%like_case%") {
-            wheres[[i]][[2]][[k]][[j]] <- str2lang(paste0("EVAL('regexp(value(\"",
+            wheres[[i]][[2]][[j]][[k]] <- str2lang(paste0("EVAL('regexp(value(\"",
                                                           elements[[j]][[k]][[2]], "\"), \"",
                                                           elements[[j]][[k]][[3]], "\", false)')"))
             
           } else if (as.character(elements[[j]][[1]]) == "%unlike_case%") {
-            wheres[[i]][[2]][[k]][[j]] <- str2lang(paste0("!EVAL('regexp(value(\"",
+            wheres[[i]][[2]][[j]][[k]] <- str2lang(paste0("!EVAL('regexp(value(\"",
                                                           elements[[j]][[k]][[2]], "\"), \"",
                                                           elements[[j]][[k]][[3]], "\", false)')"))
           }
