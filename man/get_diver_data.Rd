@@ -158,44 +158,44 @@ Using \code{certedb_query("your qry here")} is identical to using \code{certedb_
 \dontrun{
 
 # these two work identical:
-get_diver_data(date_range = 2023, where = BepalingCode == "PXNCOV")
-get_diver_data(2023, BepalingCode == "PXNCOV")
+get_diver_data(date_range = 2024, where = BepalingCode == "PXNCOV")
+get_diver_data(2024, BepalingCode == "PXNCOV")
 
 # use di$ to pull a list with column names while you type
-get_diver_data(2023, di$BepalingCode == "PXNCOV")
+get_diver_data(2024, di$BepalingCode == "PXNCOV")
 
-# for the `where`, use `&`, `|`, or `c()`:
+# for the `where`, use `&` or `|`:
 get_diver_data(last_month(),
                di$BepalingCode == "PXNCOV" & di$Zorglijn == "2e lijn")
-get_diver_data(c(2020:2023),
-               where = c(di$BepalingCode == "PXNCOV", di$Zorglijn == "2e lijn"))
+get_diver_data(c(2020:2024),
+               where = di$BepalingCode == "PXNCOV" | di$Zorglijn == "2e lijn")
 
 
 # use \%like\%, \%unlike\%, \%like_case\% or \%unlike_case\% for regular expressions
-get_diver_data(2023, where = di$MateriaalNaam \%like\% "Bloed")
-get_diver_data(2023, where = di$MateriaalNaam \%unlike\% "Bloed")
-get_diver_data(2023, where = di$MateriaalNaam \%like_case\% "bloed")
-get_diver_data(2023, where = di$MateriaalNaam \%unlike_case\% "Bloed")
+get_diver_data(2024, where = di$MateriaalNaam \%like\% "Bloed")
+get_diver_data(2024, where = di$MateriaalNaam \%unlike\% "Bloed")
+get_diver_data(2024, where = di$MateriaalNaam \%like_case\% "bloed")
+get_diver_data(2024, where = di$MateriaalNaam \%unlike_case\% "Bloed")
 
-get_diver_data(2023,
-               where = c(di$BepalingNaam \%like\% "Noro",
-                         di$PatientLeeftijd >= 75))
+get_diver_data(2024,
+               where = di$BepalingNaam \%like\% "Noro" &
+                         di$PatientLeeftijd >= 75)
                          
 # R objects will be converted
 materialen <- c("A", "B", "C")
-get_diver_data(2023, where = di$MateriaalNaam \%in\% materialen)
+get_diver_data(2024, where = di$MateriaalNaam \%in\% materialen)
 leeftijden <- 65:85
-get_diver_data(2023, where = di$PatientLeeftijd \%in\% leeftijden)
+get_diver_data(2024, where = di$PatientLeeftijd \%in\% leeftijden)
 
 
 # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
 
 # Use Diver Integrator functions within EVAL():              
-get_diver_data(2023, where = EVAL('regexp(value("MateriaalCode"),"^B")'))
+get_diver_data(2024, where = EVAL('regexp(value("MateriaalCode"),"^B")'))
 
 get_diver_data(
-  2023,
-  where = EVAL('rolling(12, value("OntvangstDatum"), date("2023/11/27"))')
+  2024,
+  where = EVAL('rolling(12, value("OntvangstDatum"), date("2024/11/27"))')
 )
 
 # See the website for an overview of allowed functions:
