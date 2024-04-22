@@ -33,7 +33,7 @@
 #' @param info a logical to indicate whether info about the connection should be printed
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
 #' @param limit maximum number of rows to return.
-#' @param as_background_job run data collection as a background job
+#' @param as_background_job run data collection as a background job. This will save the output to the global environment as 'diver_data'.
 #' @details These functions return a 'certedb tibble' from Diver or MOLIS, which prints information in the tibble header about the used source and current user.
 #' 
 #' Use [certedb_query()] to retrieve the original query that was used to download the data.
@@ -196,7 +196,7 @@ get_diver_data <- function(date_range = this_year(),
   if (!is.infinite(limit)) {
     if (!is.na(limit)) {
       limit <- as.integer(limit)
-      out <- out |> head(n = limit)
+      out <- out |> utils::head(n = limit)
     }
   }
   

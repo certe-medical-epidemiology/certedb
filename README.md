@@ -1,6 +1,6 @@
 # The `certedb` package for R
 
-This is a Certe R Package for connecting to internal Certe databases. This package is part of the 'certedata' universe.
+This is a Certe R Package for connecting to internal Certe cBases and local DuckDB databases. This package is part of the 'certedata' universe.
 
 You can read the [manual with explanation about its functions here](https://certe-medical-epidemiology.github.io/certedb/reference).
 

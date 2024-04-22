@@ -12,7 +12,7 @@ Authors@R: c(
          email = "e.hassing@certe.nl"),
   person(given = "Certe Medical Diagnostics & Advice Foundation",
          role = c("cph", "fnd")))
-Description: A Certe R Package for connecting to internal Certe databases.
+Description: A Certe R Package for connecting to internal Certe cBases and local DuckDB databases.
   This package is part of the 'certedata' universe.
 URL: https://certe-medical-epidemiology.github.io/certedb, https://github.com/certe-medical-epidemiology/certedb
 Depends: 
@@ -34,6 +34,7 @@ Imports:
   yaml (>= 2.2.1)
 Suggests:
   RMariaDB,
+  rstudioapi,
   testthat (>= 2.0.0),
   utils
 License: GPL-2

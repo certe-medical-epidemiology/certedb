@@ -6,7 +6,7 @@
 \alias{certedb-package}
 \title{certedb: A Certe R Package for Connecting to Databases}
 \description{
-A Certe R Package for connecting to internal Certe databases. This package is part of the 'certedata' universe.
+A Certe R Package for connecting to internal Certe cBases and local DuckDB databases. This package is part of the 'certedata' universe.
 }
 \seealso{
 Useful links:

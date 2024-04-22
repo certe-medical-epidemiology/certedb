@@ -106,7 +106,7 @@ certedb_getmmb_tat(
 
 \item{limit}{maximum number of rows to return.}
 
-\item{as_background_job}{run data collection as a background job}
+\item{as_background_job}{run data collection as a background job. This will save the output to the global environment as 'diver_data'.}
 
 \item{...}{not used anymore, previously settings for old \code{certetools::certedb_getmmb()} function}
 
