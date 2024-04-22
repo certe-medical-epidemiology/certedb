@@ -32,6 +32,8 @@
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
 #' @param info a logical to indicate whether info about the connection should be printed
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
+#' @param limit maximum number of rows to return.
+#' @param as_background_job run data collection as a background job
 #' @details These functions return a 'certedb tibble' from Diver or MOLIS, which prints information in the tibble header about the used source and current user.
 #' 
 #' Use [certedb_query()] to retrieve the original query that was used to download the data.
@@ -105,6 +107,8 @@ get_diver_data <- function(date_range = this_year(),
                            diver_testserver = FALSE,
                            diver_tablename = "data",
                            info = interactive(),
+                           limit = Inf,
+                           as_background_job = FALSE,
                            ...) {
   
   if (is_empty(preset)) {
@@ -188,6 +192,14 @@ get_diver_data <- function(date_range = this_year(),
   out_bak <- out
   msg_ok(dimensions = dim(out), print = info)
   
+  limit <- max(as.double(limit))
+  if (!is.infinite(limit)) {
+    if (!is.na(limit)) {
+      limit <- as.integer(limit)
+      out <- out |> head(n = limit)
+    }
+  }
+  
   msg_init("Validating WHERE statement...", print = info)
   # fill in columns from the 'di' object
   where <- where_convert_di(substitute(where))
@@ -206,10 +218,11 @@ get_diver_data <- function(date_range = this_year(),
     out <- out |> filter(preset_filter)
     msg_ok(print = info, dimensions = dim(out))
   }
+  
   qry <- remote_query(out)
   qry_print <- gsub(paste0("(", paste0("\"?", colnames(out), "\"?", collapse = "|"), ")"), font_italic(font_green("\\1")),
                     gsub("( AND | OR |NOT| IN |EVAL| BETWEEN )", font_blue("\\1"),
-                         gsub("(SELECT|FROM|WHERE)", font_bold(font_blue("\\1")),
+                         gsub("(SELECT|FROM|WHERE|LIMIT)", font_bold(font_blue("\\1")),
                               gsub("}\n  AND ", "} AND ", 
                                    gsub(" AND ", "\n  AND ", qry)))))
   
@@ -232,11 +245,37 @@ get_diver_data <- function(date_range = this_year(),
     if (choice != 1) {
       return(invisible())
     }
-  } else {
+  } else if (!interactive()) {
     wh <- strsplit(unclass(remote_query(out)), "[ \n]WHERE[ \n]")[[1]]
     wh <- paste0(trimws(gsub("\"q[0-9]+\"", "", wh[2:length(wh)])), collapse = " AND ")
     wh <- gsub(" AND ", "\n  AND ", wh, fixed = TRUE)
+    wh <- gsub("[ \n]LIMIT .*", "", wh)
     msg("Applying filter: ", wh)
+  }
+  
+  
+  if (isTRUE(as_background_job)) {
+    temp_dir <- tempdir()
+    job <- rstudioapi::jobRunScript(path = system.file("background_db.R", package = "certedb"),
+                                    name = paste0("get_diver_data()"),
+                                    workingDir = temp_dir,
+                                    importEnv = FALSE,
+                                    exportEnv = "R_GlobalEnv")
+    rstudioapi::jobSetState(job, "idle")
+    rstudioapi::jobSetStatus(job, "Waiting to start...")
+    rstudioapi::jobAddOutput(job, "Waiting to start...\n\n")
+    env <- list(job = job,
+                call = sys.call(),
+                distinct = distinct,
+                auto_transform = auto_transform,
+                diver_cbase = diver_cbase,
+                diver_dsn = diver_dsn,
+                diver_project = diver_project,
+                qry = qry,
+                user = user)
+    saveRDS(env, file.path(temp_dir, "env.rds"))
+    rstudioapi::sendToConsole(code = 'msg("Running job in background.")', execute = TRUE, echo = FALSE, focus = TRUE)
+    return(invisible())
   }
   
   msg_init("Collecting data...", print = info, prefix_time = TRUE)

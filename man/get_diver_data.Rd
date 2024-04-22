@@ -25,6 +25,8 @@ get_diver_data(
   diver_testserver = FALSE,
   diver_tablename = "data",
   info = interactive(),
+  limit = Inf,
+  as_background_job = FALSE,
   ...
 )
 
@@ -101,6 +103,10 @@ certedb_getmmb_tat(
 \item{diver_tablename}{name of the database table to download data from. This is hard-coded by DI and should normally never be changed.}
 
 \item{info}{settings for old \code{certedb_getmmb()} function}
+
+\item{limit}{maximum number of rows to return.}
+
+\item{as_background_job}{run data collection as a background job}
 
 \item{...}{not used anymore, previously settings for old \code{certetools::certedb_getmmb()} function}
 
