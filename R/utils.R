@@ -53,6 +53,7 @@ globalVariables(c("Antibioticumcode",
                   "ontvangstdatumtijd",
                   "ordernr",
                   "postcode",
+                  "type",
                   "val1_1e",
                   "val1_def",
                   "val1_usr_1e",
@@ -60,7 +61,8 @@ globalVariables(c("Antibioticumcode",
                   "val2_1e",
                   "val2_def",
                   "val2_usr_1e",
-                  "val2_usr_def"))
+                  "val2_usr_def",
+                  "value"))
 
 #' @importFrom cli symbol
 format_dimensions <- function(dims) {
@@ -157,9 +159,14 @@ msg_ok <- function(time = TRUE, dimensions = NULL, print = interactive(), ...) {
     }
     size <- paste0("; ", format_dim(dimensions))
   }
+  if (length(time_diff) == 0) {
+    time_diff <- "0 secs"
+  } else {
+    time_diff <- format(round(time_diff, digits = 1))
+  }
   db_message(font_green(" OK"),
              ifelse(isTRUE(time),
-                    paste0(" (", format(round(time_diff, digits = 1)), size, ")"),
+                    paste0(" (", time_diff, size, ")"),
                     ""),
              ...,
              type = NULL,

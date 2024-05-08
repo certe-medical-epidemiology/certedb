@@ -26,7 +26,7 @@ get_diver_data(
   diver_tablename = "data",
   info = interactive(),
   limit = Inf,
-  as_background_job = FALSE,
+  in_background = FALSE,
   ...
 )
 
@@ -106,7 +106,7 @@ certedb_getmmb_tat(
 
 \item{limit}{maximum number of rows to return.}
 
-\item{as_background_job}{run data collection as a background job. This will save the output to the global environment as 'diver_data'.}
+\item{in_background}{run data collection in the background using \code{\link[callr:r_bg]{callr::r_bg()}}. Use \code{...$get_result()} to retrieve results, or \code{...$is_active()} to check whether the background process still runs.}
 
 \item{...}{not used anymore, previously settings for old \code{certetools::certedb_getmmb()} function}
 

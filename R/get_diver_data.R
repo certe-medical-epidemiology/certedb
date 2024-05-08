@@ -33,15 +33,15 @@
 #' @param info a logical to indicate whether info about the connection should be printed
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
 #' @param limit maximum number of rows to return.
-#' @param as_background_job run data collection as a background job. This will save the output to the global environment as 'diver_data'.
+#' @param in_background run data collection in the background using [callr::r_bg()]. Use `...$get_result()` to retrieve results, or `...$is_active()` to check whether the background process still runs.
 #' @details These functions return a 'certedb tibble' from Diver or MOLIS, which prints information in the tibble header about the used source and current user.
 #' 
 #' Use [certedb_query()] to retrieve the original query that was used to download the data.
 #' @importFrom dbplyr sql remote_query
-#' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc
+#' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc all_of
 #' @importFrom certestyle format2 font_black font_blue font_bold font_green font_grey font_italic
 #' @importFrom certetoolbox auto_transform this_year
-#' @importFrom tidyr pivot_wider
+#' @importFrom tidyr pivot_longer unite pivot_wider
 #' @importFrom AMR as.sir as.mic as.disk
 #' @importFrom knitr pandoc_to
 #' @rdname get_diver_data
@@ -103,12 +103,12 @@ get_diver_data <- function(date_range = this_year(),
                            preset = read_secret("db.preset_default"),
                            diver_cbase = NULL,
                            diver_project = read_secret("db.diver_project"),
-                           diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else  read_secret("db.diver_dsn_test"),
+                           diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else read_secret("db.diver_dsn_test"),
                            diver_testserver = FALSE,
                            diver_tablename = "data",
                            info = interactive(),
                            limit = Inf,
-                           as_background_job = FALSE,
+                           in_background = FALSE,
                            ...) {
   
   if (is_empty(preset)) {
@@ -127,6 +127,35 @@ get_diver_data <- function(date_range = this_year(),
   if (is_empty(diver_cbase)) {
     diver_cbase <- ""
   }
+  
+  if (isTRUE(in_background)) {
+    message("NOTE: use ...$get_result() to retrieve results when they are available.\n\n",
+            "If the call was:\n",
+            "  data_123 <- get_diver_data(...)\n",
+            "Then after a while retrieve results using:\n",
+            "  data_123 <- data_123$get_result()")
+    out <- callr::r_bg(certedb::get_diver_data,
+                       args = list(date_range = date_range,
+                                   where = where,
+                                   date_column = date_column,
+                                   review_qry = FALSE,
+                                   antibiogram_type = antibiogram_type,
+                                   distinct = distinct,
+                                   auto_transform = auto_transform,
+                                   preset = preset,
+                                   diver_cbase = diver_cbase,
+                                   diver_project = diver_project,
+                                   diver_dsn = diver_dsn,
+                                   diver_testserver = diver_testserver,
+                                   diver_tablename = diver_tablename,
+                                   info = info,
+                                   limit = limit,
+                                   in_background = FALSE,
+                                   ...),
+                       package = TRUE)
+    return(out)
+  }
+  
   conn <- db_connect(driver = odbc::odbc(),
                      dsn = diver_dsn,
                      project = diver_project,
@@ -202,6 +231,9 @@ get_diver_data <- function(date_range = this_year(),
   
   msg_init("Validating WHERE statement...", print = info)
   # fill in columns from the 'di' object
+  if (isTRUE(list(...)$where_as_character)) {
+    where <- str2lang(where)
+  }
   where <- where_convert_di(substitute(where))
   # convert objects, this will return msg "OK"
   where <- where_convert_objects(deparse(substitute(where)), info = info)
@@ -253,31 +285,6 @@ get_diver_data <- function(date_range = this_year(),
     msg("Applying filter: ", wh)
   }
   
-  
-  if (isTRUE(as_background_job)) {
-    temp_dir <- tempdir()
-    job <- rstudioapi::jobRunScript(path = system.file("background_db.R", package = "certedb"),
-                                    name = paste0("get_diver_data()"),
-                                    workingDir = temp_dir,
-                                    importEnv = FALSE,
-                                    exportEnv = "R_GlobalEnv")
-    rstudioapi::jobSetState(job, "idle")
-    rstudioapi::jobSetStatus(job, "Waiting to start...")
-    rstudioapi::jobAddOutput(job, "Waiting to start...\n\n")
-    env <- list(job = job,
-                call = sys.call(),
-                distinct = distinct,
-                auto_transform = auto_transform,
-                diver_cbase = diver_cbase,
-                diver_dsn = diver_dsn,
-                diver_project = diver_project,
-                qry = qry,
-                user = user)
-    saveRDS(env, file.path(temp_dir, "env.rds"))
-    rstudioapi::sendToConsole(code = 'msg("Running job in background.")', execute = TRUE, echo = FALSE, focus = TRUE)
-    return(invisible())
-  }
-  
   msg_init("Collecting data...", print = info, prefix_time = TRUE)
   tryCatch({
     out <- collect(out)
@@ -303,84 +310,58 @@ get_diver_data <- function(date_range = this_year(),
     }
   }
   
-  if (diver_cbase %like% "MMBGL_Datamgnt_BepalingTotaalLevel") {
-    out <- out |>
-      mutate(ABMC = Antibioticumcode, Ab_SIR = RIS_gerapporteerd, Ab_MIC = MIC_gescreend) |> 
-      select(-c(Antibioticumcode:R_AB_Group))
-  }
-  
-  if (!any(colnames(out) %like% "^(Ab_|ABMC$)")) {
-    # do nothing
-  } else if (isTRUE(is_empty(antibiogram_type))) {
-    msg_init("Removing AB columns...", print = info, prefix_time = TRUE)
-    out <- out |>
-      select(!matches("^(Ab_|ABMC$)")) |> 
-      distinct()
-    msg_ok(time = FALSE, print = info, dimensions = dim(out))
-  } else if (isTRUE(antibiogram_type == "sir")) {
-    msg_init("Transforming SIRs...", print = info, prefix_time = TRUE)
-    ab_vars <- unique(out$ABMC)
-    ab_vars <- ab_vars[!is.na(ab_vars)]
-    SIR_col <- ifelse("Ab_RSI" %in% colnames(out), "Ab_RSI", "Ab_SIR")
-    out <- out |>
-      pivot_wider(names_from = "ABMC",
-                  values_from = SIR_col,
-                  id_cols = !matches("^Ab_"),
-                  values_fn = first) |> 
-      mutate(across(ab_vars, function(x) {
-        x[x %in% c("-", "NULL", "N", "NA")] <- NA
-        as.sir(x)
-      }))
-    if ("NA" %in% colnames(out)) {
-      out <- out |> select(-"NA")
+  if (!is.null(preset$join)) {
+    msg_init("Joining data from cBase ", font_blue(paste0("\"", preset$join$cbase, "\"")), "...", print = info, prefix_time = TRUE)
+    
+    join_fn <- getExportedValue(paste0(preset$join$type, "_join"), ns = asNamespace("dplyr"))
+    join_cols <- preset$join$by
+    join_where <- vapply(FUN.VALUE = character(1),
+                         join_cols,
+                         function(x) paste0(ifelse(mode(out[[x]]) == "numeric", "", "'"),
+                                            unique(out[[x]]),
+                                            ifelse(mode(out[[x]]) == "numeric", "", "'"),
+                                            collapse = ", "))
+    join_where <- paste0(join_cols, " %in% c(", join_where, ")", collapse = " & ")
+    # query other cBase
+    out_join <- get_diver_data(date_range = NULL, # no date range, solely base on previous dataset
+                               where = join_where,
+                               where_as_character = TRUE, # this leads to transformation with str2lang()
+                               diver_cbase = preset$join$cbase,
+                               preset = NULL,
+                               diver_project = diver_project,
+                               diver_dsn = diver_dsn,
+                               diver_tablename = diver_tablename,
+                               distinct = distinct,
+                               limit = limit,
+                               auto_transform = FALSE, # if `auto_transform = TRUE`, this will be done later
+                               review_qry = FALSE,
+                               in_background = FALSE,
+                               info = FALSE)
+    
+    if (!is.null(preset$join$select)) {
+      out_join <- out_join |> select(!!!preset$join$select)
     }
-    msg_ok(print = info, dimensions = dim(out))
-  } else if (isTRUE(antibiogram_type == "mic")) {
-    msg_init("Transforming MICs...", print = info, prefix_time = TRUE)
-    ab_vars <- unique(out$ABMC)
-    ab_vars <- ab_vars[!is.na(ab_vars)]
+    if (!is.null(preset$join$wide_names_from)) {
+      out_join <- out_join |>
+        pivot_longer(-all_of(c(join_cols, preset$join$wide_names_from)),
+                            names_to = "type",
+                            values_to = "value") |>
+        unite(col = "col", preset$join$wide_names_from, type) |>
+        pivot_wider(names_from = col, values_from = value)
+    }
+    
+    # the actual join
     out <- out |>
-      pivot_wider(names_from = "ABMC",
-                  values_from = "Ab_MIC",
-                  id_cols = !matches("^Ab_"),
-                  values_fn = first) |> 
-      mutate(across(ab_vars, function(x) {
-        x[x %in% c("F", "Neg", "Pos")] <- NA
-        as.mic(x)
-      }))
-    if ("NA" %in% colnames(out)) {
-      out <- out |> select(-"NA")
-    }
-    msg_ok(print = info, dimensions = dim(out))
-  } else if (isTRUE(antibiogram_type == "disk")) {
-    msg_init("Transforming disk diameters...", print = info, prefix_time = TRUE)
-    ab_vars <- unique(out$ABMC)
-    ab_vars <- ab_vars[!is.na(ab_vars)]
-    out <- out |>
-      pivot_wider(names_from = "ABMC",
-                  values_from = "Ab_Diameter",
-                  id_cols = !matches("^Ab_"),
-                  values_fn = first) |> 
-      mutate(across(ab_vars, as.disk))
-    if ("NA" %in% colnames(out)) {
-      out <- out |> select(-"NA")
-    }
-    msg_ok(print = info, dimensions = dim(out))
-  }
-  
-  if (isTRUE(distinct)) {
-    out_distinct <- distinct(out)
-    if (nrow(out_distinct) < nrow(out)) {
-      msg("Removed ", out_distinct - out, " duplicate rows")
-      out <- out_distinct
-    }
+      join_fn(out_join, by = join_cols, suffix = c("", "2"))
+    
+    msg_ok(dimensions = dim(out), print = info)
   }
   
   if (!is.null(preset) && !all(is.na(preset$select))) {
     msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
              print = info,
              prefix_time = TRUE)
-    out <- out |> select(preset$select)
+    out <- out |> select(!!!preset$select)
     msg_ok(print = info, dimensions = dim(out))
   }
   
@@ -499,8 +480,20 @@ where_convert_objects <- function(where, info) {
 where_convert_di <- function(where) {
   for (i in seq_len(length(where))) {
     where_txt <- paste0(trimws(deparse(where[[i]])), collapse = " ")
-    if (where_txt %like% "di[$]") {
-      where[[i]] <- str2lang(gsub("di$", "", where_txt, fixed = TRUE))
+    has_di <- FALSE
+    while (where_txt %like% "di[$]") {
+      # use while and sub(), not gsub(), to go over each mention of 'di$'
+      has_di <- TRUE
+      where_txt <- sub("(di[$][A-Za-z0-9`.-]+)",
+                       paste0(
+                         ifelse(where_txt %like% "di[$].*?[`-]", '"', ""),
+                         eval(str2lang(sub(".*(di[$][A-Za-z0-9`.-]+).*", "\\1", where_txt, perl = TRUE))),
+                         ifelse(where_txt %like% "di[$].*?[`-]", '"', "")),
+                       where_txt,
+                       perl = TRUE)
+    }
+    if (has_di == TRUE) {
+      where[[i]] <- str2lang(where_txt)
     }
   }
   where
