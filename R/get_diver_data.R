@@ -221,6 +221,7 @@ get_diver_data <- function(date_range = this_year(),
   out_bak <- out
   msg_ok(dimensions = dim(out), print = info)
   
+  # limit ----
   limit <- max(as.double(limit))
   if (!is.infinite(limit)) {
     if (!is.na(limit)) {
@@ -229,6 +230,7 @@ get_diver_data <- function(date_range = this_year(),
     }
   }
   
+  # set query ----
   msg_init("Validating WHERE statement...", print = info)
   # fill in columns from the 'di' object
   if (isTRUE(list(...)$where_as_character)) {
@@ -261,7 +263,7 @@ get_diver_data <- function(date_range = this_year(),
   if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
     choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry_print,
                                          ifelse(!is.null(preset) & !all(is.na(preset$filter)),
-                                                font_grey(paste0("\n(last part from preset \"", preset$name, "\")")),
+                                                font_grey(paste0("\n-- (a part of) this WHERE comes from preset \"", preset$name, "\")")),
                                                 "")),
                           choices = c("Yes", "No", "Print column names"),
                           graphics = FALSE)
@@ -285,6 +287,7 @@ get_diver_data <- function(date_range = this_year(),
     msg("Applying filter: ", wh)
   }
   
+  # collect ----
   msg_init("Collecting data...", print = info, prefix_time = TRUE)
   tryCatch({
     out <- collect(out)
@@ -301,15 +304,26 @@ get_diver_data <- function(date_range = this_year(),
       out[, i] <- as.logical(as.character(out[, i, drop = TRUE]))
     }
   }
+
+  # select ----
+  if (!is.null(preset) && !all(is.na(preset$select))) {
+    msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
+             print = info,
+             prefix_time = TRUE)
+    out <- out |> select(!!!preset$select)
+    msg_ok(print = info, dimensions = dim(out))
+  }
   
+  # distinct ----
   if (isTRUE(distinct)) {
     out_distinct <- distinct(out)
     if (nrow(out_distinct) < nrow(out)) {
-      msg("Removed ", nrow(out) - nrow(out_distinct), " duplicate rows")
+      msg("NOTE: Removed ", nrow(out) - nrow(out_distinct), " duplicate rows, since `distinct = TRUE`")
       out <- out_distinct
     }
   }
   
+  # join ----
   if (!is.null(preset$join)) {
     msg_init("Joining data from cBase ", font_blue(paste0("\"", preset$join$cbase, "\"")), "...", print = info, prefix_time = TRUE)
     
@@ -332,7 +346,7 @@ get_diver_data <- function(date_range = this_year(),
                                diver_dsn = diver_dsn,
                                diver_tablename = diver_tablename,
                                distinct = distinct,
-                               limit = limit,
+                               limit = Inf,
                                auto_transform = FALSE, # if `auto_transform = TRUE`, this will be done later
                                review_qry = FALSE,
                                in_background = FALSE,
@@ -357,14 +371,7 @@ get_diver_data <- function(date_range = this_year(),
     msg_ok(dimensions = dim(out), print = info)
   }
   
-  if (!is.null(preset) && !all(is.na(preset$select))) {
-    msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
-             print = info,
-             prefix_time = TRUE)
-    out <- out |> select(!!!preset$select)
-    msg_ok(print = info, dimensions = dim(out))
-  }
-  
+  # auto-transform ----
   if (isTRUE(auto_transform)) {
     msg_init("Transforming data set...", print = info, prefix_time = TRUE)
     if ("Ordernummer" %in% colnames(out)) {
@@ -378,6 +385,7 @@ get_diver_data <- function(date_range = this_year(),
     msg_ok(print = info)
   }
   
+  # return ----
   as_certedb_tibble(out,
                     source = diver_cbase,
                     qry = qry,
