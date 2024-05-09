@@ -361,6 +361,7 @@ get_diver_data <- function(date_range = this_year(),
                             names_to = "type",
                             values_to = "value") |>
         unite(col = "col", preset$join$wide_names_from, type) |>
+        distinct(across(c(join_cols, "col")), .keep_all = TRUE) |>
         pivot_wider(names_from = col, values_from = value)
     }
     
