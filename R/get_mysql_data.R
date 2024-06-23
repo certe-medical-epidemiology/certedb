@@ -422,7 +422,7 @@ certedb_getmmb <- function(dates = NULL,
   }
   
   as_certedb_tibble(out,
-                    type = "MOLIS",
+                    type = "Certe MySQL",
                     source = "certemmb",
                     qry = qry,
                     datetime = Sys.time(),

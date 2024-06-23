@@ -24,7 +24,7 @@ coverage:
 
 ignore:
   - "R/get_diver_data.R"
-  - "R/get_molis_data.R"
+  - "R/get_mysql_data.R"
   - "R/get_duckdb_data.R"
   - "R/presets.R"
   - "R/universal.R"
