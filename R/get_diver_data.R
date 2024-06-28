@@ -378,8 +378,6 @@ get_diver_data <- function(date_range = this_year(),
     if ("Ordernummer" %in% colnames(out)) {
       out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"] <- gsub(".", "", out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"], fixed = TRUE)
       out <- out |> arrange(desc(Ordernummer))
-    } else {
-      out <- out |> arrange(desc(Ontvangstdatum))
     }
     # transform data, and update column names
     out <- auto_transform(out, snake_case = TRUE)

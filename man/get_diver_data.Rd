@@ -7,6 +7,7 @@
 \alias{get_duckdb_data}
 \alias{certedb_getmmb}
 \alias{certedb_getmmb_tat}
+\alias{get_glims10_data}
 \title{Download Data from a Local or Remote Database}
 \usage{
 get_diver_data(
@@ -78,6 +79,20 @@ certedb_getmmb_tat(
   only_conducted_tests = TRUE,
   only_validated = TRUE,
   only_show_query = FALSE,
+  ...
+)
+
+get_glims10_data(
+  date_range = this_year(),
+  where = NULL,
+  date_column = "afnamedatum",
+  review_qry = interactive(),
+  antibiogram_type = "sir",
+  distinct = TRUE,
+  auto_transform = TRUE,
+  diver_tablename = "glims10",
+  info = interactive(),
+  limit = Inf,
   ...
 )
 }

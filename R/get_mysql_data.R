@@ -943,3 +943,178 @@ qry_beautify <- function(query) {
   }
   query
 }
+
+#' @rdname get_diver_data
+#' @export
+get_glims10_data <- function(date_range = this_year(),
+                             where = NULL,
+                             date_column = "afnamedatum",
+                             review_qry = interactive(),
+                             antibiogram_type = "sir",
+                             distinct = TRUE,
+                             auto_transform = TRUE,
+                             diver_tablename = "glims10",
+                             info = interactive(),
+                             limit = Inf,
+                             ...) {
+  
+  conn <- db_connect(RMariaDB::MariaDB(),
+                     dbname = unlist(read_secret("db.certemmb"))["dbname"],
+                     host = unlist(read_secret("db.certemmb"))["host"],
+                     port = as.integer(unlist(read_secret("db.certemmb"))["port"]),
+                     username = unlist(read_secret("db.certemmb"))["username"],
+                     password = unlist(read_secret("db.certemmb"))["password"],
+                     print = info)
+  on.exit(db_close(conn, print = info))
+  user <- paste0("CERTE\\", Sys.info()["user"])
+  
+  if (!is.null(date_range)) {
+    
+    msg_init("Checking date columns...", print = info)
+    case_row1 <- conn |> tbl(diver_tablename) |> utils::head(1) |> collect()
+    cbase_columns <- case_row1 |> colnames()
+    date_cols <- cbase_columns[which(vapply(FUN.VALUE = logical(1), case_row1, inherits, c("Date", "POSIXct")))]
+    
+    if (!is.null(date_column) && !identical(date_column, "") && !date_column %in% cbase_columns) {
+      msg_error(time = FALSE, print = info,
+                paste0("\n  Column \"", date_column, "\" does not exist in this cBase, change argument `date_column` to one of: ",
+                       paste0('\n  - "', date_cols, '"', collapse = "")))
+      return(invisible())
+    } else if (is.null(date_column) || identical(date_column, "")) {
+      if (length(date_cols) == 0) {
+        msg_error(time = FALSE, print = info, "No date column found in this cBase")
+        return(invisible())
+      }
+      date_column <- date_cols[1]
+      msg_ok(time = FALSE, dimensions = NULL, print = info, paste0("; Picked column ", font_blue(paste0('"', date_column, '"'))))
+    } else {
+      msg_ok(time = FALSE, dimensions = NULL, print = info) 
+    }
+    
+    if (length(date_range) == 1) {
+      date_range <- rep(date_range, 2)
+    } else {
+      # always earliest first, newest second
+      date_range <- c(min(date_range, na.rm = TRUE), max(date_range, na.rm = TRUE))
+    }
+    if (all(date_range %in% 2000:2050, na.rm = TRUE)) {
+      date_range[1] <- paste0(date_range[1], "-01-01")
+      date_range[2] <- paste0(date_range[2], "-12-31")
+    }
+    date_range <- tryCatch(as.Date(date_range),
+                           error = function(e) as.Date(date_range, origin = "1970-01-01"))
+    msg_init("Retrieving initial cBase...", print = info)
+    if (length(unique(date_range)) > 1) {
+      out <- conn |>
+        # from https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
+        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " BETWEEN ",
+                       "{d '", format2(date_range[1], "yyyy-mm-dd"), "'} AND ",
+                       "{d '", format2(date_range[2], "yyyy-mm-dd"), "'}")))
+    } else {
+      out <- conn |>
+        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " = {d '", format2(date_range[1], "yyyy-mm-dd"), "'}")))
+    }
+  } else {
+    msg_init("Retrieving initial cBase...", print = info)
+    out <- conn |> tbl(diver_tablename)
+  }
+  out_bak <- out
+  msg_ok(dimensions = dim(out), print = info)
+  
+  # limit ----
+  limit <- max(as.double(limit))
+  if (!is.infinite(limit)) {
+    if (!is.na(limit)) {
+      limit <- as.integer(limit)
+      out <- out |> utils::head(n = limit)
+    }
+  }
+  
+  # set query ----
+  msg_init("Validating WHERE statement...", print = info)
+  # fill in columns from the 'di' object
+  if (isTRUE(list(...)$where_as_character)) {
+    where <- str2lang(where)
+  }
+  # convert objects, this will return msg "OK"
+  where <- where_convert_objects(deparse(substitute(where)), info = info)
+  
+  if (!is.null(substitute(where))) {
+    out <- out |> filter({{ where }})
+    out$lazy_query$where <- where_convert_like(out$lazy_query$where)
+  }
+  
+  qry <- remote_query(out)
+  qry_print <- gsub(paste0("(", paste0("\"?", colnames(out), "\"?", collapse = "|"), ")"), font_italic(font_green("\\1")),
+                    gsub("( AND | OR |NOT| IN |EVAL| BETWEEN )", font_blue("\\1"),
+                         gsub("(SELECT|FROM|WHERE|LIMIT)", font_bold(font_blue("\\1")),
+                              gsub("}\n  AND ", "} AND ", 
+                                   gsub(" AND ", "\n  AND ", qry)))))
+  
+  if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
+    choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry_print),
+                          choices = c("Yes", "No", "Print column names"),
+                          graphics = FALSE)
+    if (choice == 3) {
+      df <- collect(out_bak, n = 1)
+      cols <- vapply(FUN.VALUE = character(1), df, type_sum)
+      # print column names with their class in <..> brackets
+      print(paste0(names(cols), " <", cols, ">"), quote = FALSE)
+      choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry_print),
+                            choices = c("Yes", "No"),
+                            graphics = FALSE)
+    }
+    if (choice != 1) {
+      return(invisible())
+    }
+  } else if (!interactive()) {
+    wh <- strsplit(unclass(remote_query(out)), "[ \n]WHERE[ \n]")[[1]]
+    wh <- paste0(trimws(gsub("\"q[0-9]+\"", "", wh[2:length(wh)])), collapse = " AND ")
+    wh <- gsub(" AND ", "\n  AND ", wh, fixed = TRUE)
+    wh <- gsub("[ \n]LIMIT .*", "", wh)
+    msg("Applying filter: ", wh)
+  }
+  
+  # collect ----
+  msg_init("Collecting data...", print = info, prefix_time = TRUE)
+  tryCatch({
+    out <- collect(out)
+  },
+  error = function(e) {
+    msg_error(time = FALSE, print = info)
+    stop(format_error(e), call. = FALSE)
+  })
+  msg_ok(dimensions = dim(out), print = info)
+  
+  for (i in seq_len(ncol(out))) {
+    # 2023-02-13 fix for Diver, logicals/booleans seem corrupt
+    if (is.logical(out[, i, drop = TRUE])) {
+      out[, i] <- as.logical(as.character(out[, i, drop = TRUE]))
+    }
+  }
+  
+  # distinct ----
+  if (isTRUE(distinct)) {
+    out_distinct <- distinct(out)
+    if (nrow(out_distinct) < nrow(out)) {
+      msg("NOTE: Removed ", nrow(out) - nrow(out_distinct), " duplicate rows, since `distinct = TRUE`")
+      out <- out_distinct
+    }
+  }
+  
+  # auto-transform ----
+  if (isTRUE(auto_transform)) {
+    msg_init("Transforming data set...", print = info, prefix_time = TRUE)
+    # transform data, and update column names
+    out <- auto_transform(out, snake_case = TRUE)
+    msg_ok(print = info)
+  }
+  
+  # return ----
+  as_certedb_tibble(out,
+                    type = "Certe MySQL",
+                    source = diver_tablename,
+                    qry = qry,
+                    datetime = Sys.time(),
+                    user = user)
+}
