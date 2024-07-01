@@ -402,6 +402,10 @@ certedb_query <- function(query,
                           auto_transform = TRUE,
                           info = interactive()) {
   
+  if (is.null(query)) {
+    return(invisible())
+  }
+  
   if (is.data.frame(query)) {
     diver_data <- query
     query <- attributes(diver_data)$qry

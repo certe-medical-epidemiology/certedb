@@ -1008,11 +1008,11 @@ get_glims10_data <- function(date_range = this_year(),
       out <- conn |>
         # from https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
         tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " BETWEEN ",
-                       "{d '", format2(date_range[1], "yyyy-mm-dd"), "'} AND ",
-                       "{d '", format2(date_range[2], "yyyy-mm-dd"), "'}")))
+                       "'", format2(date_range[1], "yyyy-mm-dd"), "' AND ",
+                       "'", format2(date_range[2], "yyyy-mm-dd"), "'")))
     } else {
       out <- conn |>
-        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " = {d '", format2(date_range[1], "yyyy-mm-dd"), "'}")))
+        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " = '", format2(date_range[1], "yyyy-mm-dd"), "'")))
     }
   } else {
     msg_init("Retrieving initial cBase...", print = info)
@@ -1048,7 +1048,7 @@ get_glims10_data <- function(date_range = this_year(),
   qry_print <- gsub(paste0("(", paste0("\"?", colnames(out), "\"?", collapse = "|"), ")"), font_italic(font_green("\\1")),
                     gsub("( AND | OR |NOT| IN |EVAL| BETWEEN )", font_blue("\\1"),
                          gsub("(SELECT|FROM|WHERE|LIMIT)", font_bold(font_blue("\\1")),
-                              gsub("}\n  AND ", "} AND ", 
+                              gsub("'\n  AND ", "' AND ", 
                                    gsub(" AND ", "\n  AND ", qry)))))
   
   if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
