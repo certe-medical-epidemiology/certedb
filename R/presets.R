@@ -17,18 +17,65 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
-#' Available Presets for Diver Server
+#' Available Presets for `get_diver_data()`
 #' 
-#' This returns a data.frame with available presets, as defined in the secrets YAML file under `db.presets`.
+#' Work with presets for [get_diver_data()]. This automates selecting, filtering, and joining cBases.
 #' @importFrom dplyr tibble
+#' @details The function [presets()] returns a data.frame with available presets, as defined in the secrets YAML file under `db.presets`.
+#' @section Required YAML Format:
+#' 
+#' This YAML information should be put into the YAML file that is read using [`read_secret()`][certetoolbox::read_secret()]. Afterwards, the name of the preset can be used as [`get_diver_data(date_range = "...", preset = "...")`][get_diver_data()].
+#' 
+#' The most basic YAML form:
+#' 
+#' ```yaml
+#' name_new_preset:
+#'   cbase: "location/to/name.cbase"
+#'   date_col: "ColumnNameDate"
+#' ```
+#' 
+#' The most extensive YAML form:
+#' 
+#' ```yaml
+#' name_new_preset:
+#'   cbase: "location/to/name.cbase"
+#'   date_col: "ColumnNameDate"
+#'   filter: ColumnName1 %in% c("Filter1", "Filter2") & ColumnName2 %in% c("Filter3", "Filter4")
+#'   select: ColumnName1, ColumnName2, ColumnNameReceiptDate, new_name = OldName
+#'   join:
+#'     cbase: "location/to/another.cbase"
+#'     by: ColumnName1, ColumnName2
+#'     type: "left"
+#'     select: ColumnName1, ColumnName2, ColumnName3
+#'     wide_names_from: ColumnName3
+#'   join2:
+#'     cbase: "location/to/yet_another.cbase"
+#'     by: ColumnName1, ColumnName2
+#'     type: "left"
+#'     select: ColumnName1, ColumnName2, ColumnName3
+#'     wide_names_from: ColumnName3
+#'     wide_name_trans: 'gsub("_", "..", .x)'
+#' ```
+#' 
+#' For all presets, `cbase` and `date_col` are required.
+#' 
+#' ## Joins
+#' 
+#' For joins, you must set at least `cbase`, `by`, and `type` (left, right, inner, etc., [see here][dplyr::left_join()]). 
+#' 
+#' If `wide_names_from` is set, the dataset is first transformed to long format using the columns specified in `by`, and then reshaped to wide format with values in `wide_names_from`.
+#' 
+#' Use `wide_name_trans` to transform the values in `wide_names_from` before the reshaping to wide format is applied. Use `.x` for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in `wide_names_from`.
+#' 
+#' An unlimited number of joins can be used, but all so-called 'keys' must be unique and start with `join`, e.g. `joinA` / `joinB` or `join` / `join2`.
+#' @rdname presets
 #' @export
 presets <- function() {
   p <- read_secret("db.presets")
   out <- tibble(preset = names(p),
                 cbase = NA_character_,
                 filter = NA_character_,
-                select = NA_character_,
-                join = NA_character_)
+                select = NA_character_)
   for (i in seq_len(length(p))) {
     out[i, "cbase"] <- p[[i]]$cbase
     
@@ -45,11 +92,8 @@ presets <- function() {
       out[i, "select"] <- paste0(length(cols), ": ", paste(cols, collapse = ", "))
     }
     
-    if (is.null(p[[i]]$join)) {
-      out[i, "join"] <- "(none)"
-    } else {
-      out[i, "join"] <- p[[i]]$join$cbase
-    }
+    joins <- which(names(p[[i]]) %like% "^join")
+    out[i, "joins"] <- length(joins)
   }
   structure(out, class = c("presets", class(out)))
 }
@@ -68,6 +112,10 @@ print.presets <- function(x, ...) {
   print(out, ...)
 }
 
+#' @rdname presets
+#' @param preset name of the preset
+#' @details The function [get_preset()] will return all the details of a preset as a [list].
+#' @export
 get_preset <- function(preset) {
   if (is_empty(preset)) {
     stop("A preset must be set.", call. = FALSE)
@@ -84,18 +132,18 @@ get_preset <- function(preset) {
   p <- c(list(name = preset),
          p)
   
-
-  if (!is.null(p$join)) {
-    p$join <- p$join[!vapply(FUN.VALUE = logical(1), p$join, is.null)]
-    if (!all(c("type", "by", "cbase") %in% names(p$join))) {
+  joins <- which(names(p) %like% "^join")
+  for (j in joins) {
+    p[[j]] <- p[[j]][!vapply(FUN.VALUE = logical(1), p[[j]], is.null)]
+    if (!all(c("type", "by", "cbase") %in% names(p[[j]]))) {
       stop("'join' elements in presets must at least contain 'type', 'by', and 'cbase'", call. = FALSE)
     }
-    if (!paste0(p$join$type, "_join") %in% ls(envir = asNamespace("dplyr"))) {
+    if (!paste0(p[[j]]$type, "_join") %in% ls(envir = asNamespace("dplyr"))) {
       stop("preset value join$type must indicate the type of join, e.g. \"left\", \"right\", \"full\", or \"inner\".")
     }
-  }
-  if (!is.null(p$join$by)) {
-    p$join$by <- strsplit(p$join$by, ", ?")[[1]]
+    if (!is.null(p[[j]]$by)) {
+      p[[j]]$by <- strsplit(p[[j]]$by, ", ?")[[1]]
+    }
   }
   
   # fix the selects - if we use a list, then this works: `... |> select(!!!preset$select)`
@@ -106,12 +154,14 @@ get_preset <- function(preset) {
     names(lst)[which(p$select %like% "=")] <- trimws(gsub("=.*$", "", names(lst[which(p$select %like% "=")])))
     p$select <- lst
   }
-  if (!is.null(p$join$select)) {
-    p$join$select <- strsplit(p$join$select, ", ?")[[1]]
-    lst <- p$join$select |> trimws() |> as.list() |> stats::setNames(p$join$select)
-    lst[which(p$join$select %like% "=")] <- trimws(gsub("^.*=", "", names(lst[which(p$join$select %like% "=")])))
-    names(lst)[which(p$join$select %like% "=")] <- trimws(gsub("=.*$", "", names(lst[which(p$join$select %like% "=")])))
-    p$join$select <- lst
+  for (j in joins) {
+    if (!is.null(p[[j]]$select)) {
+      p[[j]]$select <- strsplit(p[[j]]$select, ", ?")[[1]]
+      lst <- p[[j]]$select |> trimws() |> as.list() |> stats::setNames(p[[j]]$select)
+      lst[which(p[[j]]$select %like% "=")] <- trimws(gsub("^.*=", "", names(lst[which(p[[j]]$select %like% "=")])))
+      names(lst)[which(p[[j]]$select %like% "=")] <- trimws(gsub("=.*$", "", names(lst[which(p[[j]]$select %like% "=")])))
+      p[[j]]$select <- lst
+    }
   }
   p
 }

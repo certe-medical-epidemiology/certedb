@@ -2,10 +2,68 @@
 % Please edit documentation in R/presets.R
 \name{presets}
 \alias{presets}
-\title{Available Presets for Diver Server}
+\alias{get_preset}
+\title{Available Presets for \code{get_diver_data()}}
 \usage{
 presets()
+
+get_preset(preset)
+}
+\arguments{
+\item{preset}{name of the preset}
 }
 \description{
-This returns a data.frame with available presets, as defined in the secrets YAML file under \code{db.presets}.
+Work with presets for \code{\link[=get_diver_data]{get_diver_data()}}. This automates selecting, filtering, and joining cBases.
 }
+\details{
+The function \code{\link[=presets]{presets()}} returns a data.frame with available presets, as defined in the secrets YAML file under \code{db.presets}.
+
+The function \code{\link[=get_preset]{get_preset()}} will return all the details of a preset as a \link{list}.
+}
+\section{Required YAML Format}{
+
+
+This YAML information should be put into the YAML file that is read using \code{\link[certetoolbox:read_secret]{read_secret()}}. Afterwards, the name of the preset can be used as \code{\link[=get_diver_data]{get_diver_data(date_range = "...", preset = "...")}}.
+
+The most basic YAML form:
+
+\if{html}{\out{<div class="sourceCode yaml">}}\preformatted{name_new_preset:
+  cbase: "location/to/name.cbase"
+  date_col: "ColumnNameDate"
+}\if{html}{\out{</div>}}
+
+The most extensive YAML form:
+
+\if{html}{\out{<div class="sourceCode yaml">}}\preformatted{name_new_preset:
+  cbase: "location/to/name.cbase"
+  date_col: "ColumnNameDate"
+  filter: ColumnName1 \%in\% c("Filter1", "Filter2") & ColumnName2 \%in\% c("Filter3", "Filter4")
+  select: ColumnName1, ColumnName2, ColumnNameReceiptDate, new_name = OldName
+  join:
+    cbase: "location/to/another.cbase"
+    by: ColumnName1, ColumnName2
+    type: "left"
+    select: ColumnName1, ColumnName2, ColumnName3
+    wide_names_from: ColumnName3
+  join2:
+    cbase: "location/to/yet_another.cbase"
+    by: ColumnName1, ColumnName2
+    type: "left"
+    select: ColumnName1, ColumnName2, ColumnName3
+    wide_names_from: ColumnName3
+    wide_name_trans: 'gsub("_", "..", .x)'
+}\if{html}{\out{</div>}}
+
+For all presets, \code{cbase} and \code{date_col} are required.
+\subsection{Joins}{
+
+For joins, you must set at least \code{cbase}, \code{by}, and \code{type} (left, right, inner, etc., \link[dplyr:mutate-joins]{see here}).
+
+If \code{wide_names_from} is set, the dataset is first transformed to long format using the columns specified in \code{by}, and then reshaped to wide format with values in \code{wide_names_from}.
+
+Use \code{wide_name_trans} to transform the values in \code{wide_names_from} before the reshaping to wide format is applied. Use \code{.x} for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in \code{wide_names_from}.
+
+An unlimited number of joins can be used, but all so-called 'keys' must be unique and start with \code{join}, e.g. \code{joinA} / \code{joinB} or \code{join} / \code{join2}.
+}
+}
+

@@ -948,7 +948,6 @@ qry_beautify <- function(query) {
 #' @export
 get_glims10_data <- function(date_range = this_year(),
                              where = NULL,
-                             date_column = "afnamedatum",
                              review_qry = interactive(),
                              antibiogram_type = "sir",
                              distinct = TRUE,
@@ -969,28 +968,6 @@ get_glims10_data <- function(date_range = this_year(),
   user <- paste0("CERTE\\", Sys.info()["user"])
   
   if (!is.null(date_range)) {
-    
-    msg_init("Checking date columns...", print = info)
-    case_row1 <- conn |> tbl(diver_tablename) |> utils::head(1) |> collect()
-    cbase_columns <- case_row1 |> colnames()
-    date_cols <- cbase_columns[which(vapply(FUN.VALUE = logical(1), case_row1, inherits, c("Date", "POSIXct")))]
-    
-    if (!is.null(date_column) && !identical(date_column, "") && !date_column %in% cbase_columns) {
-      msg_error(time = FALSE, print = info,
-                paste0("\n  Column \"", date_column, "\" does not exist in this cBase, change argument `date_column` to one of: ",
-                       paste0('\n  - "', date_cols, '"', collapse = "")))
-      return(invisible())
-    } else if (is.null(date_column) || identical(date_column, "")) {
-      if (length(date_cols) == 0) {
-        msg_error(time = FALSE, print = info, "No date column found in this cBase")
-        return(invisible())
-      }
-      date_column <- date_cols[1]
-      msg_ok(time = FALSE, dimensions = NULL, print = info, paste0("; Picked column ", font_blue(paste0('"', date_column, '"'))))
-    } else {
-      msg_ok(time = FALSE, dimensions = NULL, print = info) 
-    }
-    
     if (length(date_range) == 1) {
       date_range <- rep(date_range, 2)
     } else {
@@ -1007,12 +984,12 @@ get_glims10_data <- function(date_range = this_year(),
     if (length(unique(date_range)) > 1) {
       out <- conn |>
         # from https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
-        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " BETWEEN ",
+        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE afnamedatum BETWEEN ",
                        "'", format2(date_range[1], "yyyy-mm-dd"), "' AND ",
                        "'", format2(date_range[2], "yyyy-mm-dd"), "'")))
     } else {
       out <- conn |>
-        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " = '", format2(date_range[1], "yyyy-mm-dd"), "'")))
+        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE afnamedatum = '", format2(date_range[1], "yyyy-mm-dd"), "'")))
     }
   } else {
     msg_init("Retrieving initial cBase...", print = info)

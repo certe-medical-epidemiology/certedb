@@ -190,3 +190,130 @@ msg_error <- function(time = TRUE, print = interactive(), ...) {
 is_empty <- function(x) {
   is.null(x) || isFALSE(x) || identical(x, "") || all(is.na(as.character(x)))
 }
+
+
+#' @importFrom certestyle font_blue font_black
+where_convert_objects <- function(where, info) {
+  where_split <- strsplit(paste0(trimws(where), collapse = " "), " ", fixed = TRUE)[[1]]
+  converted <- list()
+  
+  for (i in seq_len(length(where_split))) {
+    old <- where_split[i]
+    if (old %unlike% "^[A-Za-z0-9.]") {
+      next
+    }
+    evaluated <- tryCatch(eval(parse(text = old)), error = function(e) NULL)
+    if (!is.null(evaluated)) {
+      new <- paste0(trimws(deparse(evaluated)), collapse = " ")
+      if (!identical(new, old)) {
+        converted <- c(converted,
+                       stats::setNames(list(new), old))
+        where_split[i] <- new
+      }
+    }
+  }
+  
+  if (length(converted) > 0) {
+    msg_txt <- character(0)
+    for (i in seq_len(length(converted))) {
+      msg_txt <- c(msg_txt,
+                   paste0("\n  - Replaced ", font_blue(names(converted)[i]), font_black(" with "), font_blue(converted[[i]])))
+    }
+    converted <- paste0(msg_txt, collapse = "")
+  } else {
+    converted <- ""
+  }
+  msg_ok(time = FALSE, dimensions = NULL, print = info, converted)
+  where_split <- paste0(trimws(where_split), collapse = " ")
+  str2lang(where_split)
+}
+
+where_convert_di <- function(where) {
+  for (i in seq_len(length(where))) {
+    where_txt <- paste0(trimws(deparse(where[[i]])), collapse = " ")
+    has_di <- FALSE
+    while (where_txt %like% "di[$]") {
+      # use while and sub(), not gsub(), to go over each mention of 'di$'
+      has_di <- TRUE
+      where_txt <- sub("(di[$][A-Za-z0-9`.-]+)",
+                       paste0(
+                         ifelse(where_txt %like% "di[$].*?[`-]", '"', ""),
+                         eval(str2lang(sub(".*(di[$][A-Za-z0-9`.-]+).*", "\\1", where_txt, perl = TRUE))),
+                         ifelse(where_txt %like% "di[$].*?[`-]", '"', "")),
+                       where_txt,
+                       perl = TRUE)
+    }
+    if (has_di == TRUE) {
+      where[[i]] <- str2lang(where_txt)
+    }
+  }
+  where
+}
+
+#' @importFrom rlang is_quosure quo_get_expr quo_set_expr
+where_convert_like <- function(full_where) {
+  # this transforms
+  # where = Materiaalnaam %like% "bloed"
+  # to
+  # WHERE (EVAL('regexp(value("Materiaalnaam"),"bloed", true)')) 
+  
+  for (where_part in seq_len(length(full_where))) {
+    query_object <- full_where[[where_part]]
+    if (is_quosure(query_object)) {
+      query_object <- quo_get_expr(query_object)
+    }
+    
+    split_AND <- unlist(strsplit(paste0(trimws(deparse(query_object)),
+                                        collapse = " "),
+                                 " & ",
+                                 fixed = TRUE))
+    merged_AND <- character(length(split_AND))
+    for (i in seq_len(length(split_AND))) {
+      split_OR <- unlist(strsplit(split_AND[i],
+                                  " | ",
+                                  fixed = TRUE))
+      
+      for (j in seq_len(length(split_OR))) {
+        qry <- split_OR[j]
+        if (qry %unlike% "%(like|like_case|unlike|unlike_case)%") {
+          next
+        }
+        qry_language <- str2lang(qry)
+        qry_language_text <- as.character(qry_language)
+        if (qry_language_text[1] == "%like%") {
+          qry <- paste0("EVAL('regexp(value(\"",
+                        qry_language_text[2], "\"), \"",
+                        qry_language_text[3], "\", true)')")
+          
+        } else if (qry_language_text[1] == "%unlike%") {
+          qry <- paste0("!EVAL('regexp(value(\"",
+                        qry_language_text[2], "\"), \"",
+                        qry_language_text[3], "\", true)')")
+          
+        } else if (qry_language_text[1] == "%like_case%") {
+          qry <- paste0("EVAL('regexp(value(\"",
+                        qry_language_text[2], "\"), \"",
+                        qry_language_text[3], "\", false)')")
+          
+        } else if (qry_language_text[1] == "%unlike_case%") {
+          qry <- paste0("!EVAL('regexp(value(\"",
+                        qry_language_text[2], "\"), \"",
+                        qry_language_text[3], "\", false)')")
+        }
+        
+        split_OR[j] <- qry
+      }
+      
+      merged_AND[i] <- paste0(split_OR, collapse = " | ")
+    }
+    
+    merged <- str2lang(paste0(merged_AND, collapse = " & "))
+    if (is_quosure(full_where[[where_part]])) {
+      full_where[[where_part]] <- rlang::quo_set_expr(full_where[[where_part]], merged)
+    } else {
+      full_where[[where_part]] <- merged
+    }
+    
+  }
+  full_where
+}

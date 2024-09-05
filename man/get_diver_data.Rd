@@ -13,7 +13,6 @@
 get_diver_data(
   date_range = this_year(),
   where = NULL,
-  date_column = read_secret("db.diver_date_column"),
   review_qry = interactive(),
   antibiogram_type = "sir",
   distinct = TRUE,
@@ -85,7 +84,6 @@ certedb_getmmb_tat(
 get_glims10_data(
   date_range = this_year(),
   where = NULL,
-  date_column = "afnamedatum",
   review_qry = interactive(),
   antibiogram_type = "sir",
   distinct = TRUE,
@@ -97,11 +95,9 @@ get_glims10_data(
 )
 }
 \arguments{
-\item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column \code{Ontvangstdatum}. Defaults to \code{\link[=this_year]{this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}.}
+\item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column specified in the YAML file, see \link{presets}. Defaults to \code{\link[=this_year]{this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}. Date-time ojects will be converted to dates, so using times as input is useless. It is supported to filter on a date-time column though.}
 
 \item{where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.}}
-
-\item{date_column}{column name to filter \code{date_range} on, will be determined automatically if using \code{NULL}.}
 
 \item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:output_type]{knitr::pandoc_to()}} must be \code{NULL}.}
 
@@ -177,6 +173,9 @@ Using \code{certedb_query("your qry here")} is identical to using \code{certedb_
 }
 \examples{
 \dontrun{
+# peek-preview of a cBase:
+get_diver_data(diver_cbase = "models/MedEpi/GLIMS10_Grammen.cbase",
+               date_range = NULL, limit = 10, review_qry = FALSE)
 
 # these two work identical:
 get_diver_data(date_range = 2024, where = BepalingCode == "PXNCOV")

@@ -20,8 +20,7 @@
 #' Download Data from a Local or Remote Database
 #' 
 #' Thes functions can be used to download local or remote database data, e.g. Spectre data from DiveLine on a Diver server (from [Dimensional Insight](https://www.dimins.com)). The [get_diver_data()] function sets up an ODBC connection (using [db_connect()]), which requires their quite limited [DI-ODBC driver](https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html).
-#' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column `Ontvangstdatum`. Defaults to [this_year()]. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
-#' @param date_column column name to filter `date_range` on, will be determined automatically if using `NULL`.
+#' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column specified in the YAML file, see [presets]. Defaults to [this_year()]. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()]. Date-time ojects will be converted to dates, so using times as input is useless. It is supported to filter on a date-time column though.
 #' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
 #' @param diver_cbase,diver_project,diver_dsn,diver_testserver properties to set in [db_connect()]. The `diver_cbase` argument will be based on `preset`, but can also be set to blank `NULL` to manually select a cBase in a popup window.
 #' @param diver_tablename name of the database table to download data from. This is hard-coded by DI and should normally never be changed.
@@ -38,7 +37,7 @@
 #' 
 #' Use [certedb_query()] to retrieve the original query that was used to download the data.
 #' @importFrom dbplyr sql remote_query
-#' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc all_of
+#' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc all_of pull
 #' @importFrom certestyle format2 font_black font_blue font_bold font_green font_grey font_italic
 #' @importFrom certetoolbox auto_transform this_year
 #' @importFrom tidyr pivot_longer unite pivot_wider
@@ -48,6 +47,9 @@
 #' @export
 #' @examples 
 #' \dontrun{
+#' # peek-preview of a cBase:
+#' get_diver_data(diver_cbase = "models/MedEpi/GLIMS10_Grammen.cbase",
+#'                date_range = NULL, limit = 10, review_qry = FALSE)
 #' 
 #' # these two work identical:
 #' get_diver_data(date_range = 2024, where = BepalingCode == "PXNCOV")
@@ -95,7 +97,6 @@
 #' }
 get_diver_data <- function(date_range = this_year(),
                            where = NULL,
-                           date_column = read_secret("db.diver_date_column"),
                            review_qry = interactive(),
                            antibiogram_type = "sir",
                            distinct = TRUE,
@@ -114,10 +115,12 @@ get_diver_data <- function(date_range = this_year(),
   if (is_empty(preset)) {
     preset <- NULL
   }
+  date_column <- NULL
   if (missing(diver_cbase)) {
     # get preset
     preset <- get_preset(preset)
     diver_cbase <- preset$cbase
+    date_column <- preset$date_col
   } else {
     if (!is.null(preset)) {
       msg("Ignoring `preset = \"", preset, "\"` since `diver_cbase` is set")
@@ -126,6 +129,9 @@ get_diver_data <- function(date_range = this_year(),
   }
   if (is_empty(diver_cbase)) {
     diver_cbase <- ""
+  }
+  if (is_empty(date_column) && !is.null(date_range)) {
+    stop("'date_col' must be given in the preset if 'date_range' is set")
   }
   
   if (isTRUE(in_background)) {
@@ -137,7 +143,6 @@ get_diver_data <- function(date_range = this_year(),
     out <- callr::r_bg(certedb::get_diver_data,
                        args = list(date_range = date_range,
                                    where = where,
-                                   date_column = date_column,
                                    review_qry = FALSE,
                                    antibiogram_type = antibiogram_type,
                                    distinct = distinct,
@@ -203,16 +208,39 @@ get_diver_data <- function(date_range = this_year(),
     }
     date_range <- tryCatch(as.Date(date_range),
                            error = function(e) as.Date(date_range, origin = "1970-01-01"))
+    
+    date_type <- conn |>
+      tbl(sql(paste("SELECT", date_column, "FROM", diver_tablename))) |>
+      utils::head(1) |>
+      collect() |>
+      pull(date_column)
+    if (inherits(date_type, "POSIXct")) {
+      # from https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
+      # You can use the driver-agnostic ODBC formatting to make a timestamp if you are working with two different types of ODBC platforms. The format for that is `{ts 'YYYY/MM/DD hh:mm:ss'}`.
+      time_function <- "ts"
+      date_format <- c("yyyy-mm-dd 00:00:00", "yyyy-mm-dd 23:59:59")
+    } else {
+      # You can use the driver-agnostic ODBC formatting to make a date if you are working with two different types of ODBC platforms. The format for that is `{d 'YYYY-MM-DD'}`.
+      time_function <- "d"
+      date_format <- c("yyyy-mm-dd", "yyyy-mm-dd")
+    }
+    
     msg_init("Retrieving initial cBase...", print = info)
     if (length(unique(date_range)) > 1) {
       out <- conn |>
-        # from https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
-        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " BETWEEN ",
-                       "{d '", format2(date_range[1], "yyyy-mm-dd"), "'} AND ",
-                       "{d '", format2(date_range[2], "yyyy-mm-dd"), "'}")))
+        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ",
+                       date_column, " BETWEEN {", time_function, " '", format2(date_range[1], date_format[1]), "'} ",
+                       "AND {", time_function, " '", format2(date_range[2], date_format[2]), "'}")))
+    } else if (time_function == "ts") {
+      # filter on single date, but it's a timestamp, so filter between 00:00:00-23:59:59
+      out <- conn |>
+        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ",
+                       date_column, " BETWEEN {", time_function, " '", format2(date_range[1], date_format[1]), "'} ",
+                       "AND {", time_function, " '", format2(date_range[2], date_format[2]), "'}")))
     } else {
       out <- conn |>
-        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ", date_column, " = {d '", format2(date_range[1], "yyyy-mm-dd"), "'}")))
+        tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ",
+                       date_column, " = {", time_function, " '", format2(date_range[1], date_format[1]), "'}")))
     }
   } else {
     msg_init("Retrieving initial cBase...", print = info)
@@ -304,7 +332,7 @@ get_diver_data <- function(date_range = this_year(),
       out[, i] <- as.logical(as.character(out[, i, drop = TRUE]))
     }
   }
-
+  
   # select ----
   if (!is.null(preset) && !all(is.na(preset$select))) {
     msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
@@ -324,11 +352,14 @@ get_diver_data <- function(date_range = this_year(),
   }
   
   # join ----
-  if (!is.null(preset$join)) {
-    msg_init("Joining data from cBase ", font_blue(paste0("\"", preset$join$cbase, "\"")), "...", print = info, prefix_time = TRUE)
+  joins <- which(names(preset) %like% "^join")
+  for (j in joins) {
+    join_object <- preset[[j]]
     
-    join_fn <- getExportedValue(paste0(preset$join$type, "_join"), ns = asNamespace("dplyr"))
-    join_cols <- preset$join$by
+    msg_init("Joining data from cBase ", font_blue(paste0("\"", join_object$cbase, "\"")), " by ", font_blue(toString(join_object$by)), "...", print = info, prefix_time = TRUE)
+    
+    join_fn <- getExportedValue(paste0(join_object$type, "_join"), ns = asNamespace("dplyr"))
+    join_cols <- join_object$by
     join_where <- vapply(FUN.VALUE = character(1),
                          join_cols,
                          function(x) paste0(ifelse(mode(out[[x]]) == "numeric", "", "'"),
@@ -337,30 +368,35 @@ get_diver_data <- function(date_range = this_year(),
                                             collapse = ", "))
     join_where <- paste0(join_cols, " %in% c(", join_where, ")", collapse = " & ")
     # query other cBase
-    out_join <- get_diver_data(date_range = NULL, # no date range, solely base on previous dataset
+    out_join <- get_diver_data(date_range = NULL, # no date range, so base solely on previous dataset
                                where = join_where,
                                where_as_character = TRUE, # this leads to transformation with str2lang()
-                               diver_cbase = preset$join$cbase,
+                               diver_cbase = join_object$cbase,
                                preset = NULL,
                                diver_project = diver_project,
                                diver_dsn = diver_dsn,
                                diver_tablename = diver_tablename,
                                distinct = distinct,
                                limit = Inf,
-                               auto_transform = FALSE, # if `auto_transform = TRUE`, this will be done later
+                               auto_transform = FALSE, # if `auto_transform` was set to TRUE, this will be applied later
                                review_qry = FALSE,
                                in_background = FALSE,
                                info = FALSE)
     
-    if (!is.null(preset$join$select)) {
-      out_join <- out_join |> select(!!!preset$join$select)
+    if (!is.null(join_object$select)) {
+      out_join <- out_join |> select(!!!join_object$select)
     }
-    if (!is.null(preset$join$wide_names_from)) {
+    if (!is.null(join_object$wide_names_from)) {
+      if (!is.null(join_object$wide_name_trans)) {
+        out_join <- out_join |>
+          mutate(across(join_object$wide_names_from,
+                        function(.x) !!str2lang(as.character(join_object$wide_name_trans))))
+      }
       out_join <- out_join |>
-        pivot_longer(-all_of(c(join_cols, preset$join$wide_names_from)),
-                            names_to = "type",
-                            values_to = "value") |>
-        unite(col = "col", preset$join$wide_names_from, type) |>
+        pivot_longer(-all_of(c(join_cols, join_object$wide_names_from)),
+                     names_to = "type",
+                     values_to = "value") |>
+        unite(col = "col", join_object$wide_names_from, type) |>
         distinct(across(c(join_cols, "col")), .keep_all = TRUE) |>
         pivot_wider(names_from = col, values_from = value)
     }
@@ -450,130 +486,4 @@ certedb_query <- function(query,
                  mic = FALSE,
                  rsi = FALSE,
                  tat_hours = FALSE)
-}
-
-#' @importFrom certestyle font_blue font_black
-where_convert_objects <- function(where, info) {
-  where_split <- strsplit(paste0(trimws(where), collapse = " "), " ", fixed = TRUE)[[1]]
-  converted <- list()
-  
-  for (i in seq_len(length(where_split))) {
-    old <- where_split[i]
-    if (old %unlike% "^[A-Za-z0-9.]") {
-      next
-    }
-    evaluated <- tryCatch(eval(parse(text = old)), error = function(e) NULL)
-    if (!is.null(evaluated)) {
-      new <- paste0(trimws(deparse(evaluated)), collapse = " ")
-      if (!identical(new, old)) {
-        converted <- c(converted,
-                       stats::setNames(list(new), old))
-        where_split[i] <- new
-      }
-    }
-  }
-  
-  if (length(converted) > 0) {
-    msg_txt <- character(0)
-    for (i in seq_len(length(converted))) {
-      msg_txt <- c(msg_txt,
-                   paste0("\n  - Replaced ", font_blue(names(converted)[i]), font_black(" with "), font_blue(converted[[i]])))
-    }
-    converted <- paste0(msg_txt, collapse = "")
-  } else {
-    converted <- ""
-  }
-  msg_ok(time = FALSE, dimensions = NULL, print = info, converted)
-  where_split <- paste0(trimws(where_split), collapse = " ")
-  str2lang(where_split)
-}
-
-where_convert_di <- function(where) {
-  for (i in seq_len(length(where))) {
-    where_txt <- paste0(trimws(deparse(where[[i]])), collapse = " ")
-    has_di <- FALSE
-    while (where_txt %like% "di[$]") {
-      # use while and sub(), not gsub(), to go over each mention of 'di$'
-      has_di <- TRUE
-      where_txt <- sub("(di[$][A-Za-z0-9`.-]+)",
-                       paste0(
-                         ifelse(where_txt %like% "di[$].*?[`-]", '"', ""),
-                         eval(str2lang(sub(".*(di[$][A-Za-z0-9`.-]+).*", "\\1", where_txt, perl = TRUE))),
-                         ifelse(where_txt %like% "di[$].*?[`-]", '"', "")),
-                       where_txt,
-                       perl = TRUE)
-    }
-    if (has_di == TRUE) {
-      where[[i]] <- str2lang(where_txt)
-    }
-  }
-  where
-}
-
-#' @importFrom rlang is_quosure quo_get_expr quo_set_expr
-where_convert_like <- function(full_where) {
-  # this transforms
-  # where = Materiaalnaam %like% "bloed"
-  # to
-  # WHERE (EVAL('regexp(value("Materiaalnaam"),"bloed", true)')) 
-  
-  for (where_part in seq_len(length(full_where))) {
-    query_object <- full_where[[where_part]]
-    if (is_quosure(query_object)) {
-      query_object <- quo_get_expr(query_object)
-    }
-    
-    split_AND <- unlist(strsplit(paste0(trimws(deparse(query_object)),
-                                       collapse = " "),
-                                " & ",
-                                fixed = TRUE))
-    merged_AND <- character(length(split_AND))
-    for (i in seq_len(length(split_AND))) {
-      split_OR <- unlist(strsplit(split_AND[i],
-                                   " | ",
-                                   fixed = TRUE))
-      
-      for (j in seq_len(length(split_OR))) {
-        qry <- split_OR[j]
-        if (qry %unlike% "%(like|like_case|unlike|unlike_case)%") {
-          next
-        }
-        qry_language <- str2lang(qry)
-        qry_language_text <- as.character(qry_language)
-        if (qry_language_text[1] == "%like%") {
-          qry <- paste0("EVAL('regexp(value(\"",
-                        qry_language_text[2], "\"), \"",
-                        qry_language_text[3], "\", true)')")
-          
-        } else if (qry_language_text[1] == "%unlike%") {
-          qry <- paste0("!EVAL('regexp(value(\"",
-                        qry_language_text[2], "\"), \"",
-                        qry_language_text[3], "\", true)')")
-          
-        } else if (qry_language_text[1] == "%like_case%") {
-          qry <- paste0("EVAL('regexp(value(\"",
-                        qry_language_text[2], "\"), \"",
-                        qry_language_text[3], "\", false)')")
-          
-        } else if (qry_language_text[1] == "%unlike_case%") {
-          qry <- paste0("!EVAL('regexp(value(\"",
-                        qry_language_text[2], "\"), \"",
-                        qry_language_text[3], "\", false)')")
-        }
-        
-        split_OR[j] <- qry
-      }
-      
-      merged_AND[i] <- paste0(split_OR, collapse = " | ")
-    }
-    
-    merged <- str2lang(paste0(merged_AND, collapse = " & "))
-    if (is_quosure(full_where[[where_part]])) {
-      full_where[[where_part]] <- rlang::quo_set_expr(full_where[[where_part]], merged)
-    } else {
-      full_where[[where_part]] <- merged
-    }
-    
-  }
-  full_where
 }
