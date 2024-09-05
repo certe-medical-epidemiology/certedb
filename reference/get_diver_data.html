@@ -3,7 +3,7 @@
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-reference-topic">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.10.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.11.0</span>
       </span>
     </div>
 
@@ -25,35 +25,35 @@
       <ul class="nav navbar-nav"><li>
   <a href="../index.html">
     <span class="fa fa-home"></span>
-     
+
     Home
   </a>
 </li>
 <li>
   <a href="../reference/index.html">
     <span class="fa fa-book-open"></span>
-     
+
     Manual
   </a>
 </li>
 <li>
   <a href="https://github.com/certe-medical-epidemiology/certedb" class="external-link">
     <span class="fab fa-github"></span>
-     
+
     Source Code
   </a>
 </li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/certe-medical-epidemiology" class="external-link">
     <span class="fab fa-github"></span>
-     
+
     Certe Med Epi
   </a>
 </li>
 <li>
   <a href="https://certe.nl" class="external-link">
     <span class="fa fa-flask"></span>
-     
+
     Certe Website
   </a>
 </li>
@@ -61,13 +61,13 @@
   </div><!--/.container -->
 </div><!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Download Data from a Local or Remote Database</h1>
-    <small class="dont-index">Source: <a href="https://github.com/certe-medical-epidemiology/certedb/blob/HEAD/R/get_diver_data.R" class="external-link"><code>R/get_diver_data.R</code></a>, <a href="https://github.com/certe-medical-epidemiology/certedb/blob/HEAD/R/get_duckdb_data.R" class="external-link"><code>R/get_duckdb_data.R</code></a>, <a href="https://github.com/certe-medical-epidemiology/certedb/blob/HEAD/R/get_mysql_data.R" class="external-link"><code>R/get_mysql_data.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/certe-medical-epidemiology/certedb/blob/main/R/get_diver_data.R" class="external-link"><code>R/get_diver_data.R</code></a>, <a href="https://github.com/certe-medical-epidemiology/certedb/blob/main/R/get_duckdb_data.R" class="external-link"><code>R/get_duckdb_data.R</code></a>, <a href="https://github.com/certe-medical-epidemiology/certedb/blob/main/R/get_mysql_data.R" class="external-link"><code>R/get_mysql_data.R</code></a></small>
     <div class="hidden name"><code>get_diver_data.Rd</code></div>
     </div>
 
@@ -79,7 +79,6 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_diver_data</span><span class="op">(</span></span>
 <span>  date_range <span class="op">=</span> <span class="fu">this_year</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  where <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  date_column <span class="op">=</span> <span class="fu">read_secret</span><span class="op">(</span><span class="st">"db.diver_date_column"</span><span class="op">)</span>,</span>
 <span>  review_qry <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  antibiogram_type <span class="op">=</span> <span class="st">"sir"</span>,</span>
 <span>  distinct <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -151,7 +150,6 @@
 <span><span class="fu">get_glims10_data</span><span class="op">(</span></span>
 <span>  date_range <span class="op">=</span> <span class="fu">this_year</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  where <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  date_column <span class="op">=</span> <span class="st">"afnamedatum"</span>,</span>
 <span>  review_qry <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  antibiogram_type <span class="op">=</span> <span class="st">"sir"</span>,</span>
 <span>  distinct <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -165,139 +163,137 @@
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>date_range</dt>
-<dd><p>date range, can be length 1 or 2 (or more to use the min/max) to filter on the column <code>Ontvangstdatum</code>. Defaults to <code>this_year()</code>. Use <code>NULL</code> to set no date filter. Can also be years, or functions such as <code><a href="https://certe-medical-epidemiology.github.io/certetoolbox/reference/days_around_today.html" class="external-link">last_month()</a></code>.</p></dd>
 
 
-<dt>where</dt>
+<dl><dt id="arg-date-range">date_range<a class="anchor" aria-label="anchor" href="#arg-date-range"></a></dt>
+<dd><p>date range, can be length 1 or 2 (or more to use the min/max) to filter on the column specified in the YAML file, see <a href="presets.html">presets</a>. Defaults to <code>this_year()</code>. Use <code>NULL</code> to set no date filter. Can also be years, or functions such as <code><a href="https://certe-medical-epidemiology.github.io/certetoolbox/reference/days_around_today.html" class="external-link">last_month()</a></code>. Date-time ojects will be converted to dates, so using times as input is useless. It is supported to filter on a date-time column though.</p></dd>
+
+
+<dt id="arg-where">where<a class="anchor" aria-label="anchor" href="#arg-where"></a></dt>
 <dd><p>arguments to filter data on, will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>. <strong>Do not use <code>&amp;&amp;</code> or <code>||</code> but only <code>&amp;</code> or <code>|</code> in filtering.</strong></p></dd>
 
 
-<dt>date_column</dt>
-<dd><p>column name to filter <code>date_range</code> on, will be determined automatically if using <code>NULL</code>.</p></dd>
-
-
-<dt>review_qry</dt>
+<dt id="arg-review-qry">review_qry<a class="anchor" aria-label="anchor" href="#arg-review-qry"></a></dt>
 <dd><p>a <a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a> to indicate whether the query must be reviewed first, defaults to <code>TRUE</code> in interactive mode and <code>FALSE</code> otherwise. This will always be <code>FALSE</code> in Quarto / R Markdown, since the output of <code><a href="https://rdrr.io/pkg/knitr/man/output_type.html" class="external-link">knitr::pandoc_to()</a></code> must be <code>NULL</code>.</p></dd>
 
 
-<dt>antibiogram_type</dt>
+<dt id="arg-antibiogram-type">antibiogram_type<a class="anchor" aria-label="anchor" href="#arg-antibiogram-type"></a></dt>
 <dd><p>antibiotic transformation mode. Leave blank to strip antibiotic results from the data, <code>"sir"</code> to keep SIR values, <code>"mic"</code> to keep MIC values or <code>"disk"</code> to keep disk diffusion values. Values will be cleaned with <code><a href="https://msberends.github.io/AMR/reference/as.sir.html" class="external-link">as.sir()</a></code>, <code><a href="https://msberends.github.io/AMR/reference/as.mic.html" class="external-link">as.mic()</a></code> or <code><a href="https://msberends.github.io/AMR/reference/as.disk.html" class="external-link">as.disk()</a></code>.</p></dd>
 
 
-<dt>distinct</dt>
+<dt id="arg-distinct">distinct<a class="anchor" aria-label="anchor" href="#arg-distinct"></a></dt>
 <dd><p><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a> to apply <code><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct()</a></code> to the resulting data set</p></dd>
 
 
-<dt>auto_transform</dt>
+<dt id="arg-auto-transform">auto_transform<a class="anchor" aria-label="anchor" href="#arg-auto-transform"></a></dt>
 <dd><p><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a> to apply <code>auto_transform()</code> to the resulting data set</p></dd>
 
 
-<dt>preset</dt>
+<dt id="arg-preset">preset<a class="anchor" aria-label="anchor" href="#arg-preset"></a></dt>
 <dd><p>a preset to choose from <code><a href="presets.html">presets()</a></code>. Will be ignored if <code>diver_cbase</code> is set, even if it is set to <code>NULL</code>.</p></dd>
 
 
-<dt>diver_cbase, diver_project, diver_dsn, diver_testserver</dt>
+<dt id="arg-diver-cbase-diver-project-diver-dsn-diver-testserver">diver_cbase, diver_project, diver_dsn, diver_testserver<a class="anchor" aria-label="anchor" href="#arg-diver-cbase-diver-project-diver-dsn-diver-testserver"></a></dt>
 <dd><p>properties to set in <code><a href="db_connect.html">db_connect()</a></code>. The <code>diver_cbase</code> argument will be based on <code>preset</code>, but can also be set to blank <code>NULL</code> to manually select a cBase in a popup window.</p></dd>
 
 
-<dt>diver_tablename</dt>
+<dt id="arg-diver-tablename">diver_tablename<a class="anchor" aria-label="anchor" href="#arg-diver-tablename"></a></dt>
 <dd><p>name of the database table to download data from. This is hard-coded by DI and should normally never be changed.</p></dd>
 
 
-<dt>info</dt>
+<dt id="arg-info">info<a class="anchor" aria-label="anchor" href="#arg-info"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>limit</dt>
+<dt id="arg-limit">limit<a class="anchor" aria-label="anchor" href="#arg-limit"></a></dt>
 <dd><p>maximum number of rows to return.</p></dd>
 
 
-<dt>in_background</dt>
+<dt id="arg-in-background">in_background<a class="anchor" aria-label="anchor" href="#arg-in-background"></a></dt>
 <dd><p>run data collection in the background using <code><a href="https://callr.r-lib.org/reference/r_bg.html" class="external-link">callr::r_bg()</a></code>. Use <code>...$get_result()</code> to retrieve results, or <code>...$is_active()</code> to check whether the background process still runs.</p></dd>
 
 
-<dt>...</dt>
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>not used anymore, previously settings for old <code>certetools::certedb_getmmb()</code> function</p></dd>
 
 
-<dt>query</dt>
+<dt id="arg-query">query<a class="anchor" aria-label="anchor" href="#arg-query"></a></dt>
 <dd><p>a <a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a> to view the query of, or a <a href="https://rdrr.io/r/base/character.html" class="external-link">character</a> string to run as query in <code>certedb_getmmb()</code> (which will ignore all other arguments, except for <code>where</code>, <code>auto_transform</code> and <code>info</code>).</p></dd>
 
 
-<dt>duckdb_path</dt>
+<dt id="arg-duckdb-path">duckdb_path<a class="anchor" aria-label="anchor" href="#arg-duckdb-path"></a></dt>
 <dd><p>path to the local DuckDB database</p></dd>
 
 
-<dt>duckdb_table</dt>
+<dt id="arg-duckdb-table">duckdb_table<a class="anchor" aria-label="anchor" href="#arg-duckdb-table"></a></dt>
 <dd><p>name of the DuckDB database to retrieve data from</p></dd>
 
 
-<dt>dates</dt>
+<dt id="arg-dates">dates<a class="anchor" aria-label="anchor" href="#arg-dates"></a></dt>
 <dd><p>date range, can be length 1 or 2 (or more to use the min/max) to filter on the column <code>Ontvangstdatum</code>. Defaults to <code>this_year()</code>. Use <code>NULL</code> to set no date filter. Can also be years, or functions such as <code><a href="https://certe-medical-epidemiology.github.io/certetoolbox/reference/days_around_today.html" class="external-link">last_month()</a></code>.</p></dd>
 
 
-<dt>select_preset</dt>
+<dt id="arg-select-preset">select_preset<a class="anchor" aria-label="anchor" href="#arg-select-preset"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>select</dt>
+<dt id="arg-select">select<a class="anchor" aria-label="anchor" href="#arg-select"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>add_cols</dt>
+<dt id="arg-add-cols">add_cols<a class="anchor" aria-label="anchor" href="#arg-add-cols"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>first_isolates</dt>
+<dt id="arg-first-isolates">first_isolates<a class="anchor" aria-label="anchor" href="#arg-first-isolates"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>eucast_rules</dt>
+<dt id="arg-eucast-rules">eucast_rules<a class="anchor" aria-label="anchor" href="#arg-eucast-rules"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>keep_synonyms</dt>
+<dt id="arg-keep-synonyms">keep_synonyms<a class="anchor" aria-label="anchor" href="#arg-keep-synonyms"></a></dt>
 <dd><p>a <a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a> to indicate if old, previously valid taxonomic names must be preserved and not be corrected to currently accepted names. The default is <code>FALSE</code>, which will return a note if old taxonomic names were processed. The default can be set with the <a href="https://msberends.github.io/AMR/reference/AMR-options.html" class="external-link">package option</a> <code><a href="https://msberends.github.io/AMR/reference/AMR-options.html" class="external-link">AMR_keep_synonyms</a></code>, i.e. <code>options(AMR_keep_synonyms = TRUE)</code> or <code>options(AMR_keep_synonyms = FALSE)</code>.</p></dd>
 
 
-<dt>mic</dt>
+<dt id="arg-mic">mic<a class="anchor" aria-label="anchor" href="#arg-mic"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>disk</dt>
+<dt id="arg-disk">disk<a class="anchor" aria-label="anchor" href="#arg-disk"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>zipcodes</dt>
+<dt id="arg-zipcodes">zipcodes<a class="anchor" aria-label="anchor" href="#arg-zipcodes"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>ziplength</dt>
+<dt id="arg-ziplength">ziplength<a class="anchor" aria-label="anchor" href="#arg-ziplength"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>tat_hours</dt>
+<dt id="arg-tat-hours">tat_hours<a class="anchor" aria-label="anchor" href="#arg-tat-hours"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>only_real_patients</dt>
+<dt id="arg-only-real-patients">only_real_patients<a class="anchor" aria-label="anchor" href="#arg-only-real-patients"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>only_conducted_tests</dt>
+<dt id="arg-only-conducted-tests">only_conducted_tests<a class="anchor" aria-label="anchor" href="#arg-only-conducted-tests"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>only_validated</dt>
+<dt id="arg-only-validated">only_validated<a class="anchor" aria-label="anchor" href="#arg-only-validated"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>only_show_query</dt>
+<dt id="arg-only-show-query">only_show_query<a class="anchor" aria-label="anchor" href="#arg-only-show-query"></a></dt>
 <dd><p>settings for old <code>certedb_getmmb()</code> function</p></dd>
 
 
-<dt>review_where</dt>
+<dt id="arg-review-where">review_where<a class="anchor" aria-label="anchor" href="#arg-review-where"></a></dt>
 <dd><p>a <a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a> to indicate whether the query must be reviewed first, defaults to <code>TRUE</code> in interactive mode and <code>FALSE</code> otherwise. This will always be <code>FALSE</code> in Quarto / R Markdown, since the output of <code><a href="https://rdrr.io/pkg/knitr/man/output_type.html" class="external-link">knitr::pandoc_to()</a></code> must be <code>NULL</code>.</p></dd>
 
 </dl></div>
@@ -310,7 +306,10 @@
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># peek-preview of a cBase:</span></span></span>
+<span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span>diver_cbase <span class="op">=</span> <span class="st">"models/MedEpi/GLIMS10_Grammen.cbase"</span>,</span></span>
+<span class="r-in"><span>               date_range <span class="op">=</span> <span class="cn">NULL</span>, limit <span class="op">=</span> <span class="fl">10</span>, review_qry <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># these two work identical:</span></span></span>
 <span class="r-in"><span><span class="fu">get_diver_data</span><span class="op">(</span>date_range <span class="op">=</span> <span class="fl">2024</span>, where <span class="op">=</span> <span class="va">BepalingCode</span> <span class="op">==</span> <span class="st">"PXNCOV"</span><span class="op">)</span></span></span>
@@ -355,7 +354,7 @@
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># See the website for an overview of allowed functions:</span></span></span>
 <span class="r-in"><span><span class="co"># https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># USING DUCKDB DATABASE ------------------------------------------------</span></span></span>
@@ -388,7 +387,7 @@
 <span class="r-in"><span><span class="va">df</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A DuckDB tibble: 42 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Retrieved from:  "~/my_duck.db"</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Retrieved on:    1 jul 2024 07:30</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Retrieved on:    5 sep 2024 15:14</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Retrieved by:    CERTE\runner</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    sepal_length sepal_width petal_length petal_width species</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  <span style="color: #BCBCBC;">*</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
@@ -405,7 +404,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 32 more rows</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ Use `certedb_query()` to get the query of this DuckDB tibble</span></span>
 <span class="r-in"><span><span class="fu">certedb_query</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># This query was run on "~/my_duck.db" on 2024-07-01 07:30 by CERTE\runner, yielding a DuckDB tibble of 42 × 5</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># This query was run on "~/my_duck.db" on 2024-09-05 15:14 by CERTE\runner, yielding a DuckDB tibble of 42 × 5</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SELECT iris.*</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> FROM iris</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> WHERE (Species = 'setosa' AND "Sepal.Width" &gt; 3.0)</span>
@@ -426,15 +425,15 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
       </footer></div>
 
-  
 
 
-  
+
+
 
   </body></html>
 
