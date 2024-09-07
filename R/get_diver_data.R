@@ -263,26 +263,28 @@ get_diver_data <- function(date_range = this_year(),
   }
   
   # set query ----
-  msg_init("Validating WHERE statement...", print = info)
-  # fill in columns from the 'di' object
-  if (isTRUE(list(...)$where_as_character)) {
-    where <- str2lang(where)
-  }
-  where <- where_convert_di(substitute(where))
-  # convert objects, this will return msg "OK"
-  where <- where_convert_objects(deparse(substitute(where)), info = info)
-  
-  if (!is.null(substitute(where))) {
-    out <- out |> filter({{ where }})
-    out$lazy_query$where <- where_convert_like(out$lazy_query$where)
-  }
-  if (!is.null(preset) && !all(is.na(preset$filter))) {
-    # apply filter from preset
-    msg_init(paste0("Validating WHERE statement from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
-             print = info)
-    preset_filter <- str2lang(preset$filter)
-    out <- out |> filter(preset_filter)
-    msg_ok(print = info, dimensions = dim(out))
+  if (!is.null(tryCatch(where, error = function(e) 0))) {
+    msg_init("Validating WHERE statement...", print = info)
+    # fill in columns from the 'di' object
+    if (isTRUE(list(...)$where_as_character)) {
+      where <- str2lang(where)
+    }
+    where <- where_convert_di(substitute(where))
+    # convert objects, this will return msg "OK"
+    where <- where_convert_objects(deparse(substitute(where)), info = info)
+    
+    if (!is.null(substitute(where))) {
+      out <- out |> filter({{ where }})
+      out$lazy_query$where <- where_convert_like(out$lazy_query$where)
+    }
+    if (!is.null(preset) && !all(is.na(preset$filter))) {
+      # apply filter from preset
+      msg_init(paste0("Validating WHERE statement from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
+               print = info)
+      preset_filter <- str2lang(preset$filter)
+      out <- out |> filter(preset_filter)
+      msg_ok(print = info, dimensions = dim(out))
+    }
   }
   
   qry <- remote_query(out)
