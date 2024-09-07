@@ -17,6 +17,7 @@ get_diver_data(
   antibiogram_type = "sir",
   distinct = TRUE,
   auto_transform = TRUE,
+  snake_case = TRUE,
   preset = read_secret("db.preset_default"),
   diver_cbase = NULL,
   diver_project = read_secret("db.diver_project"),
@@ -107,6 +108,8 @@ get_glims10_data(
 
 \item{auto_transform}{\link{logical} to apply \code{\link[=auto_transform]{auto_transform()}} to the resulting data set}
 
+\item{snake_case}{\link{logical} to convert column names to \href{https://en.wikipedia.org/wiki/Snake_case}{snake case}, \strong{only} when \code{auto_transform = TRUE}}
+
 \item{preset}{a preset to choose from \code{\link[=presets]{presets()}}. Will be ignored if \code{diver_cbase} is set, even if it is set to \code{NULL}.}
 
 \item{diver_cbase, diver_project, diver_dsn, diver_testserver}{properties to set in \code{\link[=db_connect]{db_connect()}}. The \code{diver_cbase} argument will be based on \code{preset}, but can also be set to blank \code{NULL} to manually select a cBase in a popup window.}
@@ -173,9 +176,10 @@ Using \code{certedb_query("your qry here")} is identical to using \code{certedb_
 }
 \examples{
 \dontrun{
+
 # peek-preview of a cBase:
-get_diver_data(diver_cbase = "models/MedEpi/GLIMS10_Grammen.cbase",
-               date_range = NULL, limit = 10, review_qry = FALSE)
+get_diver_data(diver_cbase = "models/MedEpi/GLIMS10_Resistenties.cbase",
+               date_range = NULL, limit = 10, review_qry = FALSE, auto_transform = FALSE)
 
 # these two work identical:
 get_diver_data(date_range = 2024, where = BepalingCode == "PXNCOV")

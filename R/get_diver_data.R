@@ -29,6 +29,7 @@
 #' @param preset a preset to choose from [presets()]. Will be ignored if `diver_cbase` is set, even if it is set to `NULL`.
 #' @param distinct [logical] to apply [distinct()] to the resulting data set
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
+#' @param snake_case [logical] to convert column names to [snake case](https://en.wikipedia.org/wiki/Snake_case), **only** when `auto_transform = TRUE`
 #' @param info a logical to indicate whether info about the connection should be printed
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
 #' @param limit maximum number of rows to return.
@@ -38,6 +39,7 @@
 #' Use [certedb_query()] to retrieve the original query that was used to download the data.
 #' @importFrom dbplyr sql remote_query
 #' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc all_of pull
+#' @importFrom rlang parse_expr quo sym
 #' @importFrom certestyle format2 font_black font_blue font_bold font_green font_grey font_italic
 #' @importFrom certetoolbox auto_transform this_year
 #' @importFrom tidyr pivot_longer unite pivot_wider
@@ -47,9 +49,10 @@
 #' @export
 #' @examples 
 #' \dontrun{
+#' 
 #' # peek-preview of a cBase:
-#' get_diver_data(diver_cbase = "models/MedEpi/GLIMS10_Grammen.cbase",
-#'                date_range = NULL, limit = 10, review_qry = FALSE)
+#' get_diver_data(diver_cbase = "models/MedEpi/GLIMS10_Resistenties.cbase",
+#'                date_range = NULL, limit = 10, review_qry = FALSE, auto_transform = FALSE)
 #' 
 #' # these two work identical:
 #' get_diver_data(date_range = 2024, where = BepalingCode == "PXNCOV")
@@ -101,6 +104,7 @@ get_diver_data <- function(date_range = this_year(),
                            antibiogram_type = "sir",
                            distinct = TRUE,
                            auto_transform = TRUE,
+                           snake_case = TRUE,
                            preset = read_secret("db.preset_default"),
                            diver_cbase = NULL,
                            diver_project = read_secret("db.diver_project"),
@@ -338,17 +342,37 @@ get_diver_data <- function(date_range = this_year(),
     msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
              print = info,
              prefix_time = TRUE)
+
+    convert_to_tidyselect <- function(x) {
+      # get tidyselect functions
+      tidyselect_env <- asNamespace("tidyselect")
+      tidyselect_functions <- ls(envir = tidyselect_env, all.names = FALSE)
+      tidyselect_functions <- tidyselect_functions[vapply(FUN.VALUE = logical(1),
+                                                          tidyselect_functions,
+                                                          function(x) tryCatch(is.function(getExportedValue(x, ns = tidyselect_env)),
+                                                                               error = function(e) FALSE))]
+      is_negated <- grepl("^!", x)
+      x_clean <- sub("^!", "", x)
+      function_name <- sub("\\(.*\\)$", "", x_clean)
+      if (function_name %in% tidyselect_functions) {
+        parsed_expr <- parse_expr(x_clean)
+        if (is_negated) {
+          return(quo(-!!parsed_expr))
+        } else {
+          return(quo(!!parsed_expr))
+        }
+      } else {
+        return(sym(x))
+      }
+    }
+    
+    preset$select <- lapply(preset$select, convert_to_tidyselect)
+    # remove names, since otherwise everything() will lead to all column being names "everything_[0-9]"
+    names(preset$select) <- NULL
+    
+    # use unquote-splice `!!!` since input is list
     out <- out |> select(!!!preset$select)
     msg_ok(print = info, dimensions = dim(out))
-  }
-  
-  # distinct ----
-  if (isTRUE(distinct)) {
-    out_distinct <- distinct(out)
-    if (nrow(out_distinct) < nrow(out)) {
-      msg("NOTE: Removed ", nrow(out) - nrow(out_distinct), " duplicate rows, since `distinct = TRUE`")
-      out <- out_distinct
-    }
   }
   
   # join ----
@@ -356,7 +380,7 @@ get_diver_data <- function(date_range = this_year(),
   for (j in joins) {
     join_object <- preset[[j]]
     
-    msg_init("Joining data from cBase ", font_blue(paste0("\"", join_object$cbase, "\"")), " by ", font_blue(toString(join_object$by)), "...", print = info, prefix_time = TRUE)
+    msg_init("Joining data from cBase ", font_blue(paste0("\"", join_object$cbase, "\"")), "...", print = info, prefix_time = TRUE)
     
     join_fn <- getExportedValue(paste0(join_object$type, "_join"), ns = asNamespace("dplyr"))
     join_cols <- join_object$by
@@ -377,10 +401,10 @@ get_diver_data <- function(date_range = this_year(),
                                diver_dsn = diver_dsn,
                                diver_tablename = diver_tablename,
                                distinct = distinct,
-                               limit = Inf,
+                               limit = Inf, # no limit, so base solely on previous dataset
                                auto_transform = FALSE, # if `auto_transform` was set to TRUE, this will be applied later
                                review_qry = FALSE,
-                               in_background = FALSE,
+                               in_background = FALSE, # if `in_background` was set to TRUE, this already runs in the background
                                info = FALSE)
     
     if (!is.null(join_object$select)) {
@@ -408,6 +432,15 @@ get_diver_data <- function(date_range = this_year(),
     msg_ok(dimensions = dim(out), print = info)
   }
   
+  # distinct ----
+  if (isTRUE(distinct)) {
+    out_distinct <- distinct(out)
+    if (nrow(out_distinct) < nrow(out)) {
+      msg("NOTE: Removed ", nrow(out) - nrow(out_distinct), " duplicate rows, since `distinct = TRUE`")
+      out <- out_distinct
+    }
+  }
+  
   # auto-transform ----
   if (isTRUE(auto_transform)) {
     msg_init("Transforming data set...", print = info, prefix_time = TRUE)
@@ -416,7 +449,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- out |> arrange(desc(Ordernummer))
     }
     # transform data, and update column names
-    out <- auto_transform(out, snake_case = TRUE)
+    out <- auto_transform(out, snake_case = snake_case)
     msg_ok(print = info)
   }
   

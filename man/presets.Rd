@@ -23,7 +23,7 @@ The function \code{\link[=get_preset]{get_preset()}} will return all the details
 \section{Required YAML Format}{
 
 
-This YAML information should be put into the YAML file that is read using \code{\link[certetoolbox:read_secret]{read_secret()}}. Afterwards, the name of the preset can be used as \code{\link[=get_diver_data]{get_diver_data(date_range = "...", preset = "...")}}.
+This YAML information should be put into the YAML file that is read using \code{\link[certetoolbox:read_secret]{read_secret()}}. Afterwards, the name of the preset can be used as \code{\link[=get_diver_data]{get_diver_data(preset = "...")}}.
 
 The most basic YAML form:
 
@@ -43,27 +43,29 @@ The most extensive YAML form:
     cbase: "location/to/another.cbase"
     by: ColumnName1, ColumnName2
     type: "left"
-    select: ColumnName1, ColumnName2, ColumnName3
+    select: ColumnName1, ColumnName2, ColumnName3, everything(), !starts_with("abc")
     wide_names_from: ColumnName3
   join2:
     cbase: "location/to/yet_another.cbase"
     by: ColumnName1, ColumnName2
     type: "left"
-    select: ColumnName1, ColumnName2, ColumnName3
+    select: ColumnName1, ColumnName2, ColumnName3, everything(), !where(is.numeric)
     wide_names_from: ColumnName3
-    wide_name_trans: 'gsub("_", "..", .x)'
+    wide_name_trans: gsub("_", "..", .x)
 }\if{html}{\out{</div>}}
 
 For all presets, \code{cbase} and \code{date_col} are required.
+
+Input for \code{select} will be passed on to \code{\link[dplyr:select]{select()}}, meaning that column names can be used, but also \code{tidyselect} functions such as \code{\link[tidyselect:language]{everything()}}. Input for \code{filter} will be passed on to \code{\link[dplyr:filter]{filter()}}.
 \subsection{Joins}{
 
-For joins, you must set at least \code{cbase}, \code{by}, and \code{type} (left, right, inner, etc., \link[dplyr:mutate-joins]{see here}).
+For joins, you must set at least \code{cbase}, \code{by}, and \code{type} ("left", "right", "inner", etc., \link[dplyr:mutate-joins]{see here}).
+
+An unlimited number of joins can be used, but all so-called 'keys' must be unique and start with \code{join}, e.g. \code{joinA} / \code{joinB} or \code{join} / \code{join2}.
 
 If \code{wide_names_from} is set, the dataset is first transformed to long format using the columns specified in \code{by}, and then reshaped to wide format with values in \code{wide_names_from}.
 
-Use \code{wide_name_trans} to transform the values in \code{wide_names_from} before the reshaping to wide format is applied. Use \code{.x} for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in \code{wide_names_from}.
-
-An unlimited number of joins can be used, but all so-called 'keys' must be unique and start with \code{join}, e.g. \code{joinA} / \code{joinB} or \code{join} / \code{join2}.
+Use \code{wide_name_trans} to transform the values in \code{wide_names_from} before the reshaping to wide format is applied. Use \code{.x} for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in \code{wide_names_from} using e.g., \code{\link[dplyr:case_when]{case_when()}}.
 }
 }
 

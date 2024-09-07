@@ -232,14 +232,14 @@ where_convert_di <- function(where) {
   for (i in seq_len(length(where))) {
     where_txt <- paste0(trimws(deparse(where[[i]])), collapse = " ")
     has_di <- FALSE
-    while (where_txt %like% "di[$]") {
+    while (where_txt %like% "(di|gl)[$]") {
       # use while and sub(), not gsub(), to go over each mention of 'di$'
       has_di <- TRUE
-      where_txt <- sub("(di[$][A-Za-z0-9`.-]+)",
+      where_txt <- sub("((di|gl)[$][A-Za-z0-9`.-]+)",
                        paste0(
-                         ifelse(where_txt %like% "di[$].*?[`-]", '"', ""),
-                         eval(str2lang(sub(".*(di[$][A-Za-z0-9`.-]+).*", "\\1", where_txt, perl = TRUE))),
-                         ifelse(where_txt %like% "di[$].*?[`-]", '"', "")),
+                         ifelse(where_txt %like% "(di|gl)[$].*?[`-]", '"', ""),
+                         eval(str2lang(sub(".*((di|gl)[$][A-Za-z0-9`.-]+).*", "\\1", where_txt, perl = TRUE))),
+                         ifelse(where_txt %like% "(di|gl)[$].*?[`-]", '"', "")),
                        where_txt,
                        perl = TRUE)
     }

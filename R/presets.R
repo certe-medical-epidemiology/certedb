@@ -24,7 +24,7 @@
 #' @details The function [presets()] returns a data.frame with available presets, as defined in the secrets YAML file under `db.presets`.
 #' @section Required YAML Format:
 #' 
-#' This YAML information should be put into the YAML file that is read using [`read_secret()`][certetoolbox::read_secret()]. Afterwards, the name of the preset can be used as [`get_diver_data(date_range = "...", preset = "...")`][get_diver_data()].
+#' This YAML information should be put into the YAML file that is read using [`read_secret()`][certetoolbox::read_secret()]. Afterwards, the name of the preset can be used as [`get_diver_data(preset = "...")`][get_diver_data()].
 #' 
 #' The most basic YAML form:
 #' 
@@ -46,28 +46,30 @@
 #'     cbase: "location/to/another.cbase"
 #'     by: ColumnName1, ColumnName2
 #'     type: "left"
-#'     select: ColumnName1, ColumnName2, ColumnName3
+#'     select: ColumnName1, ColumnName2, ColumnName3, everything(), !starts_with("abc")
 #'     wide_names_from: ColumnName3
 #'   join2:
 #'     cbase: "location/to/yet_another.cbase"
 #'     by: ColumnName1, ColumnName2
 #'     type: "left"
-#'     select: ColumnName1, ColumnName2, ColumnName3
+#'     select: ColumnName1, ColumnName2, ColumnName3, everything(), !where(is.numeric)
 #'     wide_names_from: ColumnName3
-#'     wide_name_trans: 'gsub("_", "..", .x)'
+#'     wide_name_trans: gsub("_", "..", .x)
 #' ```
 #' 
 #' For all presets, `cbase` and `date_col` are required.
 #' 
+#' Input for `select` will be passed on to [`select()`][dplyr::select()], meaning that column names can be used, but also `tidyselect` functions such as [`everything()`][tidyselect::language]. Input for `filter` will be passed on to [`filter()`][dplyr::filter()].
+#' 
 #' ## Joins
 #' 
-#' For joins, you must set at least `cbase`, `by`, and `type` (left, right, inner, etc., [see here][dplyr::left_join()]). 
+#' For joins, you must set at least `cbase`, `by`, and `type` ("left", "right", "inner", etc., [see here][dplyr::left_join()]). 
+#' 
+#' An unlimited number of joins can be used, but all so-called 'keys' must be unique and start with `join`, e.g. `joinA` / `joinB` or `join` / `join2`.
 #' 
 #' If `wide_names_from` is set, the dataset is first transformed to long format using the columns specified in `by`, and then reshaped to wide format with values in `wide_names_from`.
 #' 
-#' Use `wide_name_trans` to transform the values in `wide_names_from` before the reshaping to wide format is applied. Use `.x` for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in `wide_names_from`.
-#' 
-#' An unlimited number of joins can be used, but all so-called 'keys' must be unique and start with `join`, e.g. `joinA` / `joinB` or `join` / `join2`.
+#' Use `wide_name_trans` to transform the values in `wide_names_from` before the reshaping to wide format is applied. Use `.x` for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in `wide_names_from` using e.g., [`case_when()`][dplyr::case_when()].
 #' @rdname presets
 #' @export
 presets <- function() {
