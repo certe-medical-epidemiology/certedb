@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.11.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.12.0</span>
       </span>
     </div>
 
@@ -99,7 +99,7 @@
 
 
 
-<p>This YAML information should be put into the YAML file that is read using <code><a href="https://certe-medical-epidemiology.github.io/certetoolbox/reference/read_secret.html" class="external-link">read_secret()</a></code>. Afterwards, the name of the preset can be used as <code><a href="get_diver_data.html">get_diver_data(date_range = "...", preset = "...")</a></code>.</p>
+<p>This YAML information should be put into the YAML file that is read using <code><a href="https://certe-medical-epidemiology.github.io/certetoolbox/reference/read_secret.html" class="external-link">read_secret()</a></code>. Afterwards, the name of the preset can be used as <code><a href="get_diver_data.html">get_diver_data(preset = "...")</a></code>.</p>
 <p>The most basic YAML form:</p>
 <p></p><div class="sourceCode yaml"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">name_new_preset</span><span class="kw">:</span></span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="at">  </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"location/to/name.cbase"</span></span>
@@ -114,23 +114,24 @@
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="at">    </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"location/to/another.cbase"</span></span>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="at">    </span><span class="fu">by</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2</span></span>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="st">"left"</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2, ColumnName3</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2, ColumnName3, everything(), !starts_with("abc")</span></span>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_names_from</span><span class="kw">:</span><span class="at"> ColumnName3</span></span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="at">  </span><span class="fu">join2</span><span class="kw">:</span></span>
 <span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="at">    </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"location/to/yet_another.cbase"</span></span>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="at">    </span><span class="fu">by</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2</span></span>
 <span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="st">"left"</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2, ColumnName3</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2, ColumnName3, everything(), !where(is.numeric)</span></span>
 <span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_names_from</span><span class="kw">:</span><span class="at"> ColumnName3</span></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_name_trans</span><span class="kw">:</span><span class="at"> </span><span class="st">'gsub("_", "..", .x)'</span></span></code></pre><p></p></div>
-<p>For all presets, <code>cbase</code> and <code>date_col</code> are required.</p><div class="section">
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_name_trans</span><span class="kw">:</span><span class="at"> gsub("_", "..", .x)</span></span></code></pre><p></p></div>
+<p>For all presets, <code>cbase</code> and <code>date_col</code> are required.</p>
+<p>Input for <code>select</code> will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select()</a></code>, meaning that column names can be used, but also <code>tidyselect</code> functions such as <code><a href="https://tidyselect.r-lib.org/reference/language.html" class="external-link">everything()</a></code>. Input for <code>filter</code> will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>.</p><div class="section">
 <h3 id="joins">Joins<a class="anchor" aria-label="anchor" href="#joins"></a></h3>
 
 
-<p>For joins, you must set at least <code>cbase</code>, <code>by</code>, and <code>type</code> (left, right, inner, etc., <a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">see here</a>).</p>
-<p>If <code>wide_names_from</code> is set, the dataset is first transformed to long format using the columns specified in <code>by</code>, and then reshaped to wide format with values in <code>wide_names_from</code>.</p>
-<p>Use <code>wide_name_trans</code> to transform the values in <code>wide_names_from</code> before the reshaping to wide format is applied. Use <code>.x</code> for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in <code>wide_names_from</code>.</p>
+<p>For joins, you must set at least <code>cbase</code>, <code>by</code>, and <code>type</code> ("left", "right", "inner", etc., <a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">see here</a>).</p>
 <p>An unlimited number of joins can be used, but all so-called 'keys' must be unique and start with <code>join</code>, e.g. <code>joinA</code> / <code>joinB</code> or <code>join</code> / <code>join2</code>.</p>
+<p>If <code>wide_names_from</code> is set, the dataset is first transformed to long format using the columns specified in <code>by</code>, and then reshaped to wide format with values in <code>wide_names_from</code>.</p>
+<p>Use <code>wide_name_trans</code> to transform the values in <code>wide_names_from</code> before the reshaping to wide format is applied. Use <code>.x</code> for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in <code>wide_names_from</code> using e.g., <code><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when()</a></code>.</p>
 </div>
 
     </div>
