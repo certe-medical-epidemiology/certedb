@@ -27,6 +27,7 @@
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise. This will always be `FALSE` in Quarto / R Markdown, since the output of [knitr::pandoc_to()] must be `NULL`.
 #' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"sir"` to keep SIR values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.sir()`][AMR::as.sir()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
 #' @param preset a preset to choose from [presets()]. Will be ignored if `diver_cbase` is set, even if it is set to `NULL`.
+#' @param date_column column name of data set to query. Normally this should be set in a preset, but this argument can be used to override that.
 #' @param distinct [logical] to apply [distinct()] to the resulting data set
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
 #' @param snake_case [logical] to convert column names to [snake case](https://en.wikipedia.org/wiki/Snake_case), **only** when `auto_transform = TRUE`
@@ -87,6 +88,9 @@
 #' 
 #' # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
 #' 
+#' # See the website for an overview of allowed functions:
+#' # https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
+#' 
 #' # Use Diver Integrator functions within EVAL():              
 #' get_diver_data(2024, where = EVAL('regexp(value("MateriaalCode"),"^B")'))
 #' 
@@ -95,8 +99,6 @@
 #'   where = EVAL('rolling(12, value("OntvangstDatum"), date("2024/11/27"))')
 #' )
 #' 
-#' # See the website for an overview of allowed functions:
-#' # https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
 #' }
 get_diver_data <- function(date_range = this_year(),
                            where = NULL,
@@ -106,6 +108,7 @@ get_diver_data <- function(date_range = this_year(),
                            auto_transform = TRUE,
                            snake_case = TRUE,
                            preset = read_secret("db.preset_default"),
+                           date_column = NULL,
                            diver_cbase = NULL,
                            diver_project = read_secret("db.diver_project"),
                            diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else read_secret("db.diver_dsn_test"),
@@ -119,29 +122,30 @@ get_diver_data <- function(date_range = this_year(),
   if (is_empty(preset)) {
     preset <- NULL
   }
-  date_column <- NULL
-  if (missing(diver_cbase)) {
+  if (is_empty(diver_cbase)) {
+    diver_cbase <- NULL
+  }
+  if (is.null(diver_cbase)) {
     # get preset
     preset <- get_preset(preset)
     diver_cbase <- preset$cbase
-    date_column <- preset$date_col
+    if (is.null(date_column)) {
+      date_column <- preset$date_col
+    }
   } else {
     if (!is.null(preset)) {
       msg("Ignoring `preset = \"", preset, "\"` since `diver_cbase` is set")
     }
     preset <- NULL
   }
-  if (is_empty(diver_cbase)) {
-    diver_cbase <- ""
-  }
   if (is_empty(date_column) && !is.null(date_range)) {
-    stop("'date_col' must be given in the preset if 'date_range' is set")
+    stop("if 'date_range' is set, 'date_column' must be set, or 'date_col' must be given in the preset", call. = FALSE)
   }
   
   if (isTRUE(in_background)) {
     message("NOTE: use ...$get_result() to retrieve results when they are available.\n\n",
             "If the call was:\n",
-            "  data_123 <- get_diver_data(...)\n",
+            "  data_123 <- get_diver_data(..., in_background = TRUE)\n",
             "Then after a while retrieve results using:\n",
             "  data_123 <- data_123$get_result()")
     out <- callr::r_bg(certedb::get_diver_data,
@@ -151,6 +155,7 @@ get_diver_data <- function(date_range = this_year(),
                                    antibiogram_type = antibiogram_type,
                                    distinct = distinct,
                                    auto_transform = auto_transform,
+                                   date_column = date_column,
                                    preset = preset,
                                    diver_cbase = diver_cbase,
                                    diver_project = diver_project,

@@ -61,17 +61,17 @@ shiny_explore <- function(preset = read_secret("db.preset_default_shiny"),
                    selectInput("preset_select", "Preset", choices = presets()$preset, selected = preset),
                    h4("Ordergegevens"),
                    textInput("Ordernummer", "Ordernummer"),
-                   dateRangeInput("datumbereik", "Ontvangst of -afnamedatum", 
+                   dateRangeInput("datumbereik", label = textOutput("date_col"),
                                   start = as.Date(paste0(format(Sys.Date(), "%Y"), "-01-01")),
                                   end = as.Date(paste0(format(Sys.Date(), "%Y"), "-12-31")),
                                   language = "nl"),
-                   textInput("BepalingCode", "Bepalingscode"),
-                   textInput("Bepaling", "Bepalingsnaam (reguliere expressie)"),
+                   textInput("BepalingCode", "BepalingCode"),
+                   textInput("BepalingOmschrijving", "BepalingOmschrijving (reguliere expressie)"),
                    h4("Patient"),
-                   textInput("PatientBSN", "BSN"),
-                   textInput("PatientID", "Patientnummer"),
-                   textInput("PatientNaam", "Naam (reguliere expressie)"),
-                   textInput("PatientGeboortedatum", "Geboortedatum"),
+                   textInput("PatientBSN", "PatientBSN"),
+                   textInput("PatientID", "PatientID"),
+                   textInput("PatientNaam", "PatientNaam (reguliere expressie)"),
+                   textInput("PatientGeboortedatum", "PatientGeboortedatum"),
                    actionButton("zoek", "Zoeken", width = "31%"),
                    actionButton("sluit", "Sluiten", width = "25%"),
                    actionButton("kopie", "Syntax kopieren", width = "41%")
@@ -86,12 +86,16 @@ shiny_explore <- function(preset = read_secret("db.preset_default_shiny"),
   
   server <- function(input, output, session) {
     
+    output$date_col <- renderText({
+      paste0(get_preset(input$preset_select)$date_col, " (gebaseerd op preset)")
+    })
+    
     data <- eventReactive(input$zoek, {
       where_clauses <- vapply(FUN.VALUE = character(1),
                               names(input),
                               function(x) {
                                 if (x %unlike% "^(data_table|datumbereik|preset_select|zoek|sluit|kopie)" && !is.null(input[[x]]) && !all(input[[x]] == "", na.rm = TRUE)) {
-                                  if (x %in% c("PatientNaam", "Bepaling")) {
+                                  if (x %in% c("PatientNaam", "BepalingOmschrijving")) {
                                     paste0(x, " %like% \"", input[[x]], "\"")
                                   # } else if (input[[x]] %like% "^[0-9]+$") {
                                   #   paste0(x, " == ", input[[x]])
@@ -133,8 +137,9 @@ shiny_explore <- function(preset = read_secret("db.preset_default_shiny"),
     observeEvent(input$kopie, {
       qry_text <- paste0("get_diver_data(date_range = c(\"", pkg_env$qry_shiny$date_range[1], "\", \"", pkg_env$qry_shiny$date_range[2], "\")",
                          ifelse(is.null(pkg_env$qry_shiny$where),
-                                ")",
-                                paste0(",\n               where = ", pkg_env$qry_shiny$where, ")")))
+                                "",
+                                paste0(",\n               where = ", pkg_env$qry_shiny$where)),
+                         ",\n               preset = \"", input$preset_select, "\")")
       clipr::write_clip(qry_text)
       rstudioapi::showDialog(title = "Gekopieerd",
                              message = paste0("Tekst gekopieerd naar klembord:\n\n", qry_text))

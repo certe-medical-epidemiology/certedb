@@ -19,6 +19,7 @@ get_diver_data(
   auto_transform = TRUE,
   snake_case = TRUE,
   preset = read_secret("db.preset_default"),
+  date_column = NULL,
   diver_cbase = NULL,
   diver_project = read_secret("db.diver_project"),
   diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else
@@ -111,6 +112,8 @@ get_glims10_data(
 \item{snake_case}{\link{logical} to convert column names to \href{https://en.wikipedia.org/wiki/Snake_case}{snake case}, \strong{only} when \code{auto_transform = TRUE}}
 
 \item{preset}{a preset to choose from \code{\link[=presets]{presets()}}. Will be ignored if \code{diver_cbase} is set, even if it is set to \code{NULL}.}
+
+\item{date_column}{column name of data set to query. Normally this should be set in a preset, but this argument can be used to override that.}
 
 \item{diver_cbase, diver_project, diver_dsn, diver_testserver}{properties to set in \code{\link[=db_connect]{db_connect()}}. The \code{diver_cbase} argument will be based on \code{preset}, but can also be set to blank \code{NULL} to manually select a cBase in a popup window.}
 
@@ -214,6 +217,9 @@ get_diver_data(2024, where = di$PatientLeeftijd \%in\% leeftijden)
 
 # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
 
+# See the website for an overview of allowed functions:
+# https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
+
 # Use Diver Integrator functions within EVAL():              
 get_diver_data(2024, where = EVAL('regexp(value("MateriaalCode"),"^B")'))
 
@@ -222,8 +228,6 @@ get_diver_data(
   where = EVAL('rolling(12, value("OntvangstDatum"), date("2024/11/27"))')
 )
 
-# See the website for an overview of allowed functions:
-# https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc-sql-reference.html
 }
 
 
