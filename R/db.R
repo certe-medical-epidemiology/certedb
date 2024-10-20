@@ -64,7 +64,7 @@ db_connect <- function(driver,
     datasource <- paste0(" to host ", font_blue(dots$host))
   }
   if ("cbase" %in% names(dots)) {
-    datasource <- paste0(" to cBase ", font_blue(paste0("\"", dots$cbase, "\"")))
+    datasource <- paste0(" to cBase ", font_blue(paste0("\"", basename(dots$cbase), "\"")))
     if ("dsn" %in% names(dots)) {
       datasource <- paste0(datasource, font_black(paste0(" (", dots$dsn, ")")))
     }

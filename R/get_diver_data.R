@@ -26,7 +26,7 @@
 #' @param diver_tablename name of the database table to download data from. This is hard-coded by DI and should normally never be changed.
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise. This will always be `FALSE` in Quarto / R Markdown, since the output of [knitr::pandoc_to()] must be `NULL`.
 #' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"sir"` to keep SIR values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.sir()`][AMR::as.sir()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
-#' @param preset a preset to choose from [presets()]. Will be ignored if `diver_cbase` is set, even if it is set to `NULL`.
+#' @param preset a preset to choose from [presets()]. Will be ignored if `diver_cbase` is set, even if it is set to `NULL`. Be sure to read [the documentation][presets()] on how to use presets, and to see in which order the YAML keys will be run.
 #' @param date_column column name of data set to query. Normally this should be set in a preset, but this argument can be used to override that.
 #' @param distinct [logical] to apply [distinct()] to the resulting data set
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
@@ -42,7 +42,7 @@
 #' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc all_of pull
 #' @importFrom rlang parse_expr quo sym
 #' @importFrom certestyle format2 font_black font_blue font_bold font_green font_grey font_italic
-#' @importFrom certetoolbox auto_transform this_year
+#' @importFrom certetoolbox auto_transform this_year import
 #' @importFrom tidyr pivot_longer unite pivot_wider
 #' @importFrom AMR as.sir as.mic as.disk
 #' @importFrom knitr pandoc_to
@@ -283,12 +283,18 @@ get_diver_data <- function(date_range = this_year(),
       out$lazy_query$where <- where_convert_like(out$lazy_query$where)
     }
     if (!is.null(preset) && !all(is.na(preset$filter))) {
-      # apply filter from preset
+      ## filter ----
       msg_init(paste0("Validating WHERE statement from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
                print = info)
-      preset_filter <- str2lang(preset$filter)
-      out <- out |> filter(preset_filter)
-      msg_ok(print = info, dimensions = dim(out))
+      
+      tryCatch({
+        preset_filter <- str2lang(preset$filter)
+        out <- out |> filter(preset_filter)
+        msg_ok(print = info, dimensions = dim(out))
+      }, error = function(e) {
+        msg_error(time = TRUE, print = info, e$message, " -> Returning unchanged data set")
+      })
+      
     }
   }
   
@@ -349,7 +355,7 @@ get_diver_data <- function(date_range = this_year(),
     msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
              print = info,
              prefix_time = TRUE)
-
+    
     convert_to_tidyselect <- function(x) {
       # get tidyselect functions
       tidyselect_env <- asNamespace("tidyselect")
@@ -373,13 +379,30 @@ get_diver_data <- function(date_range = this_year(),
       }
     }
     
-    preset$select <- lapply(preset$select, convert_to_tidyselect)
-    # remove names, since otherwise everything() will lead to all column being names "everything_[0-9]"
-    names(preset$select) <- NULL
+    tryCatch({
+      preset$select <- lapply(preset$select, convert_to_tidyselect)
+      lst_select <- preset$select
+      lst_select.bak <- lst_select
+      # first remove names, since otherwise everything() will lead to all column being names "everything_[0-9]"
+      # but since this makes `..., col_a = ColumnA` not work anymore, we run it twice
+      names(lst_select) <- NULL
+      new_cols <- out |> select(!!!lst_select) |> colnames()
+      lst_select_new <- as.list(new_cols)
+      names(lst_select_new) <- new_cols
+      # now replace the names for the ones that we set in the preset
+      for (i in seq_len(length(lst_select.bak))) {
+        if (is.name(lst_select.bak[[i]]) && as.character(lst_select.bak[[i]]) %in% names(lst_select_new)) {
+          names(lst_select_new)[which(as.character(lst_select.bak[[i]]) == names(lst_select_new))] <- names(lst_select.bak)[i]
+        }
+      }
+      
+      # use unquote-splice `!!!` since input is list
+      out <- out |> select(!!!lst_select_new)
+      msg_ok(print = info, dimensions = dim(out))
+    }, error = function(e) {
+      msg_error(time = TRUE, print = info, e$message, " -> Returning unchanged data set")
+    })
     
-    # use unquote-splice `!!!` since input is list
-    out <- out |> select(!!!preset$select)
-    msg_ok(print = info, dimensions = dim(out))
   }
   
   # join ----
@@ -387,32 +410,43 @@ get_diver_data <- function(date_range = this_year(),
   for (j in joins) {
     join_object <- preset[[j]]
     
-    msg_init("Joining data from cBase ", font_blue(paste0("\"", join_object$cbase, "\"")), "...", print = info, prefix_time = TRUE)
+    src <- join_object$cbase
+    src_txt <- paste0("cBase ", font_blue(paste0("\"", basename(src), "\"")))
+    out_join <- NULL
+    if (src %unlike% "[.]cbase$") {
+      src_txt <- paste0("file ", font_blue(paste0("\"", src, "\"")))
+      out_join <- suppressWarnings(suppressMessages(import(src)))
+    }
+    
+    msg_init("Joining data from ", src_txt, "...", print = info, prefix_time = TRUE)
     
     join_fn <- getExportedValue(paste0(join_object$type, "_join"), ns = asNamespace("dplyr"))
     join_cols <- join_object$by
-    join_where <- vapply(FUN.VALUE = character(1),
-                         join_cols,
-                         function(x) paste0(ifelse(mode(out[[x]]) == "numeric", "", "'"),
-                                            unique(out[[x]]),
-                                            ifelse(mode(out[[x]]) == "numeric", "", "'"),
-                                            collapse = ", "))
-    join_where <- paste0(join_cols, " %in% c(", join_where, ")", collapse = " & ")
-    # query other cBase
-    out_join <- get_diver_data(date_range = NULL, # no date range, so base solely on previous dataset
-                               where = join_where,
-                               where_as_character = TRUE, # this leads to transformation with str2lang()
-                               diver_cbase = join_object$cbase,
-                               preset = NULL,
-                               diver_project = diver_project,
-                               diver_dsn = diver_dsn,
-                               diver_tablename = diver_tablename,
-                               distinct = distinct,
-                               limit = Inf, # no limit, so base solely on previous dataset
-                               auto_transform = FALSE, # if `auto_transform` was set to TRUE, this will be applied later
-                               review_qry = FALSE,
-                               in_background = FALSE, # if `in_background` was set to TRUE, this already runs in the background
-                               info = FALSE)
+    
+    if (is.null(out_join)) {
+      join_where <- vapply(FUN.VALUE = character(1),
+                           join_cols,
+                           function(x) paste0(ifelse(mode(out[[x]]) == "numeric", "", "'"),
+                                              unique(out[[x]]),
+                                              ifelse(mode(out[[x]]) == "numeric", "", "'"),
+                                              collapse = ", "))
+      join_where <- paste0(join_cols, " %in% c(", join_where, ")", collapse = " & ")
+      # query other cBase
+      out_join <- get_diver_data(date_range = NULL, # no date range, so base solely on previous dataset
+                                 where = join_where,
+                                 where_as_character = TRUE, # this leads to transformation with str2lang()
+                                 diver_cbase = join_object$cbase,
+                                 preset = NULL,
+                                 diver_project = diver_project,
+                                 diver_dsn = diver_dsn,
+                                 diver_tablename = diver_tablename,
+                                 distinct = distinct,
+                                 limit = Inf, # no limit, so base solely on previous dataset
+                                 auto_transform = FALSE, # if `auto_transform` was set to TRUE, this will be applied later
+                                 review_qry = FALSE,
+                                 in_background = FALSE, # if `in_background` was set to TRUE, this already runs in the background
+                                 info = FALSE)
+    }
     
     if (!is.null(join_object$select)) {
       out_join <- out_join |> select(!!!join_object$select)
@@ -432,11 +466,34 @@ get_diver_data <- function(date_range = this_year(),
         pivot_wider(names_from = col, values_from = value)
     }
     
-    # the actual join
-    out <- out |>
-      join_fn(out_join, by = join_cols, suffix = c("", "2"))
+    if (inherits(out_join, "sf")) {
+      # otherwise join will fail
+      loadNamespace("sf")
+    }
     
-    msg_ok(dimensions = dim(out), print = info)
+    tryCatch({
+      # the actual join
+      out <- out |> join_fn(out_join, by = join_cols, suffix = c("", "2"))
+      msg_ok(dimensions = dim(out), print = info)
+    }, error = function(e) {
+      msg_error(time = TRUE, print = info, e$message, " -> Returning unchanged data set")
+    })
+    
+  }
+  
+  # post-processing ----
+  if (!is.null(preset$`post-processing`)) {
+    # since post-processing must contain `x` to indicate the data set, set it here in the environment
+    x <- out
+    msg_init("Post-processing data...", print = info, prefix_time = TRUE)
+    
+    tryCatch({
+      out <- eval(parse(text = preset$`post-processing`))
+      msg_ok(dimensions = dim(out), print = info)
+    }, error = function(e) {
+      msg_error(time = TRUE, print = info, e$message, " -> Returning unchanged data set")
+    })
+    
   }
   
   # distinct ----
@@ -455,9 +512,15 @@ get_diver_data <- function(date_range = this_year(),
       out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"] <- gsub(".", "", out$Ordernummer[out$Ordernummer %like% "[0-9]{2}[.][0-9]{4}[.][0-9]{4}"], fixed = TRUE)
       out <- out |> arrange(desc(Ordernummer))
     }
-    # transform data, and update column names
-    out <- auto_transform(out, snake_case = snake_case)
-    msg_ok(print = info)
+    
+    tryCatch({
+      # transform data, and update column names
+      out <- auto_transform(out, snake_case = snake_case)
+      msg_ok(print = info)
+    }, error = function(e) {
+      msg_error(time = TRUE, print = info, e$message, " -> Returning unchanged data set")
+    })
+    
   }
   
   # return ----

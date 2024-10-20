@@ -111,7 +111,7 @@ get_glims10_data(
 
 \item{snake_case}{\link{logical} to convert column names to \href{https://en.wikipedia.org/wiki/Snake_case}{snake case}, \strong{only} when \code{auto_transform = TRUE}}
 
-\item{preset}{a preset to choose from \code{\link[=presets]{presets()}}. Will be ignored if \code{diver_cbase} is set, even if it is set to \code{NULL}.}
+\item{preset}{a preset to choose from \code{\link[=presets]{presets()}}. Will be ignored if \code{diver_cbase} is set, even if it is set to \code{NULL}. Be sure to read \link[=presets]{the documentation} on how to use presets, and to see in which order the YAML keys will be run.}
 
 \item{date_column}{column name of data set to query. Normally this should be set in a preset, but this argument can be used to override that.}
 

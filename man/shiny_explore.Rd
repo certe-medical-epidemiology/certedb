@@ -15,7 +15,7 @@ shiny_explore(
 )
 }
 \arguments{
-\item{preset}{a preset to choose from \code{\link[=presets]{presets()}}. Will be ignored if \code{diver_cbase} is set, even if it is set to \code{NULL}.}
+\item{preset}{a preset to choose from \code{\link[=presets]{presets()}}. Will be ignored if \code{diver_cbase} is set, even if it is set to \code{NULL}. Be sure to read \link[=presets]{the documentation} on how to use presets, and to see in which order the YAML keys will be run.}
 
 \item{diver_cbase, diver_project, diver_dsn, diver_testserver}{properties to set in \code{\link[=db_connect]{db_connect()}}. The \code{diver_cbase} argument will be based on \code{preset}, but can also be set to blank \code{NULL} to manually select a cBase in a popup window.}
 

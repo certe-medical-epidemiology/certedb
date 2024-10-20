@@ -43,29 +43,92 @@ The most extensive YAML form:
     cbase: "location/to/another.cbase"
     by: ColumnName1, ColumnName2
     type: "left"
-    select: ColumnName1, ColumnName2, ColumnName3, everything(), !starts_with("abc")
+    select: ColumnName1, col_name_2 = ColumnName2, ColumnName3, everything(), !starts_with("abc")
     wide_names_from: ColumnName3
   join2:
     cbase: "location/to/yet_another.cbase"
     by: ColumnName1, ColumnName2
     type: "left"
-    select: ColumnName1, ColumnName2, ColumnName3, everything(), !where(is.numeric)
+    select: ColumnName1, ColumnName2, ColumnName3
     wide_names_from: ColumnName3
     wide_name_trans: gsub("_", "..", .x)
 }\if{html}{\out{</div>}}
 
 For all presets, \code{cbase} and \code{date_col} are required.
+\subsection{Order of running}{
 
-Input for \code{select} will be passed on to \code{\link[dplyr:select]{select()}}, meaning that column names can be used, but also \code{tidyselect} functions such as \code{\link[tidyselect:language]{everything()}}. Input for \code{filter} will be passed on to \code{\link[dplyr:filter]{filter()}}.
-\subsection{Joins}{
+The YAML keys run in this order:
+\enumerate{
+\item Download cBase and filter (applied in \code{WHERE} statement)
+\item Select
+\item Join(s)
+\item Post-processing
+}
+
+After this, the arguments in \code{\link[=get_diver_data]{get_diver_data()}} will run:
+\enumerate{
+\item Distinct if \code{distinct = TRUE} using \code{\link[dplyr:distinct]{distinct()}}
+\item Auto-transform if \code{autotransform = TRUE} using \code{\link[certetoolbox:auto_transform]{auto_transform()}}
+}
+}
+
+\subsection{cBase (\code{cbase})}{
+
+This cBase must be a filepath and must exist on the Diver server. For joins, this can also be another type of file, see \emph{Joins}
+}
+
+\subsection{Select (\code{select})}{
+
+Input for \code{select} will be passed on to \code{\link[dplyr:select]{select()}}, meaning that column names can be used, but also \code{tidyselect} functions such as \code{\link[tidyselect:language]{everything()}}.
+}
+
+\subsection{Filters (\code{filter})}{
+
+Input for \code{filter} will be passed on to \code{\link[dplyr:filter]{filter()}}.
+}
+
+\subsection{Joins (\code{join})}{
 
 For joins, you must set at least \code{cbase}, \code{by}, and \code{type} ("left", "right", "inner", etc., \link[dplyr:mutate-joins]{see here}).
 
-An unlimited number of joins can be used, but all so-called 'keys' must be unique and start with \code{join}, e.g. \code{joinA} / \code{joinB} or \code{join} / \code{join2}.
+Other files than a cBase in the field \code{cbase} will be imported using \code{\link[certetoolbox:import]{certetoolbox::import()}}, such as an Excel or CSV file. This can be any file on any local or remote location (even live internet files). For example:
+
+\if{html}{\out{<div class="sourceCode yaml">}}\preformatted{join:
+  cbase: "location/to/excel_file.xlsx"
+  by: ColumnName1
+  type: "left"
+  
+  
+join:
+  cbase: "https://github.com/certe-medical-epidemiology/certegis/blob/main/data/geo_gemeenten.rda"
+  by: ColumnName1
+  type: "left"
+}\if{html}{\out{</div>}}
+
+An unlimited number of joins can be used, but all so-called 'keys' \strong{must be unique} and start with \code{join}, e.g. \code{joinA} / \code{joinB} or \code{join} / \code{join2} / \code{join3}.
 
 If \code{wide_names_from} is set, the dataset is first transformed to long format using the columns specified in \code{by}, and then reshaped to wide format with values in \code{wide_names_from}.
 
 Use \code{wide_name_trans} to transform the values in \code{wide_names_from} before the reshaping to wide format is applied. Use \code{.x} for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in \code{wide_names_from} using e.g., \code{\link[dplyr:case_when]{case_when()}}.
+}
+
+\subsection{Post-processing (\code{post-processing})}{
+
+Any data transformation can be done after the data have been downloaded and processed according to all previous steps. Use \code{x} to indicate the data set.
+
+\if{html}{\out{<div class="sourceCode yaml">}}\preformatted{name_new_preset:
+  cbase: "location/to/name.cbase"
+  date_col: "ColumnNameDate"
+  post-processing: |
+    x |>
+      mutate(Column1 = case_when(Column2 = "A" ~ 1,
+                                 Column3 = "B" ~ 2,
+                                 TRUE ~ 3))
+}\if{html}{\out{</div>}}
+
+As shown, iIn YAML the \code{|} character can be used to start a multi-line statement.
+
+Note that the post-processing will run directly after the querying the data and thus \strong{before auto-transformation} if \code{autotransform = TRUE} in \code{\link[=get_diver_data]{get_diver_data()}}.
 }
 }
 

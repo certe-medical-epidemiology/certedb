@@ -46,30 +46,88 @@
 #'     cbase: "location/to/another.cbase"
 #'     by: ColumnName1, ColumnName2
 #'     type: "left"
-#'     select: ColumnName1, ColumnName2, ColumnName3, everything(), !starts_with("abc")
+#'     select: ColumnName1, col_name_2 = ColumnName2, ColumnName3, everything(), !starts_with("abc")
 #'     wide_names_from: ColumnName3
 #'   join2:
 #'     cbase: "location/to/yet_another.cbase"
 #'     by: ColumnName1, ColumnName2
 #'     type: "left"
-#'     select: ColumnName1, ColumnName2, ColumnName3, everything(), !where(is.numeric)
+#'     select: ColumnName1, ColumnName2, ColumnName3
 #'     wide_names_from: ColumnName3
 #'     wide_name_trans: gsub("_", "..", .x)
 #' ```
 #' 
 #' For all presets, `cbase` and `date_col` are required.
 #' 
-#' Input for `select` will be passed on to [`select()`][dplyr::select()], meaning that column names can be used, but also `tidyselect` functions such as [`everything()`][tidyselect::language]. Input for `filter` will be passed on to [`filter()`][dplyr::filter()].
+#' ## Order of running
 #' 
-#' ## Joins
+#' The YAML keys run in this order:
 #' 
-#' For joins, you must set at least `cbase`, `by`, and `type` ("left", "right", "inner", etc., [see here][dplyr::left_join()]). 
+#' 1. Download cBase and filter (applied in `WHERE` statement)
+#' 2. Select
+#' 3. Join(s)
+#' 4. Post-processing
 #' 
-#' An unlimited number of joins can be used, but all so-called 'keys' must be unique and start with `join`, e.g. `joinA` / `joinB` or `join` / `join2`.
+#' After this, the arguments in [get_diver_data()] will run:
+#' 
+#' 5. Distinct if `distinct = TRUE` using [`distinct()`][dplyr::distinct()]
+#' 6. Auto-transform if `autotransform = TRUE` using [`auto_transform()`][certetoolbox::auto_transform()]
+#' 
+#' ## cBase (`cbase`)
+#' 
+#' This cBase must be a filepath and must exist on the Diver server. For joins, this can also be another type of file, see *Joins*
+#' 
+#' ## Select (`select`)
+#' 
+#' Input for `select` will be passed on to [`select()`][dplyr::select()], meaning that column names can be used, but also `tidyselect` functions such as [`everything()`][tidyselect::language].
+#' 
+#' ## Filters (`filter`)
+#' 
+#' Input for `filter` will be passed on to [`filter()`][dplyr::filter()].
+#' 
+#' ## Joins (`join`)
+#' 
+#' For joins, you must set at least `cbase`, `by`, and `type` ("left", "right", "inner", etc., [see here][dplyr::left_join()]).
+#' 
+#' Other files than a cBase in the field `cbase` will be imported using [certetoolbox::import()], such as an Excel or CSV file. This can be any file on any local or remote location (even live internet files). For example:
+#' 
+#' ```yaml
+#' join:
+#'   cbase: "location/to/excel_file.xlsx"
+#'   by: ColumnName1
+#'   type: "left"
+#'   
+#'   
+#' join:
+#'   cbase: "https://github.com/certe-medical-epidemiology/certegis/blob/main/data/geo_gemeenten.rda"
+#'   by: ColumnName1
+#'   type: "left"
+#' ```
+#' 
+#' An unlimited number of joins can be used, but all so-called 'keys' **must be unique** and start with `join`, e.g. `joinA` / `joinB` or `join` / `join2` / `join3`.
 #' 
 #' If `wide_names_from` is set, the dataset is first transformed to long format using the columns specified in `by`, and then reshaped to wide format with values in `wide_names_from`.
 #' 
 #' Use `wide_name_trans` to transform the values in `wide_names_from` before the reshaping to wide format is applied. Use `.x` for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in `wide_names_from` using e.g., [`case_when()`][dplyr::case_when()].
+#' 
+#' ## Post-processing (`post-processing`)
+#' 
+#' Any data transformation can be done after the data have been downloaded and processed according to all previous steps. Use `x` to indicate the data set.
+#' 
+#' ```yaml
+#' name_new_preset:
+#'   cbase: "location/to/name.cbase"
+#'   date_col: "ColumnNameDate"
+#'   post-processing: |
+#'     x |>
+#'       mutate(Column1 = case_when(Column2 = "A" ~ 1,
+#'                                  Column3 = "B" ~ 2,
+#'                                  TRUE ~ 3))
+#' ```
+#' 
+#' As shown, iIn YAML the `|` character can be used to start a multi-line statement.
+#' 
+#' Note that the post-processing will run directly after the querying the data and thus **before auto-transformation** if `autotransform = TRUE` in [get_diver_data()].
 #' @rdname presets
 #' @export
 presets <- function() {
@@ -77,25 +135,38 @@ presets <- function() {
   out <- tibble(preset = names(p),
                 cbase = NA_character_,
                 filter = NA_character_,
-                select = NA_character_)
+                select = NA_character_,
+                joins = NA_character_,
+                postprocessing = NA_character_)
   for (i in seq_len(length(p))) {
     out[i, "cbase"] <- p[[i]]$cbase
     
     if (is.null(p[[i]]$filter)) {
-      out[i, "filter"] <- "(all)"
+      out[i, "filter"] <- "None"
     } else {
       out[i, "filter"] <- p[[i]]$filter
     }
     
     if (is.null(p[[i]]$select)) {
-      out[i, "select"] <- "(all)"
+      out[i, "select"] <- "None"
     } else {
       cols <- strsplit(p[[i]]$select, ", ?")[[1]]
       out[i, "select"] <- paste0(length(cols), ": ", paste(cols, collapse = ", "))
     }
     
     joins <- which(names(p[[i]]) %like% "^join")
-    out[i, "joins"] <- length(joins)
+    if (length(joins) == 0) {
+      out[i, "joins"] <- "None"
+    } else {
+      out[i, "joins"] <- paste0(length(joins), " join", ifelse(length(joins) > 1, "s", ""))
+    }
+    
+    if (is.null(p[[i]]$`post-processing`)) {
+      out[i, "postprocessing"] <- "None"
+    } else {
+      post <- strsplit(p[[i]]$`post-processing`, "\n")[[1]]
+      out[i, "postprocessing"] <- paste(length(post), "lines")
+    }
   }
   structure(out, class = c("presets", class(out)))
 }

@@ -25,7 +25,7 @@ addin1_shiny_explore <- function() {
 #' Search cBase Interactively
 #' 
 #' Use this Shiny app to search a cBase. There is also an RStudio add-in.
-#' @importFrom shiny fluidPage sidebarLayout sidebarPanel textInput dateRangeInput mainPanel reactive dialogViewer runGadget selectInput actionButton stopApp eventReactive observeEvent div h4 tags
+#' @importFrom shiny fluidPage sidebarLayout sidebarPanel textInput dateRangeInput mainPanel reactive dialogViewer runGadget selectInput actionButton stopApp eventReactive observeEvent div h4 tags textOutput renderText
 #' @importFrom DT DTOutput renderDT
 #' @importFrom certestyle colourpicker
 #' @inheritParams get_diver_data
