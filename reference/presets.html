@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.12.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.12.2</span>
       </span>
     </div>
 
@@ -114,24 +114,84 @@
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="at">    </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"location/to/another.cbase"</span></span>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="at">    </span><span class="fu">by</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2</span></span>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="st">"left"</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2, ColumnName3, everything(), !starts_with("abc")</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, col_name_2 = ColumnName2, ColumnName3, everything(), !starts_with("abc")</span></span>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_names_from</span><span class="kw">:</span><span class="at"> ColumnName3</span></span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="at">  </span><span class="fu">join2</span><span class="kw">:</span></span>
 <span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="at">    </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"location/to/yet_another.cbase"</span></span>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="at">    </span><span class="fu">by</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2</span></span>
 <span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="st">"left"</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2, ColumnName3, everything(), !where(is.numeric)</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2, ColumnName3</span></span>
 <span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_names_from</span><span class="kw">:</span><span class="at"> ColumnName3</span></span>
 <span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_name_trans</span><span class="kw">:</span><span class="at"> gsub("_", "..", .x)</span></span></code></pre><p></p></div>
-<p>For all presets, <code>cbase</code> and <code>date_col</code> are required.</p>
-<p>Input for <code>select</code> will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select()</a></code>, meaning that column names can be used, but also <code>tidyselect</code> functions such as <code><a href="https://tidyselect.r-lib.org/reference/language.html" class="external-link">everything()</a></code>. Input for <code>filter</code> will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>.</p><div class="section">
-<h3 id="joins">Joins<a class="anchor" aria-label="anchor" href="#joins"></a></h3>
+<p>For all presets, <code>cbase</code> and <code>date_col</code> are required.</p><div class="section">
+<h3 id="order-of-running">Order of running<a class="anchor" aria-label="anchor" href="#order-of-running"></a></h3>
+
+
+<p>The YAML keys run in this order:</p><ol><li><p>Download cBase and filter (applied in <code>WHERE</code> statement)</p></li>
+<li><p>Select</p></li>
+<li><p>Join(s)</p></li>
+<li><p>Post-processing</p></li>
+</ol><p>After this, the arguments in <code><a href="get_diver_data.html">get_diver_data()</a></code> will run:</p><ol><li><p>Distinct if <code>distinct = TRUE</code> using <code><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct()</a></code></p></li>
+<li><p>Auto-transform if <code>autotransform = TRUE</code> using <code><a href="https://certe-medical-epidemiology.github.io/certetoolbox/reference/auto_transform.html" class="external-link">auto_transform()</a></code></p></li>
+</ol></div>
+
+<div class="section">
+<h3 id="cbase-cbase-">cBase (<code>cbase</code>)<a class="anchor" aria-label="anchor" href="#cbase-cbase-"></a></h3>
+
+
+<p>This cBase must be a filepath and must exist on the Diver server. For joins, this can also be another type of file, see <em>Joins</em></p>
+</div>
+
+<div class="section">
+<h3 id="select-select-">Select (<code>select</code>)<a class="anchor" aria-label="anchor" href="#select-select-"></a></h3>
+
+
+<p>Input for <code>select</code> will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select()</a></code>, meaning that column names can be used, but also <code>tidyselect</code> functions such as <code><a href="https://tidyselect.r-lib.org/reference/language.html" class="external-link">everything()</a></code>.</p>
+</div>
+
+<div class="section">
+<h3 id="filters-filter-">Filters (<code>filter</code>)<a class="anchor" aria-label="anchor" href="#filters-filter-"></a></h3>
+
+
+<p>Input for <code>filter</code> will be passed on to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>.</p>
+</div>
+
+<div class="section">
+<h3 id="joins-join-">Joins (<code>join</code>)<a class="anchor" aria-label="anchor" href="#joins-join-"></a></h3>
 
 
 <p>For joins, you must set at least <code>cbase</code>, <code>by</code>, and <code>type</code> ("left", "right", "inner", etc., <a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">see here</a>).</p>
-<p>An unlimited number of joins can be used, but all so-called 'keys' must be unique and start with <code>join</code>, e.g. <code>joinA</code> / <code>joinB</code> or <code>join</code> / <code>join2</code>.</p>
+<p>Other files than a cBase in the field <code>cbase</code> will be imported using <code><a href="https://certe-medical-epidemiology.github.io/certetoolbox/reference/import.html" class="external-link">certetoolbox::import()</a></code>, such as an Excel or CSV file. This can be any file on any local or remote location (even live internet files). For example:</p>
+<p></p><div class="sourceCode yaml"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">join</span><span class="kw">:</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="at">  </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"location/to/excel_file.xlsx"</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="at">  </span><span class="fu">by</span><span class="kw">:</span><span class="at"> ColumnName1</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="at">  </span><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="st">"left"</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">join</span><span class="kw">:</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="at">  </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"https://github.com/certe-medical-epidemiology/certegis/blob/main/data/geo_gemeenten.rda"</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="at">  </span><span class="fu">by</span><span class="kw">:</span><span class="at"> ColumnName1</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="at">  </span><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="st">"left"</span></span></code></pre><p></p></div>
+<p>An unlimited number of joins can be used, but all so-called 'keys' <strong>must be unique</strong> and start with <code>join</code>, e.g. <code>joinA</code> / <code>joinB</code> or <code>join</code> / <code>join2</code> / <code>join3</code>.</p>
 <p>If <code>wide_names_from</code> is set, the dataset is first transformed to long format using the columns specified in <code>by</code>, and then reshaped to wide format with values in <code>wide_names_from</code>.</p>
 <p>Use <code>wide_name_trans</code> to transform the values in <code>wide_names_from</code> before the reshaping to wide format is applied. Use <code>.x</code> for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in <code>wide_names_from</code> using e.g., <code><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when()</a></code>.</p>
+</div>
+
+<div class="section">
+<h3 id="post-processing-post-processing-">Post-processing (<code>post-processing</code>)<a class="anchor" aria-label="anchor" href="#post-processing-post-processing-"></a></h3>
+
+
+<p>Any data transformation can be done after the data have been downloaded and processed according to all previous steps. Use <code>x</code> to indicate the data set.</p>
+<p></p><div class="sourceCode yaml"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">name_new_preset</span><span class="kw">:</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="at">  </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"location/to/name.cbase"</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="at">  </span><span class="fu">date_col</span><span class="kw">:</span><span class="at"> </span><span class="st">"ColumnNameDate"</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">  post-processing</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>    x |&gt;</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>      mutate(Column1 = case_when(Column2 = "A" ~ 1,</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>                                 Column3 = "B" ~ 2,</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>                                 TRUE ~ 3))</span></code></pre><p></p></div>
+<p>As shown, iIn YAML the <code>|</code> character can be used to start a multi-line statement.</p>
+<p>Note that the post-processing will run directly after the querying the data and thus <strong>before auto-transformation</strong> if <code>autotransform = TRUE</code> in <code><a href="get_diver_data.html">get_diver_data()</a></code>.</p>
 </div>
 
     </div>
@@ -148,7 +208,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer></div>
