@@ -431,6 +431,9 @@ get_diver_data <- function(date_range = this_year(),
                                               ifelse(mode(out[[x]]) == "numeric", "", "'"),
                                               collapse = ", "))
       join_where <- paste0(join_cols, " %in% c(", join_where, ")", collapse = " & ")
+      if (!is.null(join_object$filter)) {
+        join_where <- paste0(join_object$filter, " & (", join_where, ")")
+      }
       # query other cBase
       out_join <- get_diver_data(date_range = NULL, # no date range, so base solely on previous dataset
                                  where = join_where,
