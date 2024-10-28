@@ -27,6 +27,7 @@
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise. This will always be `FALSE` in Quarto / R Markdown, since the output of [knitr::pandoc_to()] must be `NULL`.
 #' @param antibiogram_type antibiotic transformation mode. Leave blank to strip antibiotic results from the data, `"sir"` to keep SIR values, `"mic"` to keep MIC values or `"disk"` to keep disk diffusion values. Values will be cleaned with [`as.sir()`][AMR::as.sir()], [`as.mic()`][AMR::as.mic()] or [`as.disk()`][AMR::as.disk()].
 #' @param preset a preset to choose from [presets()]. Will be ignored if `diver_cbase` is set, even if it is set to `NULL`. Be sure to read [the documentation][presets()] on how to use presets, and to see in which order the YAML keys will be run.
+#' @param add_cols extra column to include in the selection. Can be named to set a new column name. Use [gl] or [di] to quickly pick from a list.
 #' @param date_column column name of data set to query. Normally this should be set in a preset, but this argument can be used to override that.
 #' @param distinct [logical] to apply [distinct()] to the resulting data set
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
@@ -34,6 +35,10 @@
 #' @param info a logical to indicate whether info about the connection should be printed
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
 #' @param limit maximum number of rows to return.
+#' @param only_real_patients [logical] to include only real patients, i.e., remove test and Q&A samples
+#' @param only_conducted_tests [logical] to include only tests that were not stopped
+#' @param only_validated [logical] to include only validated tests
+#' @param only_requested [logical] to include only requested tests
 #' @param in_background run data collection in the background using [callr::r_bg()]. Use `...$get_result()` to retrieve results, or `...$is_active()` to check whether the background process still runs.
 #' @details These functions return a 'certedb tibble' from Diver or the `certemmb` MySQL database, which prints information in the tibble header about the used source and current user.
 #' 
@@ -59,31 +64,35 @@
 #' get_diver_data(date_range = 2024, where = BepalingCode == "PXNCOV")
 #' get_diver_data(2024, BepalingCode == "PXNCOV")
 #' 
-#' # use di$ to pull a list with column names while you type
-#' get_diver_data(2024, di$BepalingCode == "PXNCOV")
+#' # use gl$ to pull a list with column names while you type
+#' get_diver_data(2024, gl$BepalingCode == "PXNCOV")
+#' 
+#' # gl$ can also be used for adding columns, which can also be named
+#' get_diver_data(2024, gl$BepalingCode == "PXNCOV", add_cols = gl$AfnameJaar)
+#' get_diver_data(2024, gl$BepalingCode == "PXNCOV", add_cols = c(jaar = gl$AfnameJaar))
 #' 
 #' # for the `where`, use `&` or `|`:
 #' get_diver_data(last_month(),
-#'                di$BepalingCode == "PXNCOV" & di$Zorglijn == "2e lijn")
+#'                gl$BepalingCode == "PXNCOV" & gl$Zorglijn == "2e lijn")
 #' get_diver_data(c(2020:2024),
-#'                where = di$BepalingCode == "PXNCOV" | di$Zorglijn == "2e lijn")
+#'                where = gl$BepalingCode == "PXNCOV" | gl$Zorglijn == "2e lijn")
 #' 
 #' 
 #' # use %like%, %unlike%, %like_case% or %unlike_case% for regular expressions
-#' get_diver_data(2024, where = di$MateriaalNaam %like% "Bloed")
-#' get_diver_data(2024, where = di$MateriaalNaam %unlike% "Bloed")
-#' get_diver_data(2024, where = di$MateriaalNaam %like_case% "bloed")
-#' get_diver_data(2024, where = di$MateriaalNaam %unlike_case% "Bloed")
+#' get_diver_data(2024, where = gl$MateriaalNaam %like% "Bloed")
+#' get_diver_data(2024, where = gl$MateriaalNaam %unlike% "Bloed")
+#' get_diver_data(2024, where = gl$MateriaalNaam %like_case% "bloed")
+#' get_diver_data(2024, where = gl$MateriaalNaam %unlike_case% "Bloed")
 #' 
 #' get_diver_data(2024,
-#'                where = di$BepalingNaam %like% "Noro" &
-#'                          di$PatientLeeftijd >= 75)
+#'                where = gl$BepalingNaam %like% "Noro" &
+#'                          gl$PatientLeeftijd >= 75)
 #'                          
 #' # R objects will be converted
 #' materialen <- c("A", "B", "C")
-#' get_diver_data(2024, where = di$MateriaalNaam %in% materialen)
+#' get_diver_data(2024, where = gl$MateriaalNaam %in% materialen)
 #' leeftijden <- 65:85
-#' get_diver_data(2024, where = di$PatientLeeftijd %in% leeftijden)
+#' get_diver_data(2024, where = gl$PatientLeeftijd %in% leeftijden)
 #' 
 #' 
 #' # USING DIVER INTEGRATOR LANGUAGE --------------------------------------
@@ -108,6 +117,7 @@ get_diver_data <- function(date_range = this_year(),
                            auto_transform = TRUE,
                            snake_case = TRUE,
                            preset = read_secret("db.preset_default"),
+                           add_cols = NULL,
                            date_column = NULL,
                            diver_cbase = NULL,
                            diver_project = read_secret("db.diver_project"),
@@ -116,6 +126,10 @@ get_diver_data <- function(date_range = this_year(),
                            diver_tablename = "data",
                            info = interactive(),
                            limit = Inf,
+                           only_real_patients = TRUE,
+                           only_conducted_tests = TRUE,
+                           only_validated = FALSE,
+                           only_requested = FALSE,
                            in_background = FALSE,
                            ...) {
   
@@ -274,7 +288,7 @@ get_diver_data <- function(date_range = this_year(),
     if (isTRUE(list(...)$where_as_character)) {
       where <- str2lang(where)
     }
-    where <- where_convert_di(substitute(where))
+    where <- where_convert_di_gl(substitute(where))
     # convert objects, this will return msg "OK"
     where <- where_convert_objects(deparse(substitute(where)), info = info)
     
@@ -292,7 +306,7 @@ get_diver_data <- function(date_range = this_year(),
         out <- out |> filter(preset_filter)
         msg_ok(print = info, dimensions = dim(out))
       }, error = function(e) {
-        msg_error(time = TRUE, print = info, e$message, " -> Returning unchanged data set")
+        msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
       })
       
     }
@@ -352,7 +366,10 @@ get_diver_data <- function(date_range = this_year(),
   
   # select ----
   if (!is.null(preset) && !all(is.na(preset$select))) {
-    msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
+    msg_init(paste0("Selecting columns from preset ", font_blue(paste0('"', preset$name, '"')),
+                    font_black(ifelse(!is.null(add_cols),
+                                      paste0(" and ", length(add_cols), " extra column", ifelse(length(add_cols) == 1, "", "s"), "..."),
+                                      "..."))),
              print = info,
              prefix_time = TRUE)
     
@@ -395,12 +412,24 @@ get_diver_data <- function(date_range = this_year(),
           names(lst_select_new)[which(as.character(lst_select.bak[[i]]) == names(lst_select_new))] <- names(lst_select.bak)[i]
         }
       }
+      # add extra columns if requested, but only if not in select already
+      if (!is.null(add_cols)) {
+        add_cols <- add_cols[!add_cols %in% names(lst_select_new)]
+        nms <- names(add_cols)
+        if (is.null(nms)) {
+          nms <- add_cols
+        } else {
+          nms[nms == ""] <- add_cols[nms == ""]
+        }
+        lst_add_cols <- stats::setNames(as.list(add_cols), nms)
+        lst_select_new <- c(lst_select_new, lst_add_cols)
+      }
       
       # use unquote-splice `!!!` since input is list
       out <- out |> select(!!!lst_select_new)
       msg_ok(print = info, dimensions = dim(out))
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, e$message, " -> Returning unchanged data set")
+      msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
     })
     
   }
@@ -408,103 +437,169 @@ get_diver_data <- function(date_range = this_year(),
   # join ----
   joins <- which(names(preset) %like% "^join")
   for (j in joins) {
-    join_object <- preset[[j]]
-    
-    src <- join_object$cbase
-    src_txt <- paste0("cBase ", font_blue(paste0("\"", basename(src), "\"")))
-    out_join <- NULL
-    if (src %unlike% "[.]cbase$") {
-      src_txt <- paste0("file ", font_blue(paste0("\"", src, "\"")))
-      out_join <- suppressWarnings(suppressMessages(import(src)))
-    }
-    
-    msg_init("Joining data from ", src_txt, "...", print = info, prefix_time = TRUE)
-    
-    join_fn <- getExportedValue(paste0(join_object$type, "_join"), ns = asNamespace("dplyr"))
-    join_cols <- join_object$by
-    
-    if (is.null(out_join)) {
-      join_where <- vapply(FUN.VALUE = character(1),
-                           join_cols,
-                           function(x) paste0(ifelse(mode(out[[x]]) == "numeric", "", "'"),
-                                              unique(out[[x]]),
-                                              ifelse(mode(out[[x]]) == "numeric", "", "'"),
-                                              collapse = ", "))
-      join_where <- paste0(join_cols, " %in% c(", join_where, ")", collapse = " & ")
-      if (!is.null(join_object$filter)) {
-        join_where <- paste0(join_object$filter, " & (", join_where, ")")
-      }
-      # query other cBase
-      out_join <- get_diver_data(date_range = NULL, # no date range, so base solely on previous dataset
-                                 where = join_where,
-                                 where_as_character = TRUE, # this leads to transformation with str2lang()
-                                 diver_cbase = join_object$cbase,
-                                 preset = NULL,
-                                 diver_project = diver_project,
-                                 diver_dsn = diver_dsn,
-                                 diver_tablename = diver_tablename,
-                                 distinct = distinct,
-                                 limit = Inf, # no limit, so base solely on previous dataset
-                                 auto_transform = FALSE, # if `auto_transform` was set to TRUE, this will be applied later
-                                 review_qry = FALSE,
-                                 in_background = FALSE, # if `in_background` was set to TRUE, this already runs in the background
-                                 info = FALSE)
-    }
-    
-    if (!is.null(join_object$select)) {
-      out_join <- out_join |> select(!!!join_object$select)
-    }
-    if (!is.null(join_object$wide_names_from)) {
-      if (!is.null(join_object$wide_name_trans)) {
-        out_join <- out_join |>
-          mutate(across(join_object$wide_names_from,
-                        function(.x) !!str2lang(as.character(join_object$wide_name_trans))))
-      }
-      out_join <- out_join |>
-        pivot_longer(-all_of(c(join_cols, join_object$wide_names_from)),
-                     names_to = "type",
-                     values_to = "value") |>
-        unite(col = "col", join_object$wide_names_from, type) |>
-        distinct(across(c(join_cols, "col")), .keep_all = TRUE) |>
-        pivot_wider(names_from = col, values_from = value)
-    }
-    
-    if (inherits(out_join, "sf")) {
-      # otherwise join will fail
-      loadNamespace("sf")
-    }
     
     tryCatch({
+      
+      join_object <- preset[[j]]
+      
+      src <- join_object$cbase
+      src_txt <- paste0("cBase ", font_blue(paste0("\"", basename(src), "\"")))
+      out_join <- NULL
+      if (src %unlike% "[.]cbase$") {
+        src_txt <- paste0("file ", font_blue(paste0("\"", src, "\"")))
+        out_join <- suppressWarnings(suppressMessages(import(src)))
+      }
+      
+      msg_init("Joining data from ", src_txt, "...", print = info, prefix_time = TRUE)
+      
+      join_fn <- getExportedValue(paste0(join_object$type, "_join"), ns = asNamespace("dplyr"))
+      join_cols <- join_object$by
+      
+      if (is.null(out_join)) {
+        join_where <- vapply(FUN.VALUE = character(1),
+                             join_cols,
+                             function(x) paste0(ifelse(mode(out[[x]]) == "numeric", "", "'"),
+                                                unique(out[[x]]),
+                                                ifelse(mode(out[[x]]) == "numeric", "", "'"),
+                                                collapse = ", "))
+        join_where <- paste0(join_cols, " %in% c(", join_where, ")", collapse = " & ")
+        if (!is.null(join_object$filter)) {
+          join_where <- paste0(join_object$filter, " & (", join_where, ")")
+        }
+        
+        # query other cBase
+        out_join <- get_diver_data(date_range = NULL, # no date range, so base solely on previous dataset
+                                   where = join_where,
+                                   where_as_character = TRUE, # this leads to transformation with str2lang()
+                                   diver_cbase = join_object$cbase,
+                                   preset = NULL,
+                                   diver_project = diver_project,
+                                   diver_dsn = diver_dsn,
+                                   diver_tablename = diver_tablename,
+                                   distinct = distinct,
+                                   limit = Inf, # no limit, so base solely on previous dataset
+                                   auto_transform = FALSE, # if `auto_transform` was set to TRUE, this will be applied later
+                                   review_qry = FALSE,
+                                   in_background = FALSE, # if `in_background` was set to TRUE, this already runs in the background
+                                   info = FALSE)
+      }
+      
+      
+      if (!is.null(join_object$select)) {
+        out_join <- out_join |> select(!!!join_object$select)
+      }
+      if (!is.null(join_object$wide_names_from)) {
+        if (!is.null(join_object$wide_name_trans)) {
+          out_join <- out_join |>
+            mutate(across(join_object$wide_names_from,
+                          function(.x) !!str2lang(as.character(join_object$wide_name_trans))))
+        }
+        out_join <- out_join |>
+          pivot_longer(-all_of(c(join_cols, join_object$wide_names_from)),
+                       names_to = "type",
+                       values_to = "value") |>
+          unite(col = "col", join_object$wide_names_from, type) |>
+          distinct(across(c(join_cols, "col")), .keep_all = TRUE) |>
+          pivot_wider(names_from = col, values_from = value)
+      }
+      
+      if (inherits(out_join, "sf")) {
+        # otherwise join will fail
+        loadNamespace("sf")
+      }
+      
       # the actual join
       out <- out |> join_fn(out_join, by = join_cols, suffix = c("", "2"))
       msg_ok(dimensions = dim(out), print = info)
+      
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, e$message, " -> Returning unchanged data set")
+      msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
     })
     
   }
   
   # post-processing ----
-  if (!is.null(preset$`post-processing`)) {
-    # since post-processing must contain `x` to indicate the data set, set it here in the environment
-    x <- out
+  post_processing <- which(names(preset) %like% "^post-processing")
+  if (length(post_processing) > 0) {
     msg_init("Post-processing data...", print = info, prefix_time = TRUE)
-    
     tryCatch({
-      out <- eval(parse(text = preset$`post-processing`))
+      
+      for (p in post_processing) {
+        postpr <- preset[[p]]
+        # since post-processing must contain `x` to indicate the data set, set it here in the environment
+        x <- out
+        if (length(postpr) == 1 && is.character(postpr) && file.exists(postpr)) {
+          # support R files
+          postpr <- paste0(readLines(postpr), collapse = "\n")
+        }
+        out <- eval(parse(text = postpr))
+      }
       msg_ok(dimensions = dim(out), print = info)
+      
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, e$message, " -> Returning unchanged data set")
+      msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
     })
-    
   }
   
   # distinct ----
   if (isTRUE(distinct)) {
-    out_distinct <- distinct(out)
-    if (nrow(out_distinct) < nrow(out)) {
-      msg("NOTE: Removed ", nrow(out) - nrow(out_distinct), " duplicate rows, since `distinct = TRUE`")
-      out <- out_distinct
+    out_new <- distinct(out)
+    if (nrow(out_new) < nrow(out)) {
+      msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`distinct = TRUE`"), "...", print = info, prefix_time = TRUE)
+      out <- out_new
+      msg_ok(dimensions = dim(out), print = info)
+    }
+  }
+  
+  # only real patients ----
+  if (isTRUE(only_real_patients)) {
+    out_new <- out
+    if ("MateriaalKorteNaam" %in% colnames(out_new)) {
+      out_new <- out_new |> filter(MateriaalKorteNaam != "NPM")
+    }
+    if ("AanvragerCode" %in% colnames(out_new)) {
+      out_new <- out_new |> filter(AanvragerCode %unlike% "^NPM[-]")
+    }
+    if (nrow(out_new) < nrow(out)) {
+      msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_real_patients = TRUE`"), "...", print = info, prefix_time = TRUE)
+      out <- out_new
+      msg_ok(dimensions = dim(out), print = info)
+    }
+  }
+  
+  # only conducted tests ----
+  if (isTRUE(only_conducted_tests) && "ResultaatTekst" %in% colnames(out)) {
+    out_new <- out |> filter(ResultaatTekst != "Niet verricht")
+    if (nrow(out_new) < nrow(out)) {
+      msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_conducted_tests = TRUE`"), "...", print = info, prefix_time = TRUE)
+      out <- out_new
+      msg_ok(dimensions = dim(out), print = info)
+    }
+  }
+  
+  # only validated ----
+  if (isTRUE(only_validated)) {
+    if ("ResultaatStatus" %in% colnames(out) && "McraStatus" %in% colnames(out) ) {
+      out_new <- out |> filter(tolower(trimws(ResultaatStatus)) == "validated" | tolower(trimws(McraStatus)) %in% c("ReadValidated", "Closed"))
+    } else if ("ResultaatStatus" %in% colnames(out)) {
+      out_new <- out |> filter(tolower(trimws(ResultaatStatus)) == "validated")
+    } else if ("McraStatus" %in% colnames(out)) {
+      out_new <- out |> filter(tolower(trimws(McraStatus)) %in% c("ReadValidated", "Closed"))
+    }
+    if (nrow(out_new) < nrow(out)) {
+      msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_validated = TRUE`"), "...", print = info, prefix_time = TRUE)
+      out <- out_new
+      msg_ok(dimensions = dim(out), print = info)
+    }
+  }
+  
+  # only requested ----
+  if (isTRUE(only_requested) && "IsAangevraagd" %in% colnames(out)) {
+    out_new <- out |> filter(IsAangevraagd == 1)
+    if (nrow(out_new) < nrow(out)) {
+      msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_requested = TRUE`"), "...", print = info, prefix_time = TRUE)
+      out <- out_new
+      msg_ok(dimensions = dim(out), print = info)
     }
   }
   
@@ -521,7 +616,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- auto_transform(out, snake_case = snake_case)
       msg_ok(print = info)
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, e$message, " -> Returning unchanged data set")
+      msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
     })
     
   }

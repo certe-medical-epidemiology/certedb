@@ -19,6 +19,7 @@ get_diver_data(
   auto_transform = TRUE,
   snake_case = TRUE,
   preset = read_secret("db.preset_default"),
+  add_cols = NULL,
   date_column = NULL,
   diver_cbase = NULL,
   diver_project = read_secret("db.diver_project"),
@@ -28,6 +29,10 @@ get_diver_data(
   diver_tablename = "data",
   info = interactive(),
   limit = Inf,
+  only_real_patients = TRUE,
+  only_conducted_tests = TRUE,
+  only_validated = FALSE,
+  only_requested = FALSE,
   in_background = FALSE,
   ...
 )
@@ -113,6 +118,8 @@ get_glims10_data(
 
 \item{preset}{a preset to choose from \code{\link[=presets]{presets()}}. Will be ignored if \code{diver_cbase} is set, even if it is set to \code{NULL}. Be sure to read \link[=presets]{the documentation} on how to use presets, and to see in which order the YAML keys will be run.}
 
+\item{add_cols}{extra column to include in the selection. Can be named to set a new column name. Use \link{gl} or \link{di} to quickly pick from a list.}
+
 \item{date_column}{column name of data set to query. Normally this should be set in a preset, but this argument can be used to override that.}
 
 \item{diver_cbase, diver_project, diver_dsn, diver_testserver}{properties to set in \code{\link[=db_connect]{db_connect()}}. The \code{diver_cbase} argument will be based on \code{preset}, but can also be set to blank \code{NULL} to manually select a cBase in a popup window.}
@@ -122,6 +129,14 @@ get_glims10_data(
 \item{info}{settings for old \code{certedb_getmmb()} function}
 
 \item{limit}{maximum number of rows to return.}
+
+\item{only_real_patients}{\link{logical} to include only real patients, i.e., remove test and Q&A samples}
+
+\item{only_conducted_tests}{\link{logical} to include only tests that were not stopped}
+
+\item{only_validated}{settings for old \code{certedb_getmmb()} function}
+
+\item{only_requested}{\link{logical} to include only requested tests}
 
 \item{in_background}{run data collection in the background using \code{\link[callr:r_bg]{callr::r_bg()}}. Use \code{...$get_result()} to retrieve results, or \code{...$is_active()} to check whether the background process still runs.}
 
@@ -139,8 +154,6 @@ get_glims10_data(
 
 \item{select}{settings for old \code{certedb_getmmb()} function}
 
-\item{add_cols}{settings for old \code{certedb_getmmb()} function}
-
 \item{first_isolates}{settings for old \code{certedb_getmmb()} function}
 
 \item{eucast_rules}{settings for old \code{certedb_getmmb()} function}
@@ -156,12 +169,6 @@ get_glims10_data(
 \item{ziplength}{settings for old \code{certedb_getmmb()} function}
 
 \item{tat_hours}{settings for old \code{certedb_getmmb()} function}
-
-\item{only_real_patients}{settings for old \code{certedb_getmmb()} function}
-
-\item{only_conducted_tests}{settings for old \code{certedb_getmmb()} function}
-
-\item{only_validated}{settings for old \code{certedb_getmmb()} function}
 
 \item{only_show_query}{settings for old \code{certedb_getmmb()} function}
 
@@ -188,31 +195,35 @@ get_diver_data(diver_cbase = "models/MedEpi/GLIMS10_Resistenties.cbase",
 get_diver_data(date_range = 2024, where = BepalingCode == "PXNCOV")
 get_diver_data(2024, BepalingCode == "PXNCOV")
 
-# use di$ to pull a list with column names while you type
-get_diver_data(2024, di$BepalingCode == "PXNCOV")
+# use gl$ to pull a list with column names while you type
+get_diver_data(2024, gl$BepalingCode == "PXNCOV")
+
+# gl$ can also be used for adding columns, which can also be named
+get_diver_data(2024, gl$BepalingCode == "PXNCOV", add_cols = gl$AfnameJaar)
+get_diver_data(2024, gl$BepalingCode == "PXNCOV", add_cols = c(jaar = gl$AfnameJaar))
 
 # for the `where`, use `&` or `|`:
 get_diver_data(last_month(),
-               di$BepalingCode == "PXNCOV" & di$Zorglijn == "2e lijn")
+               gl$BepalingCode == "PXNCOV" & gl$Zorglijn == "2e lijn")
 get_diver_data(c(2020:2024),
-               where = di$BepalingCode == "PXNCOV" | di$Zorglijn == "2e lijn")
+               where = gl$BepalingCode == "PXNCOV" | gl$Zorglijn == "2e lijn")
 
 
 # use \%like\%, \%unlike\%, \%like_case\% or \%unlike_case\% for regular expressions
-get_diver_data(2024, where = di$MateriaalNaam \%like\% "Bloed")
-get_diver_data(2024, where = di$MateriaalNaam \%unlike\% "Bloed")
-get_diver_data(2024, where = di$MateriaalNaam \%like_case\% "bloed")
-get_diver_data(2024, where = di$MateriaalNaam \%unlike_case\% "Bloed")
+get_diver_data(2024, where = gl$MateriaalNaam \%like\% "Bloed")
+get_diver_data(2024, where = gl$MateriaalNaam \%unlike\% "Bloed")
+get_diver_data(2024, where = gl$MateriaalNaam \%like_case\% "bloed")
+get_diver_data(2024, where = gl$MateriaalNaam \%unlike_case\% "Bloed")
 
 get_diver_data(2024,
-               where = di$BepalingNaam \%like\% "Noro" &
-                         di$PatientLeeftijd >= 75)
+               where = gl$BepalingNaam \%like\% "Noro" &
+                         gl$PatientLeeftijd >= 75)
                          
 # R objects will be converted
 materialen <- c("A", "B", "C")
-get_diver_data(2024, where = di$MateriaalNaam \%in\% materialen)
+get_diver_data(2024, where = gl$MateriaalNaam \%in\% materialen)
 leeftijden <- 65:85
-get_diver_data(2024, where = di$PatientLeeftijd \%in\% leeftijden)
+get_diver_data(2024, where = gl$PatientLeeftijd \%in\% leeftijden)
 
 
 # USING DIVER INTEGRATOR LANGUAGE --------------------------------------

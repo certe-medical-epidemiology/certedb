@@ -22,7 +22,6 @@
 #' @param review_where a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise. This will always be `FALSE` in Quarto / R Markdown, since the output of [knitr::pandoc_to()] must be `NULL`.
 #' @param select_preset settings for old `certedb_getmmb()` function
 #' @param select settings for old `certedb_getmmb()` function
-#' @param add_cols settings for old `certedb_getmmb()` function
 #' @param info settings for old `certedb_getmmb()` function
 #' @param first_isolates settings for old `certedb_getmmb()` function
 #' @param eucast_rules settings for old `certedb_getmmb()` function
@@ -32,8 +31,6 @@
 #' @param zipcodes settings for old `certedb_getmmb()` function
 #' @param ziplength settings for old `certedb_getmmb()` function
 #' @param tat_hours settings for old `certedb_getmmb()` function
-#' @param only_real_patients settings for old `certedb_getmmb()` function
-#' @param only_conducted_tests settings for old `certedb_getmmb()` function
 #' @param only_validated settings for old `certedb_getmmb()` function
 #' @param only_show_query settings for old `certedb_getmmb()` function
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set

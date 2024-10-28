@@ -126,9 +126,23 @@ Any data transformation can be done after the data have been downloaded and proc
                                  TRUE ~ 3))
 }\if{html}{\out{</div>}}
 
-As shown, iIn YAML the \code{|} character can be used to start a multi-line statement.
+As shown, in YAML the \code{|} character can be used to start a multi-line statement.
 
-Note that the post-processing will run directly after the querying the data and thus \strong{before auto-transformation} if \code{autotransform = TRUE} in \code{\link[=get_diver_data]{get_diver_data()}}.
+The \code{post-processing} field can also be an R file path, which will be \link[=source]{source}d:
+
+\if{html}{\out{<div class="sourceCode yaml">}}\preformatted{name_new_preset:
+  cbase: "location/to/name.cbase"
+  date_col: "ColumnNameDate"
+  post-processing: "location/to/file.R"
+  
+name_new_preset:
+  cbase: "location/to/name.cbase"
+  date_col: "ColumnNameDate"
+  post-processing1: "location/to/file 1.R"
+  post-processing2: "location/to/file 2.R"
+}\if{html}{\out{</div>}}
+
+Note that all post-processing steps will run directly after the querying the data and thus \strong{before auto-transformation} if \code{autotransform = TRUE} in \code{\link[=get_diver_data]{get_diver_data()}}.
 }
 }
 

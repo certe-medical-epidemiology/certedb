@@ -35,25 +35,31 @@ dplyr::db_write_table
 #' @export
 dplyr::db_has_table
 
-globalVariables(c("Antibioticumcode",
-                  "MIC_gescreend",
-                  "Ontvangstdatum",
-                  "Ordernummer",
-                  "R_AB_Group",
-                  "RIS_gerapporteerd",
-                  ".",
+globalVariables(c(".",
+                  "AanvragerCode",
+                  "Antibioticumcode",
                   "aut_1e",
                   "aut_def",
                   "aut_usr_1e",
                   "aut_usr_def",
                   "bacteriecode",
                   "bacteriecode_oud",
+                  "IsAangevraagd",
                   "join_data",
+                  "MateriaalKorteNaam",
+                  "McraStatus",
+                  "MIC_gescreend",
                   "noord_zuid",
+                  "Ontvangstdatum",
                   "ontvangstdatum",
                   "ontvangstdatumtijd",
                   "ordernr",
+                  "Ordernummer",
                   "postcode",
+                  "R_AB_Group",
+                  "ResultaatStatus",
+                  "ResultaatTekst",
+                  "RIS_gerapporteerd",
                   "type",
                   "val1_1e",
                   "val1_def",
@@ -229,7 +235,7 @@ where_convert_objects <- function(where, info) {
   str2lang(where_split)
 }
 
-where_convert_di <- function(where) {
+where_convert_di_gl <- function(where) {
   for (i in seq_len(length(where))) {
     where_txt <- paste0(trimws(deparse(where[[i]])), collapse = " ")
     has_di <- FALSE

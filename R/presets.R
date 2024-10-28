@@ -125,9 +125,24 @@
 #'                                  TRUE ~ 3))
 #' ```
 #' 
-#' As shown, iIn YAML the `|` character can be used to start a multi-line statement.
+#' As shown, in YAML the `|` character can be used to start a multi-line statement.
 #' 
-#' Note that the post-processing will run directly after the querying the data and thus **before auto-transformation** if `autotransform = TRUE` in [get_diver_data()].
+#' The `post-processing` field can also be an R file path, which will be [source][source()]d:
+#' 
+#' ```yaml
+#' name_new_preset:
+#'   cbase: "location/to/name.cbase"
+#'   date_col: "ColumnNameDate"
+#'   post-processing: "location/to/file.R"
+#'   
+#' name_new_preset:
+#'   cbase: "location/to/name.cbase"
+#'   date_col: "ColumnNameDate"
+#'   post-processing1: "location/to/file 1.R"
+#'   post-processing2: "location/to/file 2.R"
+#' ```
+#' 
+#' Note that all post-processing steps will run directly after the querying the data and thus **before auto-transformation** if `autotransform = TRUE` in [get_diver_data()].
 #' @rdname presets
 #' @export
 presets <- function() {
