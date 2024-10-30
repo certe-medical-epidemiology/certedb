@@ -246,7 +246,7 @@ get_diver_data <- function(date_range = this_year(),
       # You can use the driver-agnostic ODBC formatting to make a date if you are working with two different types of ODBC platforms. The format for that is `{d 'YYYY-MM-DD'}`.
       time_function <- "d"
       date_format <- c("yyyy-mm-dd", "yyyy-mm-dd")
-    }
+    } 
     
     msg_init("Retrieving initial cBase...", print = info)
     if (length(unique(date_range)) > 1) {
