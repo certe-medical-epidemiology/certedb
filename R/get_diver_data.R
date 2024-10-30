@@ -555,10 +555,10 @@ get_diver_data <- function(date_range = this_year(),
   if (isTRUE(only_real_patients)) {
     out_new <- out
     if ("MateriaalKorteNaam" %in% colnames(out_new)) {
-      out_new <- out_new |> filter(MateriaalKorteNaam != "NPM")
+      out_new <- out_new |> filter(is.na(MateriaalKorteNaam) | MateriaalKorteNaam != "NPM")
     }
     if ("AanvragerCode" %in% colnames(out_new)) {
-      out_new <- out_new |> filter(AanvragerCode %unlike% "^NPM[-]")
+      out_new <- out_new |> filter(AanvragerCode %unlike% "^(NPM[-]|CERTE_QC)")
     }
     if (nrow(out_new) < nrow(out)) {
       msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_real_patients = TRUE`"), "...", print = info, prefix_time = TRUE)
@@ -569,7 +569,7 @@ get_diver_data <- function(date_range = this_year(),
   
   # only conducted tests ----
   if (isTRUE(only_conducted_tests) && "ResultaatTekst" %in% colnames(out)) {
-    out_new <- out |> filter(ResultaatTekst != "Niet verricht")
+    out_new <- out |> filter(is.na(ResultaatTekst) | ResultaatTekst != "Niet verricht")
     if (nrow(out_new) < nrow(out)) {
       msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_conducted_tests = TRUE`"), "...", print = info, prefix_time = TRUE)
       out <- out_new
