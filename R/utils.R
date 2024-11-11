@@ -324,3 +324,26 @@ where_convert_like <- function(full_where) {
   }
   full_where
 }
+
+unify_select_clauses <- function(query, diver_tablename = "data") {
+  # this transforms:
+  #
+  # SELECT "q01".*
+  # FROM (SELECT * FROM data WHERE OntvangstDatum = {d '2024-01-01'}) "q01"
+  # WHERE ("MateriaalGroep" IN ('Bloed', 'Bloedkweken')
+  #   AND "BepalingNaam" IN ('Banale kweek', 'Kweek')
+  #   AND "Zorglijn" = '2e lijn')
+  #
+  # to:
+  #
+  # SELECT * FROM data WHERE (OntvangstDatum = {d '2024-01-01'})
+  #   AND ("MateriaalGroep" IN ('Bloed', 'Bloedkweken')
+  #   AND "BepalingNaam" IN ('Banale kweek', 'Kweek')
+  #   AND "Zorglijn" = '2e lijn')
+  if (query %like% '"q01"') {
+    qry <- gsub('"q[0-9]+"', "", strsplit(query, "(\n| )WHERE(\n| )")[[1]])
+    qry <- qry[-1]
+    query <- paste0("SELECT * FROM ", diver_tablename, " WHERE (", paste0(trimws(qry), collapse = " AND "))
+  }
+  query
+}

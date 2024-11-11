@@ -296,21 +296,25 @@ get_diver_data <- function(date_range = this_year(),
       out <- out |> filter({{ where }})
       out$lazy_query$where <- where_convert_like(out$lazy_query$where)
     }
-    if (!is.null(preset) && !all(is.na(preset$filter))) {
-      ## filter ----
-      msg_init(paste0("Validating WHERE statement from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
-               print = info)
-      
-      tryCatch({
-        preset_filter <- str2lang(preset$filter)
-        out <- out |> filter(preset_filter)
-        msg_ok(print = info, dimensions = dim(out))
-      }, error = function(e) {
-        msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
-      })
-      
-    }
   }
+  if (!is.null(preset) && !all(is.na(preset$filter))) {
+    ## filter ----
+    msg_init(paste0("Validating WHERE statement from preset ", font_blue(paste0('"', preset$name, '"')), font_black("...")),
+             print = info)
+    
+    tryCatch({
+      preset_filter <- str2lang(preset$filter)
+      out <- out |> filter(preset_filter)
+      msg_ok(print = info, dimensions = dim(out))
+    }, error = function(e) {
+      msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
+    })
+  }
+  
+  # unify query ----
+  new_qry <- unify_select_clauses(remote_query(out), diver_tablename)
+  out <- conn |> tbl(sql(new_qry))
+
   
   qry <- remote_query(out)
   qry_print <- gsub(paste0("(", paste0("\"?", colnames(out), "\"?", collapse = "|"), ")"), font_italic(font_green("\\1")),
@@ -322,7 +326,7 @@ get_diver_data <- function(date_range = this_year(),
   if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
     choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry_print,
                                          ifelse(!is.null(preset) & !all(is.na(preset$filter)),
-                                                font_grey(paste0("\n-- (a part of) this WHERE comes from preset \"", preset$name, "\")")),
+                                                font_grey(paste0("\n-- (a part of) the WHERE comes from preset \"", preset$name, "\"")),
                                                 "")),
                           choices = c("Yes", "No", "Print column names"),
                           graphics = FALSE)
