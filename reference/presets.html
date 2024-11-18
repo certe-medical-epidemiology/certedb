@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.12.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.12.6</span>
       </span>
     </div>
 
@@ -114,15 +114,16 @@
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="at">    </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"location/to/another.cbase"</span></span>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="at">    </span><span class="fu">by</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2</span></span>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="st">"left"</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, col_name_2 = ColumnName2, ColumnName3, everything(), !starts_with("abc")</span></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_names_from</span><span class="kw">:</span><span class="at"> ColumnName3</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="at">  </span><span class="fu">join2</span><span class="kw">:</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="at">    </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"location/to/yet_another.cbase"</span></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="at">    </span><span class="fu">by</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="st">"left"</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2, ColumnName3</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_names_from</span><span class="kw">:</span><span class="at"> ColumnName3</span></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_name_trans</span><span class="kw">:</span><span class="at"> gsub("_", "..", .x)</span></span></code></pre><p></p></div>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="at">    </span><span class="fu">filter</span><span class="kw">:</span><span class="at"> ColumnName1 == "abc"</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, col_name_2 = ColumnName2, ColumnName3, everything(), !starts_with("abc")</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_names_from</span><span class="kw">:</span><span class="at"> ColumnName3</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="at">  </span><span class="fu">join2</span><span class="kw">:</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="at">    </span><span class="fu">cbase</span><span class="kw">:</span><span class="at"> </span><span class="st">"location/to/yet_another.cbase"</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="at">    </span><span class="fu">by</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="st">"left"</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="at">    </span><span class="fu">select</span><span class="kw">:</span><span class="at"> ColumnName1, ColumnName2, ColumnName3</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_names_from</span><span class="kw">:</span><span class="at"> ColumnName3</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="at">    </span><span class="fu">wide_name_trans</span><span class="kw">:</span><span class="at"> gsub("_", "..", .x)</span></span></code></pre><p></p></div>
 <p>For all presets, <code>cbase</code> and <code>date_col</code> are required.</p><div class="section">
 <h3 id="order-of-running">Order of running<a class="anchor" aria-label="anchor" href="#order-of-running"></a></h3>
 
@@ -131,8 +132,9 @@
 <li><p>Select</p></li>
 <li><p>Join(s)</p></li>
 <li><p>Post-processing</p></li>
-</ol><p>After this, the arguments in <code><a href="get_diver_data.html">get_diver_data()</a></code> will run:</p><ol><li><p>Distinct if <code>distinct = TRUE</code> using <code><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct()</a></code></p></li>
-<li><p>Auto-transform if <code>autotransform = TRUE</code> using <code><a href="https://certe-medical-epidemiology.github.io/certetoolbox/reference/auto_transform.html" class="external-link">auto_transform()</a></code></p></li>
+</ol><p>After this, the arguments in <code><a href="get_diver_data.html">get_diver_data()</a></code> will run:</p><ol><li><p>Post-WHERE if <code>post_where</code> is set, using <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code></p></li>
+<li><p>Distinct if <code>distinct = TRUE</code>, using <code><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct()</a></code></p></li>
+<li><p>Auto-transform if <code>autotransform = TRUE</code>, using <code><a href="https://certe-medical-epidemiology.github.io/certetoolbox/reference/auto_transform.html" class="external-link">auto_transform()</a></code></p></li>
 </ol></div>
 
 <div class="section">
