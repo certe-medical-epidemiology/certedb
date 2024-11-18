@@ -13,6 +13,7 @@
 get_diver_data(
   date_range = this_year(),
   where = NULL,
+  post_where = NULL,
   review_qry = interactive(),
   antibiogram_type = "sir",
   distinct = TRUE,
@@ -104,7 +105,7 @@ get_glims10_data(
 \arguments{
 \item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column specified in the YAML file, see \link{presets}. Defaults to \code{\link[=this_year]{this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}. Date-time ojects will be converted to dates, so using times as input is useless. It is supported to filter on a date-time column though.}
 
-\item{where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.}}
+\item{where, post_where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.} The \code{post_where} will be run after all downloading and post-processing, but before the auto-transform.}
 
 \item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:output_type]{knitr::pandoc_to()}} must be \code{NULL}.}
 

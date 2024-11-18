@@ -46,6 +46,7 @@
 #'     cbase: "location/to/another.cbase"
 #'     by: ColumnName1, ColumnName2
 #'     type: "left"
+#'     filter: ColumnName1 == "abc"
 #'     select: ColumnName1, col_name_2 = ColumnName2, ColumnName3, everything(), !starts_with("abc")
 #'     wide_names_from: ColumnName3
 #'   join2:
@@ -70,8 +71,9 @@
 #' 
 #' After this, the arguments in [get_diver_data()] will run:
 #' 
-#' 5. Distinct if `distinct = TRUE` using [`distinct()`][dplyr::distinct()]
-#' 6. Auto-transform if `autotransform = TRUE` using [`auto_transform()`][certetoolbox::auto_transform()]
+#' 5. Post-WHERE if `post_where` is set, using [`filter()`][dplyr::filter()]
+#' 6. Distinct if `distinct = TRUE`, using [`distinct()`][dplyr::distinct()]
+#' 7. Auto-transform if `autotransform = TRUE`, using [`auto_transform()`][certetoolbox::auto_transform()]
 #' 
 #' ## cBase (`cbase`)
 #' 

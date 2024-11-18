@@ -43,6 +43,7 @@ The most extensive YAML form:
     cbase: "location/to/another.cbase"
     by: ColumnName1, ColumnName2
     type: "left"
+    filter: ColumnName1 == "abc"
     select: ColumnName1, col_name_2 = ColumnName2, ColumnName3, everything(), !starts_with("abc")
     wide_names_from: ColumnName3
   join2:
@@ -67,8 +68,9 @@ The YAML keys run in this order:
 
 After this, the arguments in \code{\link[=get_diver_data]{get_diver_data()}} will run:
 \enumerate{
-\item Distinct if \code{distinct = TRUE} using \code{\link[dplyr:distinct]{distinct()}}
-\item Auto-transform if \code{autotransform = TRUE} using \code{\link[certetoolbox:auto_transform]{auto_transform()}}
+\item Post-WHERE if \code{post_where} is set, using \code{\link[dplyr:filter]{filter()}}
+\item Distinct if \code{distinct = TRUE}, using \code{\link[dplyr:distinct]{distinct()}}
+\item Auto-transform if \code{autotransform = TRUE}, using \code{\link[certetoolbox:auto_transform]{auto_transform()}}
 }
 }
 

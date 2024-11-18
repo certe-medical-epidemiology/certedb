@@ -21,7 +21,7 @@
 #' 
 #' Thes functions can be used to download local or remote database data, e.g. Spectre data from DiveLine on a Diver server (from [Dimensional Insight](https://www.dimins.com)). The [get_diver_data()] function sets up an ODBC connection (using [db_connect()]), which requires their quite limited [DI-ODBC driver](https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html).
 #' @param date_range date range, can be length 1 or 2 (or more to use the min/max) to filter on the column specified in the YAML file, see [presets]. Defaults to [this_year()]. Use `NULL` to set no date filter. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()]. Date-time ojects will be converted to dates, so using times as input is useless. It is supported to filter on a date-time column though.
-#' @param where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. **Do not use `&&` or `||` but only `&` or `|` in filtering.**
+#' @param where,post_where arguments to filter data on, will be passed on to [`filter()`][dplyr::filter()]. **Do not use `&&` or `||` but only `&` or `|` in filtering.** The `post_where` will be run after all downloading and post-processing, but before the auto-transform.
 #' @param diver_cbase,diver_project,diver_dsn,diver_testserver properties to set in [db_connect()]. The `diver_cbase` argument will be based on `preset`, but can also be set to blank `NULL` to manually select a cBase in a popup window.
 #' @param diver_tablename name of the database table to download data from. This is hard-coded by DI and should normally never be changed.
 #' @param review_qry a [logical] to indicate whether the query must be reviewed first, defaults to `TRUE` in interactive mode and `FALSE` otherwise. This will always be `FALSE` in Quarto / R Markdown, since the output of [knitr::pandoc_to()] must be `NULL`.
@@ -111,6 +111,7 @@
 #' }
 get_diver_data <- function(date_range = this_year(),
                            where = NULL,
+                           post_where = NULL,
                            review_qry = interactive(),
                            antibiogram_type = "sir",
                            distinct = TRUE,
@@ -284,7 +285,7 @@ get_diver_data <- function(date_range = this_year(),
   # set query ----
   if (!is.null(tryCatch(where, error = function(e) 0))) {
     msg_init("Validating WHERE statement...", print = info)
-    # fill in columns from the 'di' object
+    # fill in columns from the 'di' or 'gl' object
     if (isTRUE(list(...)$where_as_character)) {
       where <- str2lang(where)
     }
@@ -550,6 +551,21 @@ get_diver_data <- function(date_range = this_year(),
     out_new <- distinct(out)
     if (nrow(out_new) < nrow(out)) {
       msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`distinct = TRUE`"), "...", print = info, prefix_time = TRUE)
+      out <- out_new
+      msg_ok(dimensions = dim(out), print = info)
+    }
+  }
+  
+  # post WHERE ----
+  if (!is.null(tryCatch(post_where, error = function(e) 0))) {
+    msg_init("Validating post-WHERE statement...", print = info, prefix_time = TRUE)
+    # fill in columns from the 'di' or 'gl' object
+    post_where <- where_convert_di_gl(substitute(post_where))
+    # convert objects, this will return msg "OK"
+    post_where <- where_convert_objects(deparse(substitute(post_where)), info = info)
+    out_new <- out |> filter(!!post_where)
+    if (nrow(out_new) < nrow(out)) {
+      msg_init("Removing ", nrow(out) - nrow(out_new), " rows from ", font_blue("post_where"), "...", print = info, prefix_time = TRUE)
       out <- out_new
       msg_ok(dimensions = dim(out), print = info)
     }
