@@ -238,19 +238,19 @@ where_convert_objects <- function(where, info) {
 where_convert_di_gl <- function(where) {
   for (i in seq_len(length(where))) {
     where_txt <- paste0(trimws(deparse(where[[i]])), collapse = " ")
-    has_di <- FALSE
+    has_di_gl <- FALSE
     while (where_txt %like% "(di|gl)[$]") {
       # use while and sub(), not gsub(), to go over each mention of 'di$'
-      has_di <- TRUE
+      has_di_gl <- TRUE
       where_txt <- sub("((di|gl)[$][A-Za-z0-9`.-]+)",
-                       paste0(
-                         ifelse(where_txt %like% "(di|gl)[$].*?[`-]", '"', ""),
-                         eval(str2lang(sub(".*((di|gl)[$][A-Za-z0-9`.-]+).*", "\\1", where_txt, perl = TRUE))),
-                         ifelse(where_txt %like% "(di|gl)[$].*?[`-]", '"', "")),
+                       eval(str2lang(sub(".*((di|gl)[$][A-Za-z0-9`.-]+).*", "\\1", where_txt, perl = TRUE))),
                        where_txt,
                        perl = TRUE)
+      if (where_txt %like% "^[a-zA-Z0-9]+[-]") {
+        stop("Hyphen (-) in a column name cannot be used to query a cBase", call. = FALSE)
+      }
     }
-    if (has_di == TRUE) {
+    if (has_di_gl == TRUE) {
       where[[i]] <- str2lang(where_txt)
     }
   }
@@ -282,7 +282,7 @@ where_convert_like <- function(full_where) {
       
       for (j in seq_len(length(split_OR))) {
         qry <- split_OR[j]
-        if (qry %unlike% "%(like|like_case|unlike|unlike_case)%") {
+        if (qry %unlike% "%(like|like_case|unlike|unlike_case)%" && qry %unlike% "[-]") {
           next
         }
         qry_language <- str2lang(qry)
@@ -307,10 +307,8 @@ where_convert_like <- function(full_where) {
                         qry_language_text[2], "\"), \"",
                         qry_language_text[3], "\", false)')")
         }
-        
         split_OR[j] <- qry
       }
-      
       merged_AND[i] <- paste0(split_OR, collapse = " | ")
     }
     
