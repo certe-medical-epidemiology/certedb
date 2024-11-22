@@ -282,7 +282,7 @@ where_convert_like <- function(full_where) {
       
       for (j in seq_len(length(split_OR))) {
         qry <- split_OR[j]
-        if (qry %unlike% "%(like|like_case|unlike|unlike_case)%" && qry %unlike% "[-]") {
+        if (qry %unlike% "%(like|like_case|unlike|unlike_case)%") {
           next
         }
         qry_language <- str2lang(qry)
