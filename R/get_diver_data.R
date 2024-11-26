@@ -134,6 +134,10 @@ get_diver_data <- function(date_range = this_year(),
                            in_background = FALSE,
                            ...) {
   
+  if (!is.null(list(...))$dates && missing(date_range)) {
+    date_range <- dates
+  }
+  
   if (is_empty(preset)) {
     preset <- NULL
   }
