@@ -33,6 +33,7 @@
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
 #' @param snake_case [logical] to convert column names to [snake case](https://en.wikipedia.org/wiki/Snake_case), **only** when `auto_transform = TRUE`
 #' @param info a logical to indicate whether info about the connection should be printed
+#' @param log_file a file path to which the query will be logged, after collection and before any transformation. Use `NULL` or `""` to prevent logging.
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
 #' @param limit maximum number of rows to return.
 #' @param only_real_patients [logical] to include only real patients, i.e., remove test and Q&A samples
@@ -126,6 +127,7 @@ get_diver_data <- function(date_range = this_year(),
                            diver_testserver = FALSE,
                            diver_tablename = "data",
                            info = interactive(),
+                           log_file = read_secret("db.query_log"),
                            limit = Inf,
                            only_real_patients = TRUE,
                            only_conducted_tests = TRUE,
@@ -134,8 +136,8 @@ get_diver_data <- function(date_range = this_year(),
                            in_background = FALSE,
                            ...) {
   
-  if (!is.null(list(...))$dates && missing(date_range)) {
-    date_range <- dates
+  if (!is.null(list(...)$dates) && missing(date_range)) {
+    date_range <- list(...)$dates
   }
   
   if (is_empty(preset)) {
@@ -182,7 +184,12 @@ get_diver_data <- function(date_range = this_year(),
                                    diver_testserver = diver_testserver,
                                    diver_tablename = diver_tablename,
                                    info = info,
+                                   log_file = log_file,
                                    limit = limit,
+                                   only_real_patients = only_real_patients,
+                                   only_conducted_tests = only_conducted_tests,
+                                   only_validated = only_validated,
+                                   only_requested = only_requested,
                                    in_background = FALSE,
                                    ...),
                        package = TRUE)
@@ -312,21 +319,20 @@ get_diver_data <- function(date_range = this_year(),
       out <- out |> filter(preset_filter)
       msg_ok(print = info, dimensions = dim(out))
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
     })
   }
   
   # unify query ----
   new_qry <- unify_select_clauses(remote_query(out), diver_tablename)
   out <- conn |> tbl(sql(new_qry))
-
   
   qry <- remote_query(out)
   qry_print <- gsub(paste0("(", paste0("\"?", colnames(out), "\"?", collapse = "|"), ")"), font_italic(font_green("\\1")),
                     gsub("( AND | OR |NOT| IN |EVAL| BETWEEN )", font_blue("\\1"),
                          gsub("(SELECT|FROM|WHERE|LIMIT)", font_bold(font_blue("\\1")),
-                              gsub("}\n  AND ", "} AND ", 
-                                   gsub(" AND ", "\n  AND ", qry)))))
+                              gsub("}\n  (AND|OR) ", "} \\1 ", 
+                                   gsub(" (AND|OR) ", "\n  \\1 ", qry)))))
   
   if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
     choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry_print,
@@ -364,7 +370,28 @@ get_diver_data <- function(date_range = this_year(),
     msg_error(time = FALSE, print = info)
     stop(format_error(e), call. = FALSE)
   })
-  msg_ok(dimensions = dim(out), print = info)
+  log <- FALSE
+  if (!is.null(suppressMessages(suppressWarnings(log_file))) && suppressMessages(suppressWarnings(log_file)) != "") {
+    # log queries
+    df <- data.frame(datetime = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"), 
+                     user = user,
+                     interactive = interactive(),
+                     source_dsn = diver_dsn,
+                     source_project = diver_project,
+                     source_cbase = diver_cbase,
+                     query = gsub(" +", " ", gsub("\n", " ", new_qry, fixed = TRUE)),
+                     rows = NROW(out),
+                     columns = NCOL(out))
+    utils::write.table(x = df,
+                       file = log_file,
+                       append = TRUE,
+                       row.names = FALSE,
+                       col.names = !file.exists(log_file),
+                       sep = ",")
+    log <- TRUE
+  }
+  msg_ok(time = TRUE, dimensions = dim(out), print = info,
+         ifelse(log, paste0(font_black("- logged to "), font_blue(paste0('"', log_file, '"'))), font_red("- not logged")))
   
   for (i in seq_len(ncol(out))) {
     # 2023-02-13 fix for Diver, logicals/booleans seem corrupt
@@ -438,7 +465,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- out |> select(!!!lst_select_new)
       msg_ok(print = info, dimensions = dim(out))
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
     })
     
   }
@@ -522,7 +549,7 @@ get_diver_data <- function(date_range = this_year(),
       msg_ok(dimensions = dim(out), print = info)
       
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
     })
     
   }
@@ -541,12 +568,12 @@ get_diver_data <- function(date_range = this_year(),
           # support R files
           postpr <- paste0(readLines(postpr), collapse = "\n")
         }
-        out <- eval(parse(text = postpr))
+        out <- eval(parse(text = paste0("{\n", postpr, "\n}")))
       }
       msg_ok(dimensions = dim(out), print = info)
       
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
     })
   }
   
@@ -640,7 +667,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- auto_transform(out, snake_case = snake_case)
       msg_ok(print = info)
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, format_error(e), " -> Returning unchanged data set")
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
     })
     
   }

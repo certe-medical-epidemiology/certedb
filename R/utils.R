@@ -224,7 +224,7 @@ where_convert_objects <- function(where, info) {
     msg_txt <- character(0)
     for (i in seq_len(length(converted))) {
       msg_txt <- c(msg_txt,
-                   paste0("\n  - Replaced ", font_blue(names(converted)[i]), font_black(" with "), font_blue(converted[[i]])))
+                   paste0(font_black("\n  - Replaced "), font_blue(names(converted)[i]), font_black(" with "), font_blue(converted[[i]])))
     }
     converted <- paste0(msg_txt, collapse = "")
   } else {

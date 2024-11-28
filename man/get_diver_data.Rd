@@ -29,6 +29,7 @@ get_diver_data(
   diver_testserver = FALSE,
   diver_tablename = "data",
   info = interactive(),
+  log_file = read_secret("db.query_log"),
   limit = Inf,
   only_real_patients = TRUE,
   only_conducted_tests = TRUE,
@@ -67,6 +68,7 @@ certedb_getmmb(
   zipcodes = FALSE,
   ziplength = 4,
   tat_hours = FALSE,
+  log_file = read_secret("db.query_log"),
   only_real_patients = TRUE,
   only_conducted_tests = TRUE,
   only_validated = FALSE,
@@ -128,6 +130,8 @@ get_glims10_data(
 \item{diver_tablename}{name of the database table to download data from. This is hard-coded by DI and should normally never be changed.}
 
 \item{info}{settings for old \code{certedb_getmmb()} function}
+
+\item{log_file}{a file path to which the query will be logged, after collection and before any transformation. Use \code{NULL} or \code{""} to prevent logging.}
 
 \item{limit}{maximum number of rows to return.}
 

@@ -31,6 +31,7 @@
 #' @param zipcodes settings for old `certedb_getmmb()` function
 #' @param ziplength settings for old `certedb_getmmb()` function
 #' @param tat_hours settings for old `certedb_getmmb()` function
+#' @param log_file a file path to which the query will be logged, after collection and before any transformation. Use `NULL` or `""` to prevent logging.
 #' @param only_validated settings for old `certedb_getmmb()` function
 #' @param only_show_query settings for old `certedb_getmmb()` function
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
@@ -58,6 +59,7 @@ certedb_getmmb <- function(dates = NULL,
                            zipcodes = FALSE,
                            ziplength = 4,
                            tat_hours = FALSE,
+                           log_file = read_secret("db.query_log"),
                            only_real_patients = TRUE,
                            only_conducted_tests = TRUE,
                            only_validated = FALSE,
@@ -285,7 +287,32 @@ certedb_getmmb <- function(dates = NULL,
     msg_error(time = FALSE, print = info)
     stop(format_error(e), call. = FALSE)
   })
-  msg_ok(time = TRUE, dimensions = dim(out), print = info)
+  log <- FALSE
+  if (!is.null(suppressMessages(suppressWarnings(log_file))) && suppressMessages(suppressWarnings(log_file)) != "") {
+    # log queries
+    df <- data.frame(datetime = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"), 
+                     user = user,
+                     interactive = interactive(),
+                     source_dsn = paste0(unlist(read_secret("db.certemmb"))["username"],
+                                         "@",
+                                         unlist(read_secret("db.certemmb"))["host"],
+                                         ":",
+                                         as.integer(unlist(read_secret("db.certemmb"))["port"])),
+                     source_project = unlist(read_secret("db.certemmb"))["dbname"],
+                     source_cbase = NA_character_,
+                     query = gsub(" +", " ", gsub("\n", " ", query, fixed = TRUE)),
+                     rows = NROW(out),
+                     columns = NCOL(out))
+    utils::write.table(x = df,
+                       file = log_file,
+                       append = TRUE,
+                       row.names = FALSE,
+                       col.names = !file.exists(log_file),
+                       sep = ",")
+    log <- TRUE
+  }
+  msg_ok(time = TRUE, dimensions = dim(out), print = info,
+         ifelse(log, paste0(font_black("- logged to "), font_blue(paste0('"', log_file, '"'))), font_red("- not logged")))
   
   if (tat_hours == TRUE && select %like% " dlt[.]") {
     msg_init("Calculating time differences in hours...", print = info, prefix_time = TRUE)
