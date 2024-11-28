@@ -621,7 +621,6 @@ get_diver_data <- function(date_range = this_year(),
   # only conducted tests ----
   if (isTRUE(only_conducted_tests) && "ResultaatTekst" %in% colnames(out)) {
     out_new <- out |> filter(is.na(ResultaatTekst) | ResultaatTekst %unlike% "Niet verricht|kweek niet ingezet|materiaal ongeschikt")
-    )
     if (nrow(out_new) < nrow(out)) {
       msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_conducted_tests = TRUE`"), "...", print = info, prefix_time = TRUE)
       out <- out_new
