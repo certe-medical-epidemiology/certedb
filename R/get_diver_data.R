@@ -379,7 +379,7 @@ get_diver_data <- function(date_range = this_year(),
                      source_dsn = diver_dsn,
                      source_project = diver_project,
                      source_cbase = diver_cbase,
-                     query = gsub(" +", " ", gsub("\n", " ", new_qry, fixed = TRUE)),
+                     query = limit_txt_length(gsub(" +", " ", gsub("\n", " ", new_qry, fixed = TRUE)), 5000),
                      rows = NROW(out),
                      columns = NCOL(out))
     utils::write.table(x = df,

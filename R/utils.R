@@ -345,3 +345,9 @@ unify_select_clauses <- function(query, diver_tablename = "data") {
   }
   query
 }
+
+limit_txt_length <- function(txt, max) {
+  txt_out <- substr(txt, 1, max)
+  txt_out[nchar(txt) > max] <- paste0(txt_out[nchar(txt) > max], "...[OUTPUT TRUNCATED]")
+  txt_out
+}

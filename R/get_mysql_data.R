@@ -300,7 +300,7 @@ certedb_getmmb <- function(dates = NULL,
                                          as.integer(unlist(read_secret("db.certemmb"))["port"])),
                      source_project = unlist(read_secret("db.certemmb"))["dbname"],
                      source_cbase = NA_character_,
-                     query = gsub(" +", " ", gsub("\n", " ", query, fixed = TRUE)),
+                     query = limit_txt_length(gsub(" +", " ", gsub("\n", " ", query, fixed = TRUE)), 5000),
                      rows = NROW(out),
                      columns = NCOL(out))
     utils::write.table(x = df,
