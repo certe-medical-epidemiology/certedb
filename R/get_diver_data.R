@@ -611,6 +611,9 @@ get_diver_data <- function(date_range = this_year(),
     if ("AanvragerCode" %in% colnames(out_new)) {
       out_new <- out_new |> filter(AanvragerCode %unlike% "^(NPM[-]|CERTE_QC)")
     }
+    if ("PatientNaam" %in% colnames(out_new)) {
+      out_new <- out_new |> filter(PatientNaam %unlike% "(SKML|QCMD|NEQAS)")
+    }
     if (nrow(out_new) < nrow(out)) {
       msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_real_patients = TRUE`"), "...", print = info, prefix_time = TRUE)
       out <- out_new
