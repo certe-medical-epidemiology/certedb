@@ -231,6 +231,15 @@ get_diver_data <- function(date_range = this_year(),
       msg_ok(time = FALSE, dimensions = NULL, print = info) 
     }
     
+    date_range <- as.character(date_range)
+    dates_int <- suppressWarnings(as.integer(date_range))
+    if (!is.na(dates_int[1])) {
+      date_range[1] <- as.character(as.Date(as.integer(date_range[1]), origin = "1970-01-01"))
+    }
+    if (!is.na(dates_int[2])) {
+      date_range[2] <- as.character(as.Date(as.integer(date_range[2]), origin = "1970-01-01"))
+    }
+    
     if (length(date_range) == 1) {
       date_range <- rep(date_range, 2)
     } else {
