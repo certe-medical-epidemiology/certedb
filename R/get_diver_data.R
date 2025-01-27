@@ -45,7 +45,7 @@
 #' 
 #' Use [certedb_query()] to retrieve the original query that was used to download the data.
 #' @importFrom dbplyr sql remote_query
-#' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc all_of pull
+#' @importFrom dplyr tbl filter collect matches mutate across select distinct first type_sum arrange desc all_of pull case_when
 #' @importFrom rlang parse_expr quo sym
 #' @importFrom certestyle format2 font_black font_blue font_bold font_green font_grey font_italic
 #' @importFrom certetoolbox auto_transform this_year import
@@ -208,12 +208,12 @@ get_diver_data <- function(date_range = this_year(),
     diver_cbase <- "(manually selected)"
   }
   
+  row1 <- conn |> tbl(diver_tablename) |> utils::head(1) |> collect()
+  
   if (!is.null(date_range)) {
-    
     msg_init("Checking date columns...", print = info)
-    case_row1 <- conn |> tbl(diver_tablename) |> utils::head(1) |> collect()
-    cbase_columns <- case_row1 |> colnames()
-    date_cols <- cbase_columns[which(vapply(FUN.VALUE = logical(1), case_row1, inherits, c("Date", "POSIXct")))]
+    cbase_columns <- row1 |> colnames()
+    date_cols <- cbase_columns[which(vapply(FUN.VALUE = logical(1), row1, inherits, c("Date", "POSIXct")))]
     
     if (!is.null(date_column) && !identical(date_column, "") && !date_column %in% cbase_columns) {
       msg_error(time = FALSE, print = info,
@@ -472,12 +472,16 @@ get_diver_data <- function(date_range = this_year(),
       }
       
       # use unquote-splice `!!!` since input is list
-      out <- out |> select(!!!lst_select_new)
+      out_select <- out |> select(!!!lst_select_new)
+      if (only_requested == TRUE && "IsAangevraagd" %in% colnames(row1) && !"IsAangevraagd" %in% colnames(out_select)) {
+        # include IsAangevraagd if it is in the original data - otherwise `only_requested` will not work
+        out_select <- out |> select(!!!lst_select_new, "IsAangevraagd")
+      }
+      out <- out_select
       msg_ok(print = info, dimensions = dim(out))
     }, error = function(e) {
       msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
     })
-    
   }
   
   # join ----
@@ -633,6 +637,17 @@ get_diver_data <- function(date_range = this_year(),
   
   # only conducted tests ----
   if (isTRUE(only_conducted_tests) && "ResultaatTekst" %in% colnames(out)) {
+    if ("Resultaat" %in% colnames(out)) {
+      # does not matter that we change the original `ResultaatTekst` column here - these rows will be filtered out any way
+      out <- out |> 
+        mutate(ResultaatTekst = case_when(Resultaat %like% "ERC_GBA" ~ "Niet verricht",  # Geen betrouwbare analyse mogelijk
+                                          Resultaat %like% "ERC_GMO" ~ "Niet verricht",  # Geen materiaal ontvangen
+                                          Resultaat %like% "ERC_NU\\}" ~ "Niet verricht", # Niet uitgevoerd
+                                          Resultaat %like% "ERC_TWM" ~ "Niet verricht",  # Te weinig materiaal
+                                          tolower(Resultaat) == "nv" ~ "Niet verricht",
+                                          tolower(ResultaatTekst) == "niet verricht" ~ "Niet verricht",
+                                          TRUE ~ ResultaatTekst))
+    }
     out_new <- out |> filter(is.na(ResultaatTekst) | ResultaatTekst %unlike% "Niet verricht|kweek niet ingezet|materiaal ongeschikt")
     if (nrow(out_new) < nrow(out)) {
       msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_conducted_tests = TRUE`"), "...", print = info, prefix_time = TRUE)
