@@ -408,6 +408,14 @@ get_diver_data <- function(date_range = this_year(),
     if (is.logical(out[, i, drop = TRUE])) {
       out[, i] <- as.logical(as.character(out[, i, drop = TRUE]))
     }
+    # 2025-03-06 fix for Diver, UTF8 strings seem corrupt
+    if (is.character(out[, i, drop = TRUE])) {
+      invalid_rows <- grep("[^[:print:]]", out[, i, drop = TRUE], value = TRUE)
+      if (length(invalid_rows) > 0) {
+        msg("Replacing invalid characters with \"?\" in column '", colnames(out)[i], "' for ", length(invalid_rows), " rows.", print = info)
+      }
+      out[, i] <- gsub("[^[:print:]]", "?", out[, i, drop = TRUE])
+    }
   }
   
   # select ----

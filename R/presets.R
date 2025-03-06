@@ -156,7 +156,11 @@ presets <- function() {
                 joins = NA_character_,
                 postprocessing = NA_character_)
   for (i in seq_len(length(p))) {
-    out[i, "cbase"] <- p[[i]]$cbase
+    if (is.null(p[[i]]$cbase)) {
+      out[i, "cbase"] <- "None"
+    } else {
+      out[i, "cbase"] <- p[[i]]$cbase
+    }
     
     if (is.null(p[[i]]$filter)) {
       out[i, "filter"] <- "None"

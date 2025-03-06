@@ -18,8 +18,8 @@
 # ===================================================================== #
 
 
-addin1_shiny_explore <- function() {
-  shiny_explore() 
+addin1_cbase_explore <- function() {
+  cbase_explore() 
 }
 
 #' Search cBase Interactively
@@ -30,7 +30,7 @@ addin1_shiny_explore <- function() {
 #' @importFrom certestyle colourpicker
 #' @inheritParams get_diver_data
 #' @export
-shiny_explore <- function(preset = read_secret("db.preset_default_shiny"),
+cbase_explore <- function(preset = read_secret("db.preset_default_shiny"),
                           diver_cbase = NULL,
                           diver_project = read_secret("db.diver_project"),
                           diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else read_secret("db.diver_dsn_test"),
@@ -44,13 +44,13 @@ shiny_explore <- function(preset = read_secret("db.preset_default_shiny"),
   
   ui <- fluidPage(
     tags$style(paste0(
-      ".well { background-color: ", colourpicker("certeroze6"), "; font-size: 12px; line-height: 1; margin-top: 12px; }",
-      ".well label { color: ", colourpicker("certeroze"), "; }",
-      "h4 { color: ", colourpicker("certeroze"), "; font-size: 14px; font-weight: bold; text-decoration: underline; text-align: center; }",
-      "#zoek { background-color: ", colourpicker("certeroze"), "; border-color: ", colourpicker("certeroze"), "; color: white; }",
-      "#zoek:hover { background-color: ", colourpicker("certeroze0"), "; border-color: ", colourpicker("certeroze"), "; }",
-      ".btn { color: ", colourpicker("certeroze"), "; border-color: ", colourpicker("certeroze"), "; }",
-      ".btn:hover { color: ", colourpicker("certeroze"), "; background-color: ", colourpicker("certeroze6"), "; border-color: ", colourpicker("certeroze"), "; }",
+      ".well { background-color: ", colourpicker("certeblauw6"), "; font-size: 12px; line-height: 1; margin-top: 12px; }",
+      ".well label { color: ", colourpicker("certeblauw"), "; }",
+      "h4 { color: ", colourpicker("certeblauw"), "; font-size: 14px; font-weight: bold; text-decoration: underline; text-align: center; }",
+      "#zoek { background-color: ", colourpicker("certeblauw"), "; border-color: ", colourpicker("certeblauw"), "; color: white; }",
+      "#zoek:hover { background-color: ", colourpicker("certeblauw0"), "; border-color: ", colourpicker("certeblauw"), "; }",
+      ".btn { color: ", colourpicker("certeblauw"), "; border-color: ", colourpicker("certeblauw"), "; }",
+      ".btn:hover { color: ", colourpicker("certeblauw"), "; background-color: ", colourpicker("certeblauw6"), "; border-color: ", colourpicker("certeblauw"), "; }",
       ".main { margin: 0px; padding: 0px; }",
       ".data-output { width: 100%; overflow: scroll; height: 750px;}",
       "table * { line-height: 14px; font-size: 12px;}",
@@ -97,8 +97,8 @@ shiny_explore <- function(preset = read_secret("db.preset_default_shiny"),
                                 if (x %unlike% "^(data_table|datumbereik|preset_select|zoek|sluit|kopie)" && !is.null(input[[x]]) && !all(input[[x]] == "", na.rm = TRUE)) {
                                   if (x %in% c("PatientNaam", "BepalingOmschrijving")) {
                                     paste0(x, " %like% \"", input[[x]], "\"")
-                                  # } else if (input[[x]] %like% "^[0-9]+$") {
-                                  #   paste0(x, " == ", input[[x]])
+                                    # } else if (input[[x]] %like% "^[0-9]+$") {
+                                    #   paste0(x, " == ", input[[x]])
                                   } else {
                                     paste0(x, " == \"", input[[x]], "\"")  
                                   }
