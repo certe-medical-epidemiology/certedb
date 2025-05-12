@@ -242,8 +242,8 @@ where_convert_di_gl <- function(where) {
     while (where_txt %like% "(di|gl)[$]") {
       # use while and sub(), not gsub(), to go over each mention of 'di$'
       has_di_gl <- TRUE
-      where_txt <- sub("((di|gl)[$][A-Za-z0-9`.-]+)",
-                       eval(str2lang(sub(".*((di|gl)[$][A-Za-z0-9`.-]+).*", "\\1", where_txt, perl = TRUE))),
+      where_txt <- sub("((certedb::)?(di|gl)[$][A-Za-z0-9`.-]+)",
+                       eval(str2lang(sub(".*((certedb::)?(di|gl)[$][A-Za-z0-9`.-]+).*", "\\1", where_txt, perl = TRUE))),
                        where_txt,
                        perl = TRUE)
       if (where_txt %like% "^[a-zA-Z0-9]+[-]") {
