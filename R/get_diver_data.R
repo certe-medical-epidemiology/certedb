@@ -690,6 +690,8 @@ get_diver_data <- function(date_range = this_year(),
     }
   }
   
+  base::gc(verbose = FALSE, full = TRUE)
+  
   # auto-transform ----
   if (isTRUE(auto_transform)) {
     msg_init("Transforming data set...", print = info, prefix_time = TRUE)

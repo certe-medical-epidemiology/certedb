@@ -17,26 +17,22 @@
 #  useful, but it comes WITHOUT ANY WARRANTY OR LIABILITY.              #
 # ===================================================================== #
 
-
-addin1_cbase_explore <- function() {
-  cbase_explore() 
-}
-
 #' Search cBase Interactively
 #' 
 #' Use this Shiny app to search a cBase. There is also an RStudio add-in.
 #' @importFrom shiny fluidPage sidebarLayout sidebarPanel textInput dateRangeInput mainPanel reactive dialogViewer runGadget selectInput actionButton stopApp eventReactive observeEvent div h4 tags textOutput renderText
 #' @importFrom DT DTOutput renderDT
+#' @importFrom dplyr mutate_all
+#' @importFrom tidyr pivot_longer pivot_wider
 #' @importFrom certestyle colourpicker
 #' @inheritParams get_diver_data
 #' @export
-cbase_explore <- function(preset = read_secret("db.preset_default_shiny"),
-                          diver_cbase = NULL,
-                          diver_project = read_secret("db.diver_project"),
-                          diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else read_secret("db.diver_dsn_test"),
-                          diver_testserver = FALSE,
-                          diver_tablename = "data") {
-  
+cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
+                           diver_cbase = NULL,
+                           diver_project = read_secret("db.diver_project"),
+                           diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else read_secret("db.diver_dsn_test"),
+                           diver_testserver = FALSE,
+                           diver_tablename = "data") {
   
   pkg_env$qry_shiny <- list(date_range = c(paste0(format(Sys.Date(), "%Y"), "-01-01"),
                                            paste0(format(Sys.Date(), "%Y"), "-12-31")),
@@ -100,7 +96,11 @@ cbase_explore <- function(preset = read_secret("db.preset_default_shiny"),
                                     # } else if (input[[x]] %like% "^[0-9]+$") {
                                     #   paste0(x, " == ", input[[x]])
                                   } else {
-                                    paste0(x, " == \"", input[[x]], "\"")  
+                                    val <- input[[x]]
+                                    if (is.character(input[[x]])) {
+                                      val <- trimws(input[[x]])
+                                    }
+                                    paste0(x, " == \"", val, "\"")
                                   }
                                 } else {
                                   NA_character_
@@ -127,6 +127,19 @@ cbase_explore <- function(preset = read_secret("db.preset_default_shiny"),
                             diver_dsn = diver_dsn,
                             diver_testserver = diver_testserver,
                             diver_tablename = diver_tablename)
+      
+      # scroll horizontally
+      out <- out |>
+        mutate_all(as.character) |>
+        pivot_longer(
+          -Ordernummer,
+          names_to = "variable",
+          values_to = "value") |>
+        pivot_wider(
+          names_from = Ordernummer,
+          values_from = value) %>%
+        stats::setNames(c("Ordernummer", colnames(.)[-1]))
+      
       out
     })
     
@@ -147,11 +160,11 @@ cbase_explore <- function(preset = read_secret("db.preset_default_shiny"),
     
     output$data_table <- DT::renderDT({
       data()
-    }, options = list(pageLength = 100), rownames = FALSE)
+    }, options = list(paging = FALSE, info = FALSE, scrollX = TRUE, pageLength = -1), rownames = FALSE)
     
   }
   
-  viewer <- dialogViewer(dialogName = "Diver Data",
+  viewer <- dialogViewer(dialogName = "cBase Explorer",
                          width = 1600,
                          height = 750)
   
