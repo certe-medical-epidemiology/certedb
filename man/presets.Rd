@@ -53,6 +53,9 @@ The most extensive YAML form:
     select: ColumnName1, ColumnName2, ColumnName3
     wide_names_from: ColumnName3
     wide_name_trans: gsub("_", "..", .x)
+  post-processing:
+    - "file 1.R"
+    - "file 2.R"
 }\if{html}{\out{</div>}}
 
 For all presets, \code{cbase} and \code{date_col} are required.
@@ -130,12 +133,19 @@ Any data transformation can be done after the data have been downloaded and proc
 
 As shown, in YAML the \code{|} character can be used to start a multi-line statement.
 
-The \code{post-processing} field can also be an R file path, which will be \link[=source]{source}d:
+The \code{post-processing} field can also be one or more R file paths, which will be read using \code{\link[=readLines]{readLines()}}. Each of these chunks is valid:
 
 \if{html}{\out{<div class="sourceCode yaml">}}\preformatted{name_new_preset:
   cbase: "location/to/name.cbase"
   date_col: "ColumnNameDate"
   post-processing: "location/to/file.R"
+  
+name_new_preset:
+  cbase: "location/to/name.cbase"
+  date_col: "ColumnNameDate"
+  post-processing:
+    - "location/to/file 1.R"
+    - "location/to/file 2.R"
   
 name_new_preset:
   cbase: "location/to/name.cbase"

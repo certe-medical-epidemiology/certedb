@@ -44,6 +44,7 @@ globalVariables(c(".",
                   "aut_usr_def",
                   "bacteriecode",
                   "bacteriecode_oud",
+                  "BepalingCode",
                   "IsAangevraagd",
                   "join_data",
                   "MateriaalKorteNaam",
@@ -53,8 +54,10 @@ globalVariables(c(".",
                   "Ontvangstdatum",
                   "ontvangstdatum",
                   "ontvangstdatumtijd",
+                  "order_unique",
                   "ordernr",
                   "Ordernummer",
+                  "PatientNaam",
                   "postcode",
                   "R_AB_Group",
                   "ResultaatStatus",
@@ -69,7 +72,8 @@ globalVariables(c(".",
                   "val2_def",
                   "val2_usr_1e",
                   "val2_usr_def",
-                  "value"))
+                  "value",
+                  "variable"))
 
 #' @importFrom cli symbol
 format_dimensions <- function(dims) {

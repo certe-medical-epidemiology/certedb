@@ -586,11 +586,17 @@ get_diver_data <- function(date_range = this_year(),
         postpr <- preset[[p]]
         # since post-processing must contain `x` to indicate the data set, set it here in the environment
         x <- out
-        if (length(postpr) == 1 && is.character(postpr) && file.exists(postpr)) {
+        if (all(is.character(postpr)) && all(file.exists(postpr))) {
           # support R files
-          postpr <- paste0(readLines(postpr), collapse = "\n")
+          for (fl in postpr) {
+            fl_content <- paste0(readLines(fl), collapse = "\n")
+            out <- eval(parse(text = paste0("{\n", fl_content, "\n}")))
+            # re-set x here in the environment for the next file to read
+            x <- out
+          }
+        } else {
+          out <- eval(parse(text = paste0("{\n", postpr, "\n}")))
         }
-        out <- eval(parse(text = paste0("{\n", postpr, "\n}")))
       }
       msg_ok(dimensions = dim(out), print = info)
       

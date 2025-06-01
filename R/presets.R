@@ -56,6 +56,9 @@
 #'     select: ColumnName1, ColumnName2, ColumnName3
 #'     wide_names_from: ColumnName3
 #'     wide_name_trans: gsub("_", "..", .x)
+#'   post-processing:
+#'     - "file 1.R"
+#'     - "file 2.R"
 #' ```
 #' 
 #' For all presets, `cbase` and `date_col` are required.
@@ -129,13 +132,20 @@
 #' 
 #' As shown, in YAML the `|` character can be used to start a multi-line statement.
 #' 
-#' The `post-processing` field can also be an R file path, which will be [source][source()]d:
+#' The `post-processing` field can also be one or more R file paths, which will be read using [readLines()]. Each of these chunks is valid:
 #' 
 #' ```yaml
 #' name_new_preset:
 #'   cbase: "location/to/name.cbase"
 #'   date_col: "ColumnNameDate"
 #'   post-processing: "location/to/file.R"
+#'   
+#' name_new_preset:
+#'   cbase: "location/to/name.cbase"
+#'   date_col: "ColumnNameDate"
+#'   post-processing:
+#'     - "location/to/file 1.R"
+#'     - "location/to/file 2.R"
 #'   
 #' name_new_preset:
 #'   cbase: "location/to/name.cbase"

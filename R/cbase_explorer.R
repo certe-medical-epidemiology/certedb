@@ -128,16 +128,26 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
                             diver_testserver = diver_testserver,
                             diver_tablename = diver_tablename)
       
+      out <- out |>
+        mutate(order_unique = paste0(Ordernummer, BepalingCode))
+      
       # scroll horizontally
       out <- out |>
         mutate_all(as.character) |>
         pivot_longer(
-          -Ordernummer,
+          -order_unique,
           names_to = "variable",
           values_to = "value") |>
         pivot_wider(
-          names_from = Ordernummer,
-          values_from = value) %>%
+          names_from = order_unique,
+          values_from = value)
+      
+      vars <- unique(c("Ordernummer", "Monsternummer", "BepalingCode", out$variable))
+      vars <- vars[vars %in% out$variable]
+      
+      out$variable <- factor(out$variable, levels = vars, ordered = TRUE)
+      out <- out |>
+        arrange(variable) %>%
         stats::setNames(c("Ordernummer", colnames(.)[-1]))
       
       out
