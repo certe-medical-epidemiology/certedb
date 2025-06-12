@@ -20,7 +20,7 @@
 #' Search cBase Interactively
 #' 
 #' Use this Shiny app to search a cBase. There is also an RStudio add-in.
-#' @importFrom shiny fluidPage sidebarLayout sidebarPanel textInput dateRangeInput mainPanel reactive dialogViewer runGadget selectInput actionButton stopApp eventReactive observeEvent div h4 tags textOutput renderText
+#' @importFrom shiny fluidPage sidebarLayout sidebarPanel textInput dateRangeInput mainPanel reactive dialogViewer runGadget selectInput actionButton stopApp eventReactive observeEvent div h4 tags textOutput renderText checkboxInput renderUI tagList uiOutput showNotification br
 #' @importFrom DT DTOutput renderDT
 #' @importFrom dplyr mutate_all
 #' @importFrom tidyr pivot_longer pivot_wider
@@ -63,6 +63,7 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
                                   language = "nl"),
                    textInput("BepalingCode", "BepalingCode"),
                    textInput("BepalingOmschrijving", "BepalingOmschrijving (reguliere expressie)"),
+                   uiOutput("overig"),
                    h4("Patient"),
                    textInput("PatientBSN", "PatientBSN"),
                    textInput("PatientID", "PatientID"),
@@ -70,11 +71,14 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
                    textInput("PatientGeboortedatum", "PatientGeboortedatum"),
                    actionButton("zoek", "Zoeken", width = "31%"),
                    actionButton("sluit", "Sluiten", width = "25%"),
-                   actionButton("kopie", "Syntax kopieren", width = "41%")
+                   actionButton("kopie", "Syntax kopieren", width = "41%"),
+                   br(),
+                   br(),
+                   actionButton("opslaan", "Data opslaan als 'df_explorer'", width = "100%")
       ),
       mainPanel(width = 9, class = "main",
                 div(class = "data-output",
-                    DT::DTOutput("data_table")
+                    DTOutput("data_table")
                 )
       )
     )
@@ -86,12 +90,39 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
       paste0(get_preset(input$preset_select)$date_col, " (gebaseerd op preset)")
     })
     
+    output$overig <- renderUI({
+      df <- get_diver_data(date_range = NULL,
+                           limit = 0,
+                           auto_transform = FALSE,
+                           info = FALSE,
+                           review_qry = FALSE,
+                           preset = input$preset_select,
+                           diver_project = diver_project,
+                           diver_dsn = diver_dsn,
+                           diver_testserver = diver_testserver,
+                           diver_tablename = diver_tablename)
+      cols <- colnames(df)
+      tagList(
+        h4("Overig criterium"),
+        selectInput("OverigVeld", "Kolom", choices = cols),
+        textInput("OverigWaarde", "Waarde", value = ""),
+        checkboxInput("OverigRegex", "Reguliere expressie", value = TRUE)
+      )
+    })
+    
     data <- eventReactive(input$zoek, {
       where_clauses <- vapply(FUN.VALUE = character(1),
                               names(input),
                               function(x) {
-                                if (x %unlike% "^(data_table|datumbereik|preset_select|zoek|sluit|kopie)" && !is.null(input[[x]]) && !all(input[[x]] == "", na.rm = TRUE)) {
-                                  if (x %in% c("PatientNaam", "BepalingOmschrijving")) {
+                                if (x %unlike% "^(data_table|datumbereik|preset_select|zoek|sluit|kopie|opslaan|OverigWaarde|OverigRegex)" && !is.null(input[[x]]) && !all(input[[x]] == "", na.rm = TRUE)) {
+                                  if (x == "OverigVeld") {
+                                    val <- trimws(input$OverigWaarde)
+                                    if (isTRUE(input$OverigRegex)) {
+                                      paste0(input$OverigVeld, " %like% \"", val, "\"")
+                                    } else {
+                                      paste0(input$OverigVeld, " == \"", val, "\"")
+                                    }
+                                  } else if (x %in% c("PatientNaam", "BepalingOmschrijving")) {
                                     paste0(x, " %like% \"", input[[x]], "\"")
                                     # } else if (input[[x]] %like% "^[0-9]+$") {
                                     #   paste0(x, " == ", input[[x]])
@@ -127,6 +158,8 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
                             diver_dsn = diver_dsn,
                             diver_testserver = diver_testserver,
                             diver_tablename = diver_tablename)
+      
+      pkg_env$cbase_explorer_last <- out
       
       out <- out |>
         mutate(order_unique = paste0(Ordernummer, BepalingCode))
@@ -168,7 +201,12 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
                              message = paste0("Tekst gekopieerd naar klembord:\n\n", qry_text))
     })
     
-    output$data_table <- DT::renderDT({
+    observeEvent(input$opslaan, {
+      assign(x = "df_explorer", value = pkg_env$cbase_explorer_last, envir = globalenv())
+      showNotification(session = session, "Opgeslagen naar global environment.")
+    })
+    
+    output$data_table <- renderDT({
       data()
     }, options = list(paging = FALSE, info = FALSE, scrollX = TRUE, pageLength = -1), rownames = FALSE)
     
