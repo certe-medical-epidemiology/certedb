@@ -204,7 +204,7 @@ is_empty <- function(x) {
 
 
 #' @importFrom certestyle font_blue font_black
-where_convert_objects <- function(where, info) {
+where_convert_objects <- function(where, info, convert_numeric) {
   where_split <- strsplit(paste0(trimws(where), collapse = " "), " ", fixed = TRUE)[[1]]
   converted <- list()
   
@@ -215,6 +215,9 @@ where_convert_objects <- function(where, info) {
     }
     evaluated <- tryCatch(eval(parse(text = old)), error = function(e) NULL)
     if (!is.null(evaluated)) {
+      if (convert_numeric == TRUE && is.numeric(evaluated)) {
+        evaluated <- as.character(evaluated)
+      }
       new <- paste0(trimws(deparse(evaluated)), collapse = " ")
       if (!identical(new, old)) {
         converted <- c(converted,
@@ -242,18 +245,24 @@ where_convert_objects <- function(where, info) {
 where_convert_di_gl <- function(where) {
   for (i in seq_len(length(where))) {
     where_txt <- paste0(trimws(deparse(where[[i]])), collapse = " ")
+    where_txt_items <- strsplit(where_txt, " ")[[1]]
     has_di_gl <- FALSE
-    while (where_txt %like% "(di|gl)[$]") {
-      # use while and sub(), not gsub(), to go over each mention of 'di$'
-      has_di_gl <- TRUE
-      where_txt <- sub("((certedb::)?(di|gl)[$][A-Za-z0-9`.-]+)",
-                       eval(str2lang(sub(".*((certedb::)?(di|gl)[$][A-Za-z0-9`.-]+).*", "\\1", where_txt, perl = TRUE))),
-                       where_txt,
-                       perl = TRUE)
-      if (where_txt %like% "^[a-zA-Z0-9]+[-]") {
-        stop("Hyphen (-) in a column name cannot be used to query a cBase", call. = FALSE)
+    for (j in seq_len(length(where_txt_items))) {
+      item <- where_txt_items[j]
+      while (item %like% "(di|gl)[$]") {
+        # use while and sub(), not gsub(), to go over each mention of 'di$'
+        has_di_gl <- TRUE
+        item <- sub("((certedb::)?(di|gl)[$][A-Za-z0-9`.-]+)",
+                    eval(str2lang(sub(".*((certedb::)?(di|gl)[$][A-Za-z0-9`.-]+).*", "\\1", item, perl = TRUE))),
+                    item,
+                    perl = TRUE)
+        if (item %like% "^[a-zA-Z0-9]+[-]") {
+          stop("Hyphen (-) in a column name cannot be used to query a cBase", call. = FALSE)
+        }
       }
+      where_txt_items[j] <- item
     }
+    where_txt <- paste0(where_txt_items, collapse = " ")
     if (has_di_gl == TRUE) {
       where[[i]] <- str2lang(where_txt)
     }

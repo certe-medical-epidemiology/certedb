@@ -35,6 +35,7 @@ get_diver_data(
   only_conducted_tests = TRUE,
   only_validated = FALSE,
   only_requested = FALSE,
+  convert_numeric_where = TRUE,
   in_background = FALSE,
   ...
 )
@@ -142,6 +143,8 @@ get_glims10_data(
 \item{only_validated}{settings for old \code{certedb_getmmb()} function}
 
 \item{only_requested}{\link{logical} to include only requested tests}
+
+\item{convert_numeric_where}{\link{logical} to convert numeric vectors in the \code{WHERE} to character vectors. For example, \code{where = PatientID \%in\% pat_numbers} would update the \code{WHERE} clause to make the numeric vector \code{pat_numbers} a character vector. Using \code{\%in\%} with numeric vectors in a Diver query has been known to return insufficient rows.}
 
 \item{in_background}{run data collection in the background using \code{\link[callr:r_bg]{callr::r_bg()}}. Use \code{...$get_result()} to retrieve results, or \code{...$is_active()} to check whether the background process still runs.}
 

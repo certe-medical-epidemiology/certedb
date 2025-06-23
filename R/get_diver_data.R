@@ -40,6 +40,7 @@
 #' @param only_conducted_tests [logical] to include only tests that were not stopped
 #' @param only_validated [logical] to include only validated tests
 #' @param only_requested [logical] to include only requested tests
+#' @param convert_numeric_where [logical] to convert numeric vectors in the `WHERE` to character vectors. For example, `where = PatientID %in% pat_numbers` would update the `WHERE` clause to make the numeric vector `pat_numbers` a character vector. Using `%in%` with numeric vectors in a Diver query has been known to return insufficient rows.
 #' @param in_background run data collection in the background using [callr::r_bg()]. Use `...$get_result()` to retrieve results, or `...$is_active()` to check whether the background process still runs.
 #' @details These functions return a 'certedb tibble' from Diver or the `certemmb` MySQL database, which prints information in the tibble header about the used source and current user.
 #' 
@@ -133,6 +134,7 @@ get_diver_data <- function(date_range = this_year(),
                            only_conducted_tests = TRUE,
                            only_validated = FALSE,
                            only_requested = FALSE,
+                           convert_numeric_where = TRUE,
                            in_background = FALSE,
                            ...) {
   
@@ -312,11 +314,13 @@ get_diver_data <- function(date_range = this_year(),
     }
     where <- where_convert_di_gl(substitute(where))
     # convert objects, this will return msg "OK"
-    where <- where_convert_objects(deparse(substitute(where)), info = info)
+    where <- where_convert_objects(deparse(substitute(where)), info = info, convert_numeric = convert_numeric_where)
     
     if (!is.null(substitute(where))) {
-      out <- out |> filter({{ where }})
-      out$lazy_query$where <- where_convert_like(out$lazy_query$where)
+      tryCatch({
+        out <- out |> filter({{ where }})
+        out$lazy_query$where <- where_convert_like(out$lazy_query$where)
+      }, error = function(e) stop("Invalid WHERE clause: `", deparse(where), "`.\n\n", conditionMessage(e), call. = FALSE))
     }
   }
   if (!is.null(preset) && !all(is.na(preset$filter))) {
