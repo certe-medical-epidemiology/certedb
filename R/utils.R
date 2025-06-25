@@ -215,8 +215,11 @@ where_convert_objects <- function(where, info, convert_numeric) {
     }
     evaluated <- tryCatch(eval(parse(text = old)), error = function(e) NULL)
     if (!is.null(evaluated)) {
+      # bug Diver server: filtering on integer vector only returns some results, not all
       if (convert_numeric == TRUE && is.numeric(evaluated)) {
-        evaluated <- as.character(evaluated)
+        if (!(length(evaluated) == 1 && evaluated %in% c(0, 1))) {
+          evaluated <- as.character(evaluated)
+        }
       }
       new <- paste0(trimws(deparse(evaluated)), collapse = " ")
       if (!identical(new, old)) {
