@@ -314,7 +314,7 @@ get_diver_data <- function(date_range = this_year(),
     }
     where <- where_convert_di_gl(substitute(where))
     # convert objects, this will return msg "OK"
-    where <- where_convert_objects(deparse(substitute(where)), info = info, convert_numeric = convert_numeric_where)
+    where <- where_convert_objects(deparse(substitute(where)), info = info, convert_numeric = convert_numeric_where, df = row1)
     
     if (!is.null(substitute(where))) {
       tryCatch({

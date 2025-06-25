@@ -204,7 +204,7 @@ is_empty <- function(x) {
 
 
 #' @importFrom certestyle font_blue font_black
-where_convert_objects <- function(where, info, convert_numeric) {
+where_convert_objects <- function(where, info, convert_numeric, df) {
   where_split <- strsplit(paste0(trimws(where), collapse = " "), " ", fixed = TRUE)[[1]]
   converted <- list()
   
@@ -213,12 +213,22 @@ where_convert_objects <- function(where, info, convert_numeric) {
     if (old %unlike% "^[A-Za-z0-9.]") {
       next
     }
+    var <- NULL
+    if (i >= 2 && where_split[i - 1] %in% c("==", "%in%") && where_split[i - 2] %in% colnames(df)) {
+      var <- df[0, where_split[i - 2], drop = TRUE]
+    }
     evaluated <- tryCatch(eval(parse(text = old)), error = function(e) NULL)
     if (!is.null(evaluated)) {
-      # bug Diver server: filtering on integer vector only returns some results, not all
-      if (convert_numeric == TRUE && is.numeric(evaluated)) {
-        if (!(length(evaluated) == 1 && evaluated %in% c(0, 1))) {
+      # correct values to right data type
+      if (!is.null(var)) {
+        if (is.character(var)) {
           evaluated <- as.character(evaluated)
+        } else if (is.integer(var)) {
+          evaluated <- as.integer(evaluated)
+        } else if (is.double(var)) {
+          evaluated <- as.double(evaluated)
+        } else if (is.logical(var)) {
+          evaluated <- is.logical(evaluated)
         }
       }
       new <- paste0(trimws(deparse(evaluated)), collapse = " ")
