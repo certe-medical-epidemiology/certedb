@@ -210,7 +210,7 @@ where_convert_objects <- function(where, info, convert_numeric, df) {
   
   for (i in seq_len(length(where_split))) {
     old <- where_split[i]
-    if (old %unlike% "^[A-Za-z0-9.]") {
+    if (old %unlike% "^['\"]?[A-Za-z0-9.]") {
       next
     }
     var <- NULL
@@ -228,7 +228,7 @@ where_convert_objects <- function(where, info, convert_numeric, df) {
         } else if (is.double(var)) {
           evaluated <- as.double(evaluated)
         } else if (is.logical(var)) {
-          evaluated <- is.logical(evaluated)
+          evaluated <- as.logical(evaluated)
         }
       }
       new <- paste0(trimws(deparse(evaluated)), collapse = " ")
