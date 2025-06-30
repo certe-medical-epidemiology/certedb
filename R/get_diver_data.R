@@ -420,6 +420,10 @@ get_diver_data <- function(date_range = this_year(),
       }
       out[, i] <- gsub("[^[:print:]]", "?", out[, i, drop = TRUE])
     }
+    # 2025-06-30 fix for Diver, int64 seem corrupt
+    if (is.integer(out[, i, drop = TRUE])) {
+      out[, i] <- as.integer(as.character(out[, i, drop = TRUE]))
+    }
   }
   
   # select ----
