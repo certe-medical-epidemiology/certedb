@@ -1,6 +1,6 @@
 Package: certedb
 Title: A Certe R Package for Connecting to Databases
-Version: 1.13.8
+Version: 1.14.0
 Authors@R: c(
   person(given = c("Matthijs", "S."), 
          family = "Berends",
@@ -37,6 +37,7 @@ Imports:
 Suggests:
   callr,
   clipr (>= 0.8.0),
+  connections,
   RMariaDB,
   rstudioapi,
   sf,

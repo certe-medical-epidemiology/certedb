@@ -5,7 +5,7 @@
 \alias{gl}
 \title{List of GLIMS Columns}
 \format{
-An object of class \code{list} of length 106.
+An object of class \code{list} of length 107.
 }
 \usage{
 gl
