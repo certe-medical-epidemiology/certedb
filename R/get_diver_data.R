@@ -342,7 +342,7 @@ get_diver_data <- function(date_range = this_year(),
   out <- conn |> tbl(sql(new_qry))
   
   qry <- remote_query(out)
-  qry_print <- gsub(paste0("(", paste0("\"?", colnames(out), "\"?", collapse = "|"), ")"), font_italic(font_green("\\1")),
+  qry_print <- gsub(paste0("(", paste0("\"?", gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", colnames(out)), "\"?", collapse = "|"), ")"), font_italic(font_green("\\1")),
                     gsub("( AND | OR |NOT| IN |EVAL| BETWEEN )", font_blue("\\1"),
                          gsub("(SELECT|FROM|WHERE|LIMIT)", font_bold(font_blue("\\1")),
                               gsub("}\n  (AND|OR) ", "} \\1 ", 
@@ -644,11 +644,14 @@ get_diver_data <- function(date_range = this_year(),
     if ("MateriaalKorteNaam" %in% colnames(out_new)) {
       out_new <- out_new |> filter(is.na(MateriaalKorteNaam) | MateriaalKorteNaam != "NPM")
     }
+    if ("MateriaalCode" %in% colnames(out_new)) {
+      out_new <- out_new |> filter(is.na(MateriaalCode) | MateriaalCode != "M_Niet-patientgebonden-materiaal")
+    }
     if ("AanvragerCode" %in% colnames(out_new)) {
-      out_new <- out_new |> filter(AanvragerCode %unlike% "^(NPM[-]|CERTE_QC)")
+      out_new <- out_new |> filter(AanvragerCode %unlike% "^(NPM[-]|CERTE_QC|CERTE_MMB)")
     }
     if ("PatientNaam" %in% colnames(out_new)) {
-      out_new <- out_new |> filter(PatientNaam %unlike% "(SKML|QCMD|NEQAS)")
+      out_new <- out_new |> filter(PatientNaam %unlike% "(SKML|QCMD|NEQAS|EARS NET|^INSTAND )")
     }
     if (nrow(out_new) < nrow(out)) {
       msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_real_patients = TRUE`"), "...", print = info, prefix_time = TRUE)
