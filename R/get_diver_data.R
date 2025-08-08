@@ -547,6 +547,10 @@ get_diver_data <- function(date_range = this_year(),
                                    auto_transform = FALSE, # if `auto_transform` was set to TRUE, this will be applied later
                                    review_qry = FALSE,
                                    in_background = FALSE, # if `in_background` was set to TRUE, this already runs in the background
+                                   only_real_patients = only_real_patients,
+                                   only_conducted_tests = only_conducted_tests,
+                                   only_validated = only_validated,
+                                   only_requested = only_requested,
                                    info = FALSE)
       }
       
