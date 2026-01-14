@@ -36,10 +36,11 @@
 #' @param log_file a file path to which the query will be logged, after collection and before any transformation. Use `NULL` or `""` to prevent logging.
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
 #' @param limit maximum number of rows to return.
-#' @param only_real_patients [logical] to include only real patients, i.e., remove test and Q&A samples
-#' @param only_conducted_tests [logical] to include only tests that were not stopped
-#' @param only_validated [logical] to include only validated tests
-#' @param only_requested [logical] to include only requested tests
+#' @param only_real_patients,only_conducted_tests,only_validated,only_requested These can all be set to `TRUE` or `FALSE`, and if `TRUE`, run scripts in the folder `read_secrets("db.datafilters")`:
+#'   * `only_real_patients.R`\cr to include only real patients, i.e., remove test and Q&A samples
+#'   * `only_conducted_tests.R`\cr to include only tests that were not stopped
+#'   * `only_validated.R`\cr to include only validated tests
+#'   * `only_requested.R`\cr to include only requested tests
 #' @param convert_numeric_where [logical] to convert numeric vectors in the `WHERE` to character vectors. For example, `where = PatientID %in% pat_numbers` would update the `WHERE` clause to make the numeric vector `pat_numbers` a character vector. Using `%in%` with numeric vectors in a Diver query has been known to return insufficient rows.
 #' @param in_background run data collection in the background using [callr::r_bg()]. Use `...$get_result()` to retrieve results, or `...$is_active()` to check whether the background process still runs.
 #' @details These functions return a 'certedb tibble' from Diver or the `certemmb` MySQL database, which prints information in the tibble header about the used source and current user.
@@ -642,73 +643,26 @@ get_diver_data <- function(date_range = this_year(),
     }
   }
   
-  # only real patients ----
+  # data filters -----
+  data_filter <- function(argument) {
+    out_new <- source(file.path(read_secret("db.datafilters"), paste0(argument, ".R")))
+    if (nrow(out_new) < nrow(out)) {
+      msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue(paste0("`", argument, " = TRUE`")), "...", print = info, prefix_time = TRUE)
+      msg_ok(dimensions = dim(out), print = info)
+    }
+    out_new
+  }
   if (isTRUE(only_real_patients)) {
-    out_new <- out
-    if ("MateriaalKorteNaam" %in% colnames(out_new)) {
-      out_new <- out_new |> filter(is.na(MateriaalKorteNaam) | MateriaalKorteNaam != "NPM")
-    }
-    if ("MateriaalCode" %in% colnames(out_new)) {
-      out_new <- out_new |> filter(is.na(MateriaalCode) | MateriaalCode != "M_Niet-patientgebonden-materiaal")
-    }
-    if ("AanvragerCode" %in% colnames(out_new)) {
-      out_new <- out_new |> filter(AanvragerCode %unlike% "^(NPM[-]|CERTE_QC|CERTE_MMB)")
-    }
-    if ("PatientNaam" %in% colnames(out_new)) {
-      out_new <- out_new |> filter(PatientNaam %unlike% "(SKML|QCMD|NEQAS|EARS NET|^INSTAND )")
-    }
-    if (nrow(out_new) < nrow(out)) {
-      msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_real_patients = TRUE`"), "...", print = info, prefix_time = TRUE)
-      out <- out_new
-      msg_ok(dimensions = dim(out), print = info)
-    }
+    out <- data_filter("only_real_patients")
   }
-  
-  # only conducted tests ----
-  if (isTRUE(only_conducted_tests) && "ResultaatTekst" %in% colnames(out)) {
-    if ("Resultaat" %in% colnames(out)) {
-      # does not matter that we change the original `ResultaatTekst` column here - these rows will be filtered out any way
-      out <- out |> 
-        mutate(ResultaatTekst = case_when(Resultaat %like% "ERC_GBA" ~ "Niet verricht",  # Geen betrouwbare analyse mogelijk
-                                          Resultaat %like% "ERC_GMO" ~ "Niet verricht",  # Geen materiaal ontvangen
-                                          Resultaat %like% "ERC_NU\\}" ~ "Niet verricht", # Niet uitgevoerd
-                                          Resultaat %like% "ERC_TWM" ~ "Niet verricht",  # Te weinig materiaal
-                                          tolower(Resultaat) == "nv" ~ "Niet verricht",
-                                          tolower(ResultaatTekst) == "niet verricht" ~ "Niet verricht",
-                                          TRUE ~ ResultaatTekst))
-    }
-    out_new <- out |> filter(is.na(ResultaatTekst) | ResultaatTekst %unlike% "Niet verricht|kweek niet ingezet|materiaal ongeschikt")
-    if (nrow(out_new) < nrow(out)) {
-      msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_conducted_tests = TRUE`"), "...", print = info, prefix_time = TRUE)
-      out <- out_new
-      msg_ok(dimensions = dim(out), print = info)
-    }
+  if (isTRUE(only_conducted_tests)) {
+    out <- data_filter("only_conducted_tests")
   }
-  
-  # only validated ----
   if (isTRUE(only_validated)) {
-    if ("ResultaatStatus" %in% colnames(out) && "McraStatus" %in% colnames(out) ) {
-      out_new <- out |> filter(tolower(trimws(ResultaatStatus)) == "validated" | tolower(trimws(McraStatus)) %in% c("ReadValidated", "Closed"))
-    } else if ("ResultaatStatus" %in% colnames(out)) {
-      out_new <- out |> filter(tolower(trimws(ResultaatStatus)) == "validated")
-    } else if ("McraStatus" %in% colnames(out)) {
-      out_new <- out |> filter(tolower(trimws(McraStatus)) %in% c("ReadValidated", "Closed"))
-    }
-    if (nrow(out_new) < nrow(out)) {
-      msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_validated = TRUE`"), "...", print = info, prefix_time = TRUE)
-      out <- out_new
-      msg_ok(dimensions = dim(out), print = info)
-    }
+    out <- data_filter("only_validated")
   }
-  
-  # only requested ----
-  if (isTRUE(only_requested) && "IsAangevraagd" %in% colnames(out)) {
-    out_new <- out |> filter(IsAangevraagd == 1)
-    if (nrow(out_new) < nrow(out)) {
-      msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue("`only_requested = TRUE`"), "...", print = info, prefix_time = TRUE)
-      out <- out_new
-      msg_ok(dimensions = dim(out), print = info)
-    }
+  if (isTRUE(only_requested)) {
+    out <- data_filter("only_requested")
   }
   
   base::gc(verbose = FALSE, full = TRUE)
