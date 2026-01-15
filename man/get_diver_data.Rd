@@ -136,12 +136,13 @@ get_glims10_data(
 
 \item{limit}{maximum number of rows to return.}
 
-\item{only_real_patients, only_conducted_tests, only_validated, only_requested}{These can all be set to \code{TRUE} or \code{FALSE}, and if \code{TRUE}, run scripts in the folder \code{read_secrets("db.datafilters")}:
+\item{only_real_patients, only_conducted_tests, only_validated, only_requested, only_relevant_rows}{These can all be set to \code{TRUE} or \code{FALSE}, and if \code{TRUE}, run scripts in the folder \code{read_secrets("db.datafilters")}:
 \itemize{
 \item \code{only_real_patients.R}\cr to include only real patients, i.e., remove test and Q&A samples
 \item \code{only_conducted_tests.R}\cr to include only tests that were not stopped
 \item \code{only_validated.R}\cr to include only validated tests
 \item \code{only_requested.R}\cr to include only requested tests
+\item \code{only_relevant_rows.R}\cr to include only relevant rows
 }}
 
 \item{only_validated}{settings for old \code{certedb_getmmb()} function}

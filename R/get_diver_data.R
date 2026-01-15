@@ -36,11 +36,12 @@
 #' @param log_file a file path to which the query will be logged, after collection and before any transformation. Use `NULL` or `""` to prevent logging.
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
 #' @param limit maximum number of rows to return.
-#' @param only_real_patients,only_conducted_tests,only_validated,only_requested These can all be set to `TRUE` or `FALSE`, and if `TRUE`, run scripts in the folder `read_secrets("db.datafilters")`:
+#' @param only_real_patients,only_conducted_tests,only_validated,only_requested,only_relevant_rows These can all be set to `TRUE` or `FALSE`, and if `TRUE`, run scripts in the folder `read_secrets("db.datafilters")`:
 #'   * `only_real_patients.R`\cr to include only real patients, i.e., remove test and Q&A samples
 #'   * `only_conducted_tests.R`\cr to include only tests that were not stopped
 #'   * `only_validated.R`\cr to include only validated tests
 #'   * `only_requested.R`\cr to include only requested tests
+#'   * `only_relevant_rows.R`\cr to include only relevant rows
 #' @param convert_numeric_where [logical] to convert numeric vectors in the `WHERE` to character vectors. For example, `where = PatientID %in% pat_numbers` would update the `WHERE` clause to make the numeric vector `pat_numbers` a character vector. Using `%in%` with numeric vectors in a Diver query has been known to return insufficient rows.
 #' @param in_background run data collection in the background using [callr::r_bg()]. Use `...$get_result()` to retrieve results, or `...$is_active()` to check whether the background process still runs.
 #' @details These functions return a 'certedb tibble' from Diver or the `certemmb` MySQL database, which prints information in the tibble header about the used source and current user.
@@ -135,6 +136,7 @@ get_diver_data <- function(date_range = this_year(),
                            only_conducted_tests = TRUE,
                            only_validated = FALSE,
                            only_requested = FALSE,
+                           only_relevant_rows = TRUE,
                            convert_numeric_where = TRUE,
                            in_background = FALSE,
                            ...) {
@@ -193,6 +195,7 @@ get_diver_data <- function(date_range = this_year(),
                                    only_conducted_tests = only_conducted_tests,
                                    only_validated = only_validated,
                                    only_requested = only_requested,
+                                   only_relevant_rows = only_relevant_rows,
                                    in_background = FALSE,
                                    ...),
                        package = TRUE)
@@ -518,6 +521,7 @@ get_diver_data <- function(date_range = this_year(),
       }
       
       msg_init("Joining data from ", src_txt, "...", print = info, prefix_time = TRUE)
+      current_time <- Sys.time()
       
       join_fn <- getExportedValue(paste0(join_object$type, "_join"), ns = asNamespace("dplyr"))
       join_cols <- join_object$by
@@ -552,6 +556,7 @@ get_diver_data <- function(date_range = this_year(),
                                    only_conducted_tests = only_conducted_tests,
                                    only_validated = only_validated,
                                    only_requested = only_requested,
+                                   only_relevant_rows = only_relevant_rows,
                                    info = FALSE)
       }
       
@@ -581,6 +586,7 @@ get_diver_data <- function(date_range = this_year(),
       
       # the actual join
       out <- out |> join_fn(out_join, by = join_cols, suffix = c("", "2"))
+      pkg_env$time <- current_time
       msg_ok(dimensions = dim(out), print = info)
       
     }, error = function(e) {
@@ -645,7 +651,10 @@ get_diver_data <- function(date_range = this_year(),
   
   # data filters -----
   data_filter <- function(argument) {
-    out_new <- source(file.path(read_secret("db.datafilters"), paste0(argument, ".R")))
+    pkg_env$out <- out # store `out` to our pkg envir
+    source(file.path(read_secret("db.datafilters"), paste0(argument, ".R")),
+           local = pkg_env) # store results to our pkg envir
+    out_new <- pkg_env$out  # retrieve results from our pkg envir
     if (nrow(out_new) < nrow(out)) {
       msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue(paste0("`", argument, " = TRUE`")), "...", print = info, prefix_time = TRUE)
       msg_ok(dimensions = dim(out), print = info)
@@ -663,6 +672,9 @@ get_diver_data <- function(date_range = this_year(),
   }
   if (isTRUE(only_requested)) {
     out <- data_filter("only_requested")
+  }
+  if (isTRUE(only_relevant_rows)) {
+    out <- data_filter("only_relevant_rows")
   }
   
   base::gc(verbose = FALSE, full = TRUE)

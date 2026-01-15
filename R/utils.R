@@ -205,7 +205,8 @@ is_empty <- function(x) {
 
 #' @importFrom certestyle font_blue font_black
 where_convert_objects <- function(where, info, convert_numeric, df) {
-  where_split <- strsplit(paste0(trimws(where), collapse = " "), " ", fixed = TRUE)[[1]]
+  string <- paste0(trimws(where), collapse = " ")
+  where_split <- stringr::str_match_all(string, '"[^"]+"|[^\\s]+')[[1]][,1]
   converted <- list()
   
   for (i in seq_len(length(where_split))) {
@@ -218,7 +219,7 @@ where_convert_objects <- function(where, info, convert_numeric, df) {
       var <- df[0, where_split[i - 2], drop = TRUE]
     }
     evaluated <- tryCatch(eval(parse(text = old)), error = function(e) NULL)
-    if (!is.null(evaluated)) {
+    if (!is.null(evaluated) && mode(evaluated) %in% c("character", "numeric", "logical")) {
       # correct values to right data type
       if (!is.null(var)) {
         if (is.character(var)) {
