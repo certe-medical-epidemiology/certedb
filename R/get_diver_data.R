@@ -518,6 +518,7 @@ get_diver_data <- function(date_range = this_year(),
       }
       
       msg_init("Joining data from ", src_txt, "...", print = info, prefix_time = TRUE)
+      current_time <- Sys.time()
       
       join_fn <- getExportedValue(paste0(join_object$type, "_join"), ns = asNamespace("dplyr"))
       join_cols <- join_object$by
@@ -581,6 +582,7 @@ get_diver_data <- function(date_range = this_year(),
       
       # the actual join
       out <- out |> join_fn(out_join, by = join_cols, suffix = c("", "2"))
+      pkg_env$time <- current_time
       msg_ok(dimensions = dim(out), print = info)
       
     }, error = function(e) {
@@ -645,7 +647,10 @@ get_diver_data <- function(date_range = this_year(),
   
   # data filters -----
   data_filter <- function(argument) {
-    out_new <- source(file.path(read_secret("db.datafilters"), paste0(argument, ".R")))
+    pkg_env$out <- out # store `out` to our pkg envir
+    source(file.path(read_secret("db.datafilters"), paste0(argument, ".R")),
+           local = pkg_env) # store results to our pkg envir
+    out_new <- pkg_env$out  # retrieve results from our pkg envir
     if (nrow(out_new) < nrow(out)) {
       msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue(paste0("`", argument, " = TRUE`")), "...", print = info, prefix_time = TRUE)
       msg_ok(dimensions = dim(out), print = info)
