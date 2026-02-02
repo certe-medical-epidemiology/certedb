@@ -657,7 +657,7 @@ get_diver_data <- function(date_range = this_year(),
     out_new <- pkg_env$out  # retrieve results from our pkg envir
     if (nrow(out_new) < nrow(out)) {
       msg_init("Removing ", nrow(out) - nrow(out_new), " rows since ", font_blue(paste0("`", argument, " = TRUE`")), "...", print = info, prefix_time = TRUE)
-      msg_ok(dimensions = dim(out), print = info)
+      msg_ok(dimensions = dim(out_new), print = info)
     }
     out_new
   }
