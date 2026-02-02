@@ -106,7 +106,7 @@ get_glims10_data(
 )
 }
 \arguments{
-\item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column specified in the YAML file, see \link{presets}. Defaults to \code{\link[=this_year]{this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}. Date-time ojects will be converted to dates, so using times as input is useless. It is supported to filter on a date-time column though.}
+\item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column specified in the YAML file, see \link{presets}. Defaults to \code{\link[certetoolbox:days_around_today]{certetoolbox::this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}. Date-time ojects will be converted to dates, so using times as input is useless. It is supported to filter on a date-time column though.}
 
 \item{where, post_where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.} The \code{post_where} will be run after all downloading and post-processing, but before the auto-transform.}
 
@@ -114,9 +114,9 @@ get_glims10_data(
 
 \item{antibiogram_type}{antibiotic transformation mode. Leave blank to strip antibiotic results from the data, \code{"sir"} to keep SIR values, \code{"mic"} to keep MIC values or \code{"disk"} to keep disk diffusion values. Values will be cleaned with \code{\link[AMR:as.sir]{as.sir()}}, \code{\link[AMR:as.mic]{as.mic()}} or \code{\link[AMR:as.disk]{as.disk()}}.}
 
-\item{distinct}{\link{logical} to apply \code{\link[=distinct]{distinct()}} to the resulting data set}
+\item{distinct}{\link{logical} to apply \code{\link[dplyr:distinct]{dplyr::distinct()}} to the resulting data set}
 
-\item{auto_transform}{\link{logical} to apply \code{\link[=auto_transform]{auto_transform()}} to the resulting data set}
+\item{auto_transform}{\link{logical} to apply \code{\link[certetoolbox:auto_transform]{certetoolbox::auto_transform()}} to the resulting data set}
 
 \item{snake_case}{\link{logical} to convert column names to \href{https://en.wikipedia.org/wiki/Snake_case}{snake case}, \strong{only} when \code{auto_transform = TRUE}}
 
@@ -136,13 +136,16 @@ get_glims10_data(
 
 \item{limit}{maximum number of rows to return.}
 
-\item{only_real_patients}{\link{logical} to include only real patients, i.e., remove test and Q&A samples}
-
-\item{only_conducted_tests}{\link{logical} to include only tests that were not stopped}
+\item{only_real_patients, only_conducted_tests, only_validated, only_requested, only_relevant_rows}{These can all be set to \code{TRUE} or \code{FALSE}, and if \code{TRUE}, run scripts in the folder \code{read_secrets("db.datafilters")}:
+\itemize{
+\item \code{only_real_patients.R}\cr to include only real patients, i.e., remove test and Q&A samples
+\item \code{only_conducted_tests.R}\cr to include only tests that were not stopped
+\item \code{only_validated.R}\cr to include only validated tests
+\item \code{only_requested.R}\cr to include only requested tests
+\item \code{only_relevant_rows.R}\cr to include only relevant rows
+}}
 
 \item{only_validated}{settings for old \code{certedb_getmmb()} function}
-
-\item{only_requested}{\link{logical} to include only requested tests}
 
 \item{convert_numeric_where}{\link{logical} to convert numeric vectors in the \code{WHERE} to character vectors. For example, \code{where = PatientID \%in\% pat_numbers} would update the \code{WHERE} clause to make the numeric vector \code{pat_numbers} a character vector. Using \code{\%in\%} with numeric vectors in a Diver query has been known to return insufficient rows.}
 
@@ -156,7 +159,7 @@ get_glims10_data(
 
 \item{duckdb_table}{name of the DuckDB database to retrieve data from}
 
-\item{dates}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column \code{Ontvangstdatum}. Defaults to \code{\link[=this_year]{this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}.}
+\item{dates}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column \code{Ontvangstdatum}. Defaults to \code{\link[certetoolbox:days_around_today]{certetoolbox::this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}.}
 
 \item{select_preset}{settings for old \code{certedb_getmmb()} function}
 
