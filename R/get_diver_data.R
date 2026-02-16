@@ -552,14 +552,13 @@ get_diver_data <- function(date_range = this_year(),
                                    auto_transform = FALSE, # if `auto_transform` was set to TRUE, this will be applied later
                                    review_qry = FALSE,
                                    in_background = FALSE, # if `in_background` was set to TRUE, this already runs in the background
-                                   only_real_patients = only_real_patients,
-                                   only_conducted_tests = only_conducted_tests,
-                                   only_validated = only_validated,
-                                   only_requested = only_requested,
-                                   only_relevant_rows = only_relevant_rows,
+                                   only_real_patients = FALSE, # all these will be covered with data filters later on, after the join
+                                   only_conducted_tests = FALSE,
+                                   only_validated = FALSE,
+                                   only_requested = FALSE,
+                                   only_relevant_rows = FALSE,
                                    info = FALSE)
       }
-      
       
       if (!is.null(join_object$select)) {
         out_join <- out_join |> select(!!!join_object$select)
