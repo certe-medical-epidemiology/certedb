@@ -136,8 +136,8 @@ db_message <- function(...,
       icon <- font_red(icon)
     }
     message(trimws(paste0(icon, " ",
-                         ifelse(prefix_time == TRUE, font_grey(paste0("[", format(Sys.time()), "] ")), ""),
-                         font_black(msg))),
+                          ifelse(prefix_time == TRUE, font_grey(paste0("[", format(Sys.time()), "] ")), ""),
+                          font_black(msg))),
             appendLF = new_line)
   }
 }
@@ -206,22 +206,34 @@ is_empty <- function(x) {
 #' @importFrom certestyle font_blue font_black
 where_convert_objects <- function(where, info, convert_numeric, df) {
   string <- paste0(trimws(where), collapse = " ")
-  where_split <- stringr::str_match_all(string, '"[^"]+"|[^\\s]+')[[1]][,1]
+  expr <- rlang::parse_expr(string)
+  df_cols <- colnames(df)
+  
   converted <- list()
   
-  for (i in seq_len(length(where_split))) {
-    old <- where_split[i]
-    if (old %unlike% "^['\"]?[A-Za-z0-9.]") {
-      next
-    }
-    var <- NULL
-    if (i >= 2 && where_split[i - 1] %in% c("==", "%in%") && where_split[i - 2] %in% colnames(df)) {
-      var <- df[0, where_split[i - 2], drop = TRUE]
-    }
-    evaluated <- tryCatch(eval(parse(text = old)), error = function(e) NULL)
-    if (!is.null(evaluated) && mode(evaluated) %in% c("character", "numeric", "logical")) {
-      # correct values to right data type
-      if (!is.null(var)) {
+  convert_node <- function(node, parent = NULL, parent_op = NULL, lhs_name = NULL) {
+    # If symbol: attempt evaluation
+    if (rlang::is_symbol(node)) {
+      name <- as.character(node)
+      # Only attempt evaluation if object exists
+      if (!exists(name, envir = parent.frame(), inherits = TRUE)) {
+        return(node)
+      }
+      evaluated <- tryCatch(
+        eval(node, envir = parent.frame()),
+        error = function(e) NULL
+      )
+      if (is.null(evaluated) ||
+          !mode(evaluated) %in% c("character", "numeric", "logical")) {
+        return(node)
+      }
+      
+      # Determine target column type
+      if (!is.null(parent_op) &&
+          parent_op %in% c("==", "%in%") &&
+          !is.null(lhs_name) &&
+          lhs_name %in% df_cols) {
+        var <- df[0, lhs_name, drop = TRUE]
         if (is.character(var)) {
           evaluated <- as.character(evaluated)
         } else if (is.integer(var)) {
@@ -232,29 +244,66 @@ where_convert_objects <- function(where, info, convert_numeric, df) {
           evaluated <- as.logical(evaluated)
         }
       }
-      new <- paste0(trimws(deparse(evaluated)), collapse = " ")
-      if (!identical(new, old)) {
-        converted <- c(converted,
-                       stats::setNames(list(new), old))
-        where_split[i] <- new
+      
+      new_txt <- paste0(trimws(deparse(evaluated)), collapse = " ")
+      
+      if (!identical(new_txt, name)) {
+        converted[[length(converted) + 1]] <<- 
+          stats::setNames(list(new_txt), name)
       }
+      
+      return(evaluated)
     }
+    
+    # If call: recurse
+    if (rlang::is_call(node)) {
+      op <- as.character(node[[1]])
+      # Detect LHS column name for type correction
+      lhs <- NULL
+      if (length(node) >= 3 && rlang::is_symbol(node[[2]])) {
+        lhs <- as.character(node[[2]])
+      }
+      node[] <- lapply(
+        seq_along(node),
+        function(i) {
+          if (i == 1) return(node[[i]])
+          convert_node(
+            node[[i]],
+            parent = node,
+            parent_op = op,
+            lhs_name = lhs
+          )
+        }
+      )
+      return(node)
+    }
+    node
   }
   
+  expr_new <- convert_node(expr)
+  
+  # Build message (same structure as original)
   if (length(converted) > 0) {
     msg_txt <- character(0)
     for (i in seq_len(length(converted))) {
-      msg_txt <- c(msg_txt,
-                   paste0(font_black("\n  - Replaced "), font_blue(names(converted)[i]), font_black(" with "), font_blue(converted[[i]])))
+      msg_txt <- c(
+        msg_txt,
+        paste0(
+          certestyle::font_black("\n  - Replaced "),
+          certestyle::font_blue(names(converted)[i]),
+          certestyle::font_black(" with "),
+          certestyle::font_blue(converted[[i]])
+        )
+      )
     }
-    converted <- paste0(msg_txt, collapse = "")
+    converted_msg <- paste0(msg_txt, collapse = "")
   } else {
-    converted <- ""
+    converted_msg <- ""
   }
-  msg_ok(time = FALSE, dimensions = NULL, print = info, converted)
-  where_split <- paste0(trimws(where_split), collapse = " ")
-  str2lang(where_split)
+  msg_ok(time = FALSE, dimensions = NULL, print = info, converted_msg)
+  expr_new
 }
+
 
 where_convert_di_gl <- function(where) {
   for (i in seq_len(length(where))) {
