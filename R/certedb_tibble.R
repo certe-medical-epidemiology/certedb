@@ -37,14 +37,19 @@ tbl_sum.certedb_tibble <- function(x, ...) {
   out <- dim_desc(x)
   names(out) <- paste("A", attributes(x)$type, "tibble")
   if (identical(attributes(x)$dims, dim(x))) {
-    if (!is.null(attributes(x)$source)) {
-      out <- c(out, "Retrieved from" = attributes(x)$source)
-    }
     if (!is.null(attributes(x)$datetime)) {
       out <- c(out, "Retrieved on" = format2(attributes(x)$datetime, "d mmm yyyy HH:MM"))
     }
     if (!is.null(attributes(x)$user)) {
       out <- c(out, "Retrieved by" = attributes(x)$user)
+    }
+    if (!is.null(attributes(x)$source)) {
+      out <- c(out, "Retrieved from" = attributes(x)$source[1])
+      if (length(attributes(x)$source) > 1) {
+        for (i in 2:length(attributes(x)$source)) {
+          out <- c(out, "+ Join from" = attributes(x)$source[i])
+        }
+      }
     }
   }
   out

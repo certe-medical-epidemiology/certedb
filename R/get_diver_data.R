@@ -317,8 +317,12 @@ get_diver_data <- function(date_range = this_year(),
       where <- str2lang(where)
     }
     where <- where_convert_di_gl(substitute(where))
-    # convert objects, this will return msg "OK"
-    where <- where_convert_objects(deparse(substitute(where)), info = info, convert_numeric = convert_numeric_where, df = row1)
+    if (!isFALSE(list(...)$where_check)) {
+      # convert objects, this will return msg "OK"
+      where <- where_convert_objects(deparse(substitute(where)), info = info, convert_numeric = convert_numeric_where, df = row1)
+    } else {
+      msg_ok(time = FALSE, dimensions = NULL, print = info)
+    }
     
     if (!is.null(substitute(where))) {
       tryCatch({
@@ -337,7 +341,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- out |> filter(preset_filter)
       msg_ok(print = info, dimensions = dim(out))
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(format_error(e)))
     })
   }
   
@@ -377,6 +381,12 @@ get_diver_data <- function(date_range = this_year(),
     wh <- gsub(" AND ", "\n  AND ", wh, fixed = TRUE)
     wh <- gsub("[ \n]LIMIT .*", "", wh)
     msg("Applying filter: ", wh)
+  }
+  
+  # start the clock ----
+  if (!isFALSE(list(...)$is_intial)) {
+    pkg_env$time_initial <- Sys.time()
+    pkg_env$cbases_used <- diver_cbase
   }
   
   # collect ----
@@ -500,7 +510,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- out_select
       msg_ok(print = info, dimensions = dim(out))
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(format_error(e)))
     })
   }
   
@@ -542,6 +552,8 @@ get_diver_data <- function(date_range = this_year(),
         out_join <- get_diver_data(date_range = NULL, # no date range, so base solely on previous dataset
                                    where = join_where,
                                    where_as_character = TRUE, # this leads to transformation with str2lang()
+                                   where_check = FALSE, # this prevents running where_convert_objects(), it's not needed
+                                   is_intial = FALSE, # this prevent new time registration of initial get_diver_data() call
                                    diver_cbase = join_object$cbase,
                                    preset = NULL,
                                    diver_project = diver_project,
@@ -559,6 +571,8 @@ get_diver_data <- function(date_range = this_year(),
                                    only_relevant_rows = FALSE,
                                    info = FALSE)
       }
+      
+      pkg_env$cbases_used <- c(pkg_env$cbases_used, join_object$cbase)
       
       if (!is.null(join_object$select)) {
         out_join <- out_join |> select(!!!join_object$select)
@@ -589,7 +603,7 @@ get_diver_data <- function(date_range = this_year(),
       msg_ok(dimensions = dim(out), print = info)
       
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(format_error(e)))
     })
     
   }
@@ -619,7 +633,7 @@ get_diver_data <- function(date_range = this_year(),
       msg_ok(dimensions = dim(out), print = info)
       
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(format_error(e)))
     })
   }
   
@@ -691,14 +705,23 @@ get_diver_data <- function(date_range = this_year(),
       out <- auto_transform(out, snake_case = snake_case)
       msg_ok(print = info)
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), format_error(e))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(format_error(e)))
     })
     
   }
   
+  # full runtime ----
+  time_diff <- difftime(Sys.time(), pkg_env$time_initial)
+  if (length(time_diff) == 0) {
+    time_diff <- "0 secs"
+  } else {
+    time_diff <- format(round(time_diff, digits = 1))
+  }
+  db_message("Total run time: ", time_diff, type = "ok", print = info)
+  
   # return ----
   as_certedb_tibble(out,
-                    source = diver_cbase,
+                    source = pkg_env$cbases_used,
                     qry = qry,
                     datetime = Sys.time(),
                     user = user,
@@ -725,7 +748,7 @@ certedb_query <- function(query,
       message("No query found.")
     } else {
       if (!is.null(attributes(diver_data)$source)) {
-        msg <- paste0("# This query was run on ", attributes(diver_data)$source)
+        msg <- paste0("# This query was run on ", paste0(attributes(diver_data)$source, collapse = " and "))
         if (!is.null(attributes(diver_data)$datetime)) {
           msg <- paste0(msg, " on ", format2(attributes(diver_data)$datetime, "yyyy-mm-dd HH:MM"))
         }
