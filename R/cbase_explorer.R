@@ -202,7 +202,8 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
     })
     
     observeEvent(input$opslaan, {
-      assign(x = "df_explorer", value = pkg_env$cbase_explorer_last, envir = globalenv())
+      envir <- globalenv()
+      assign(x = "df_explorer", value = pkg_env$cbase_explorer_last, envir = envir)
       showNotification(session = session, "Opgeslagen naar global environment.")
     })
     

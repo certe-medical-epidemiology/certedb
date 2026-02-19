@@ -35,6 +35,7 @@ get_diver_data(
   only_conducted_tests = TRUE,
   only_validated = FALSE,
   only_requested = FALSE,
+  only_relevant_rows = TRUE,
   convert_numeric_where = TRUE,
   in_background = FALSE,
   ...
@@ -144,8 +145,6 @@ get_glims10_data(
 \item \code{only_requested.R}\cr to include only requested tests
 \item \code{only_relevant_rows.R}\cr to include only relevant rows
 }}
-
-\item{only_validated}{settings for old \code{certedb_getmmb()} function}
 
 \item{convert_numeric_where}{\link{logical} to convert numeric vectors in the \code{WHERE} to character vectors. For example, \code{where = PatientID \%in\% pat_numbers} would update the \code{WHERE} clause to make the numeric vector \code{pat_numbers} a character vector. Using \code{\%in\%} with numeric vectors in a Diver query has been known to return insufficient rows.}
 

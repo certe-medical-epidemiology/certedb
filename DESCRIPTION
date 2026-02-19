@@ -41,6 +41,7 @@ Suggests:
   RMariaDB,
   rstudioapi,
   sf,
+  stringr,
   testthat (>= 2.0.0),
   utils
 License: GPL-2

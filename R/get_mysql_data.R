@@ -32,7 +32,6 @@
 #' @param ziplength settings for old `certedb_getmmb()` function
 #' @param tat_hours settings for old `certedb_getmmb()` function
 #' @param log_file a file path to which the query will be logged, after collection and before any transformation. Use `NULL` or `""` to prevent logging.
-#' @param only_validated settings for old `certedb_getmmb()` function
 #' @param only_show_query settings for old `certedb_getmmb()` function
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
 #' @param ... not used anymore, previously settings for old `certetools::certedb_getmmb()` function
