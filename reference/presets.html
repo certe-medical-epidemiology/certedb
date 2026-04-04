@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.14.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.14.5</span>
       </span>
     </div>
 
@@ -179,7 +179,7 @@
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="at">  </span><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="st">"left"</span></span></code></pre><p></p></div>
 <p>An unlimited number of joins can be used, but all so-called 'keys' <strong>must be unique</strong> and start with <code>join</code>, e.g. <code>joinA</code> / <code>joinB</code> or <code>join</code> / <code>join2</code> / <code>join3</code>.</p>
 <p>If <code>wide_names_from</code> is set, the dataset is first transformed to long format using the columns specified in <code>by</code>, and then reshaped to wide format with values in <code>wide_names_from</code>.</p>
-<p>Use <code>wide_name_trans</code> to transform the values in <code>wide_names_from</code> before the reshaping to wide format is applied. Use <code>.x</code> for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in <code>wide_names_from</code> using e.g., <code><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when()</a></code>.</p>
+<p>Use <code>wide_name_trans</code> to transform the values in <code>wide_names_from</code> before the reshaping to wide format is applied. Use <code>.x</code> for the column values. As this will be applied before the data is transformed to a wide format, it allows to refine the values in <code>wide_names_from</code> using e.g., <code><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when()</a></code>.</p>
 </div>
 
 <div class="section">
@@ -227,7 +227,7 @@
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Matthijs S. Berends, Erwin E. A. Hassing, Certe Medical Diagnostics &amp; Advice Foundation.</p>
+  <p></p><p>Developed by Matthijs S. Berends, Erwin E. A. Hassing, Erwin Dijkstra, Certe Medical Diagnostics &amp; Advice Foundation.</p>
 </div>
 
 <div class="pkgdown">
