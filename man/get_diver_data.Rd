@@ -168,7 +168,9 @@ get_glims10_data(
 
 \item{eucast_rules}{settings for old \code{certedb_getmmb()} function}
 
-\item{keep_synonyms}{A \link{logical} to indicate if old, previously valid taxonomic names must be preserved and not be corrected to currently accepted names. The default is \code{FALSE}, which will return a note if old taxonomic names were processed. The default can be set with the package option \code{\link[AMR:AMR-options]{AMR_keep_synonyms}}, i.e. \code{options(AMR_keep_synonyms = TRUE)} or \code{options(AMR_keep_synonyms = FALSE)}.}
+\item{keep_synonyms}{A \link{logical} to indicate if outdated, previously valid taxonomic names must be preserved and not be corrected to currently accepted names. Do note that the term "synonym" is in this case jargon from the field of microbial taxonomy - it is not in place to denote that e.g. "Streptococcus Group A" is a synonym of \emph{S. pyogenes}. Though this is practically the case, taxonomically it is not as "Streptococcus Group A" is not even a valid taxonomic name.
+
+The default is \code{FALSE}, which will return a note if outdated taxonomic names were processed. The default can be set with the package option \code{\link[AMR:AMR-options]{AMR_keep_synonyms}}, i.e. \code{options(AMR_keep_synonyms = TRUE)} or \code{options(AMR_keep_synonyms = FALSE)}.}
 
 \item{mic}{settings for old \code{certedb_getmmb()} function}
 

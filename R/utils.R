@@ -97,7 +97,6 @@ format_error <- function(e, replace = character(0), by = character(0)) {
   }
   txt <- txt[txt %unlike% "^Problem while"]
   if (length(txt) == 0) {
-    # return original error
     stop(e, call. = FALSE)
   }
   for (i in seq_len(length(replace))) {
@@ -107,7 +106,13 @@ format_error <- function(e, replace = character(0), by = character(0)) {
     txt <- "Unknown error"
   }
   txt <- trimws(txt)
-  paste0(txt, collapse = "\n")
+  txt <- paste0(txt, collapse = "\n")
+  # escape cli inline markup characters to prevent cli from interpreting
+  # values such as <BPO_EBV_10> as tag expressions when the error message
+  # is passed to any cli-backed formatting or colouring function
+  txt <- gsub("{", "\\{", txt, fixed = TRUE)
+  txt <- gsub("<", "\\<", txt, fixed = TRUE)
+  txt
 }
 
 #' @importFrom certestyle font_black font_blue font_red font_green font_grey
