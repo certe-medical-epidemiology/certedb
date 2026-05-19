@@ -140,7 +140,7 @@ get_duckdb_data <- function(date_range = this_year(),
   },
   error = function(e) {
     msg_error(time = FALSE, print = info)
-    stop(format_error(e), call. = FALSE)
+    stop(conditionMessage(e), call. = FALSE)
   })
   msg_ok(time = TRUE, dimensions = dim(out), print = info)
   

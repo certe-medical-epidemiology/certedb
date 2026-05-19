@@ -341,7 +341,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- out |> filter(preset_filter)
       msg_ok(print = info, dimensions = dim(out))
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(format_error(e)))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(conditionMessage(e)))
     })
   }
   
@@ -396,7 +396,7 @@ get_diver_data <- function(date_range = this_year(),
   },
   error = function(e) {
     msg_error(time = FALSE, print = info)
-    stop(format_error(e), call. = FALSE)
+    stop(conditionMessage(e), call. = FALSE)
   })
   log <- FALSE
   if (!is.null(suppressMessages(suppressWarnings(log_file))) && suppressMessages(suppressWarnings(log_file)) != "") {
@@ -510,7 +510,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- out_select
       msg_ok(print = info, dimensions = dim(out))
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(format_error(e)))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(conditionMessage(e)))
     })
   }
   
@@ -603,7 +603,7 @@ get_diver_data <- function(date_range = this_year(),
       msg_ok(dimensions = dim(out), print = info)
       
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(format_error(e)))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(conditionMessage(e)))
     })
     
   }
@@ -633,7 +633,7 @@ get_diver_data <- function(date_range = this_year(),
       msg_ok(dimensions = dim(out), print = info)
       
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(format_error(e)))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(conditionMessage(e)))
     })
   }
   
@@ -705,7 +705,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- auto_transform(out, snake_case = snake_case)
       msg_ok(print = info)
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(format_error(e)))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(conditionMessage(e)))
     })
     
   }

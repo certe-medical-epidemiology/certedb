@@ -79,7 +79,7 @@ db_connect <- function(driver,
     }},
     error = function(e) {
       msg_error(time = FALSE, print = print)
-      stop(format_error(e), call. = FALSE)
+      stop(conditionMessage(e), call. = FALSE)
     })
   msg_ok(time = FALSE, print = print)
   invisible(con)
@@ -103,11 +103,11 @@ db_close <- function(conn, ..., print = TRUE) {
     db_message(font_green("OK"), type = NULL, print = print)
   }, error = function(e) {
     db_message(font_red("ERROR\n"), type = NULL, print = print)
-    stop(format_error(e), call. = FALSE)
+    stop(conditionMessage(e), call. = FALSE)
   },
   warning = function(e) {
     db_message(font_red("WARNING\n"), type = NULL, print = print)
-    warning(format_error(e), call. = FALSE)
+    warning(conditionMessage(e), call. = FALSE)
   })
   invisible(TRUE)
 }

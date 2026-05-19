@@ -284,7 +284,7 @@ certedb_getmmb <- function(dates = NULL,
   },
   error = function(e) {
     msg_error(time = FALSE, print = info)
-    stop(format_error(e), call. = FALSE)
+    stop(conditionMessage(e), call. = FALSE)
   })
   log <- FALSE
   if (!is.null(suppressMessages(suppressWarnings(log_file))) && suppressMessages(suppressWarnings(log_file)) != "") {
@@ -1082,7 +1082,7 @@ get_glims10_data <- function(date_range = this_year(),
   },
   error = function(e) {
     msg_error(time = FALSE, print = info)
-    stop(format_error(e), call. = FALSE)
+    stop(conditionMessage(e), call. = FALSE)
   })
   msg_ok(dimensions = dim(out), print = info)
   
