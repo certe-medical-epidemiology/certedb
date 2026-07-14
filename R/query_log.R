@@ -31,11 +31,14 @@
 #' @param columns number of columns returned
 #' @param duration_secs duration of the query in seconds
 #' @param print a [logical] to indicate whether info should be printed
+#' @param date_range date range to filter log entries on, can be length 1 or 2 (or more to use the min/max). Defaults to [this_year()]. Use `NULL` to return all entries. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
 #' @param joins_only if `TRUE`, return only the joins table instead of the main query log
 #' @importFrom DBI dbConnect dbDisconnect dbExecute dbAppendTable dbGetQuery
+#' @importFrom certetoolbox this_year
 #' @rdname query_log
 #' @export
 read_query_log <- function(log_file = read_secret("db.query_log"),
+                           date_range = this_year(),
                            joins_only = FALSE) {
   if (is.null(log_file) || identical(log_file, "")) {
     stop("No log file path configured. Set 'db.query_log' or provide a path.", call. = FALSE)
@@ -44,6 +47,34 @@ read_query_log <- function(log_file = read_secret("db.query_log"),
     message("Log file does not exist yet: ", log_file)
     return(invisible(data.frame()))
   }
+
+  # parse date_range to a length-2 Date vector
+  date_filter <- NULL
+  if (!is.null(date_range)) {
+    date_range <- as.character(date_range)
+    dates_int <- suppressWarnings(as.integer(date_range))
+    if (!is.na(dates_int[1])) {
+      date_range[1] <- as.character(as.Date(as.integer(date_range[1]), origin = "1970-01-01"))
+    }
+    if (!is.na(dates_int[2])) {
+      date_range[2] <- as.character(as.Date(as.integer(date_range[2]), origin = "1970-01-01"))
+    }
+    if (length(date_range) == 1) {
+      date_range <- rep(date_range, 2)
+    } else {
+      date_range <- c(min(date_range, na.rm = TRUE), max(date_range, na.rm = TRUE))
+    }
+    if (all(dates_int %in% 2000:2050, na.rm = TRUE)) {
+      date_range[1] <- paste0(min(dates_int, na.rm = TRUE), "-01-01")
+      date_range[2] <- paste0(max(dates_int, na.rm = TRUE), "-12-31")
+    }
+    date_range <- tryCatch(as.Date(date_range),
+                           error = function(e) as.Date(date_range, origin = "1970-01-01"))
+    date_filter <- paste0(" WHERE datetime BETWEEN '",
+                          format(date_range[1], "%Y-%m-%d"), " 00:00:00' AND '",
+                          format(date_range[2], "%Y-%m-%d"), " 23:59:59'")
+  }
+
   conn <- dbConnect(RSQLite::SQLite(), log_file)
   on.exit(dbDisconnect(conn))
   tables <- DBI::dbListTables(conn)
@@ -56,15 +87,24 @@ read_query_log <- function(log_file = read_secret("db.query_log"),
       message("No join log entries found.")
       return(invisible(data.frame()))
     }
-    out <- dbGetQuery(conn, "SELECT * FROM query_log_joins ORDER BY query_log_id DESC")
+    if (!is.null(date_filter)) {
+      qry <- paste0("SELECT j.* FROM query_log_joins j ",
+                     "INNER JOIN query_log q ON j.query_log_id = q.id",
+                     date_filter, " ORDER BY j.query_log_id DESC")
+    } else {
+      qry <- "SELECT * FROM query_log_joins ORDER BY query_log_id DESC"
+    }
+    out <- dbGetQuery(conn, qry)
     return(dplyr::as_tibble(out))
   }
   has_joins <- "query_log_joins" %in% tables
-  out <- dbGetQuery(conn, "SELECT * FROM query_log ORDER BY datetime DESC")
+  qry <- paste0("SELECT * FROM query_log", date_filter, " ORDER BY datetime DESC")
+  out <- dbGetQuery(conn, qry)
   out$datetime <- as.POSIXct(out$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "")
   out$interactive <- as.logical(out$interactive)
-  if (has_joins) {
-    joins <- dbGetQuery(conn, "SELECT * FROM query_log_joins ORDER BY query_log_id, id")
+  if (has_joins && nrow(out) > 0) {
+    ids <- paste(out$id, collapse = ", ")
+    joins <- dbGetQuery(conn, paste0("SELECT * FROM query_log_joins WHERE query_log_id IN (", ids, ") ORDER BY query_log_id, id"))
     n_joins <- stats::aggregate(id ~ query_log_id, data = joins, FUN = length)
     colnames(n_joins) <- c("id", "n_joins")
     out <- merge(out, n_joins, by = "id", all.x = TRUE)
