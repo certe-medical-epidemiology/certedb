@@ -529,6 +529,7 @@ get_diver_data <- function(date_range = this_year(),
       join_fn <- getExportedValue(paste0(join_object$type, "_join"), ns = asNamespace("dplyr"))
       join_cols <- join_object$by
       
+      filter_values_n <- NA_integer_
       if (is.null(out_join)) {
         join_where <- vapply(FUN.VALUE = character(1),
                              join_cols,
@@ -536,12 +537,15 @@ get_diver_data <- function(date_range = this_year(),
                                                 unique(out[[x]]),
                                                 ifelse(mode(out[[x]]) == "numeric", "", "'"),
                                                 collapse = ", "))
+        filter_values_n <- max(vapply(FUN.VALUE = integer(1),
+                                      join_cols,
+                                      function(x) length(unique(out[[x]]))))
         join_where <- paste0(join_cols, " %in% c(", join_where, ")", collapse = " & ")
         if (!is.null(join_object$filter)) {
           join_where <- paste0(join_object$filter, " & (", join_where, ")")
         }
-        
-        # query other cBase
+
+        # query other cBase - skip logging here, log as join below
         out_join <- get_diver_data(date_range = NULL, # no date range, so base solely on previous dataset
                                    where = join_where,
                                    where_as_character = TRUE, # this leads to transformation with str2lang()
@@ -562,6 +566,7 @@ get_diver_data <- function(date_range = this_year(),
                                    only_validated = FALSE,
                                    only_requested = FALSE,
                                    only_relevant_rows = FALSE,
+                                   log_file = NULL,
                                    info = FALSE)
       }
       
@@ -592,6 +597,18 @@ get_diver_data <- function(date_range = this_year(),
       
       # the actual join
       out <- out |> join_fn(out_join, by = join_cols, suffix = c("", "2"))
+      write_query_log_join(
+        log_file = log_file,
+        query_log_id = pkg_env$last_log_id,
+        cbase = join_object$cbase,
+        join_type = join_object$type,
+        by_columns = join_cols,
+        filter_values_n = filter_values_n,
+        rows = NROW(out_join),
+        columns = NCOL(out_join),
+        duration_secs = as.double(difftime(Sys.time(), current_time, units = "secs")),
+        print = info
+      )
       pkg_env$time <- current_time
       msg_ok(dimensions = dim(out), print = info)
       
