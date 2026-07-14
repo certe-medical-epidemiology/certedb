@@ -37,6 +37,16 @@
 #' @importFrom certetoolbox this_year
 #' @rdname query_log
 #' @export
+#' @examples
+#' \dontrun{
+#'
+#' read_query_log()                            # this year (default)
+#' read_query_log(date_range = 2024)           # all of 2024
+#' read_query_log(date_range = last_month())   # last month
+#' read_query_log(date_range = c(2023, 2025))  # range of years
+#' read_query_log(date_range = NULL)           # everything
+#'
+#' }
 read_query_log <- function(log_file = read_secret("db.query_log"),
                            date_range = this_year(),
                            joins_only = FALSE) {
