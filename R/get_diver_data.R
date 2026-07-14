@@ -33,7 +33,7 @@
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
 #' @param snake_case [logical] to convert column names to [snake case](https://en.wikipedia.org/wiki/Snake_case), **only** when `auto_transform = TRUE`
 #' @param info a logical to indicate whether info about the connection should be printed
-#' @param log_file a file path to which the query will be logged, after collection and before any transformation. Use `NULL` or `""` to prevent logging.
+#' @param log_file path to a SQLite file to which the query will be logged, after collection and before any transformation. Use `NULL` or `""` to prevent logging. The log can be read with [read_query_log()].
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
 #' @param limit maximum number of rows to return.
 #' @param only_real_patients,only_conducted_tests,only_validated,only_requested,only_relevant_rows These can all be set to `TRUE` or `FALSE`, and if `TRUE`, run scripts in the folder `read_secrets("db.datafilters")`:
@@ -398,33 +398,19 @@ get_diver_data <- function(date_range = this_year(),
     msg_error(time = FALSE, print = info)
     stop(conditionMessage(e), call. = FALSE)
   })
-  log <- FALSE
-  if (!is.null(suppressMessages(suppressWarnings(log_file))) && suppressMessages(suppressWarnings(log_file)) != "") {
-    # log queries
-    df <- data.frame(datetime = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
-                     user = user,
-                     interactive = interactive(),
-                     source_dsn = diver_dsn,
-                     source_project = diver_project,
-                     source_cbase = diver_cbase,
-                     query = limit_txt_length(gsub(" +", " ", gsub("\n", " ", new_qry, fixed = TRUE)), 5000),
-                     rows = NROW(out),
-                     columns = NCOL(out))
-    tryCatch(
-      {
-        utils::write.table(x = df,
-                           file = log_file,
-                           append = TRUE,
-                           row.names = FALSE,
-                           col.names = !file.exists(log_file),
-                           sep = ",")
-        log <- TRUE
-      },
-      error = function(e) {
-        msg("Could not write to log file: ", conditionMessage(e), print = info)
-      }
-    )
-  }
+  log <- write_query_log(
+    log_file = log_file,
+    user = user,
+    source_type = "Diver",
+    source_dsn = diver_dsn,
+    source_project = diver_project,
+    source_cbase = diver_cbase,
+    query = limit_txt_length(gsub(" +", " ", gsub("\n", " ", new_qry, fixed = TRUE)), 5000),
+    rows = NROW(out),
+    columns = NCOL(out),
+    duration_secs = as.double(difftime(Sys.time(), pkg_env$time, units = "secs")),
+    print = info
+  )
   msg_ok(time = TRUE, dimensions = dim(out), print = info,
          ifelse(log, paste0(font_black("- logged to "), font_blue(paste0('"', log_file, '"'))), font_red("- not logged")))
   

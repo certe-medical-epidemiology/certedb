@@ -133,7 +133,7 @@ get_glims10_data(
 
 \item{info}{settings for old \code{certedb_getmmb()} function}
 
-\item{log_file}{a file path to which the query will be logged, after collection and before any transformation. Use \code{NULL} or \code{""} to prevent logging.}
+\item{log_file}{path to a SQLite file to which the query will be logged, after collection and before any transformation. Use \code{NULL} or \code{""} to prevent logging. The log can be read with \code{\link{read_query_log}()}.}
 
 \item{limit}{maximum number of rows to return.}
 
