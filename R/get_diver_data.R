@@ -401,7 +401,7 @@ get_diver_data <- function(date_range = this_year(),
   log <- FALSE
   if (!is.null(suppressMessages(suppressWarnings(log_file))) && suppressMessages(suppressWarnings(log_file)) != "") {
     # log queries
-    df <- data.frame(datetime = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"), 
+    df <- data.frame(datetime = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
                      user = user,
                      interactive = interactive(),
                      source_dsn = diver_dsn,
@@ -410,13 +410,20 @@ get_diver_data <- function(date_range = this_year(),
                      query = limit_txt_length(gsub(" +", " ", gsub("\n", " ", new_qry, fixed = TRUE)), 5000),
                      rows = NROW(out),
                      columns = NCOL(out))
-    utils::write.table(x = df,
-                       file = log_file,
-                       append = TRUE,
-                       row.names = FALSE,
-                       col.names = !file.exists(log_file),
-                       sep = ",")
-    log <- TRUE
+    tryCatch(
+      {
+        utils::write.table(x = df,
+                           file = log_file,
+                           append = TRUE,
+                           row.names = FALSE,
+                           col.names = !file.exists(log_file),
+                           sep = ",")
+        log <- TRUE
+      },
+      error = function(e) {
+        msg("Could not write to log file: ", conditionMessage(e), print = info)
+      }
+    )
   }
   msg_ok(time = TRUE, dimensions = dim(out), print = info,
          ifelse(log, paste0(font_black("- logged to "), font_blue(paste0('"', log_file, '"'))), font_red("- not logged")))
