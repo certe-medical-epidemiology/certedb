@@ -54,6 +54,22 @@ read_query_log <- function(log_file = read_secret("db.query_log")) {
   dplyr::as_tibble(out)
 }
 
+sanitise_query <- function(query) {
+  query <- gsub(" +", " ", gsub("\n", " ", query, fixed = TRUE))
+  # replace IN ('val1', 'val2', ..., 'valN') with IN (<N values>)
+  pattern <- "\\bIN\\s*\\(([^)]+)\\)"
+  m <- gregexpr(pattern, query, ignore.case = TRUE, perl = TRUE)
+  matches <- regmatches(query, m)[[1]]
+  for (match in matches) {
+    inner <- sub("^.*?\\((.+)\\)$", "\\1", match)
+    n <- length(strsplit(inner, ",")[[1]])
+    if (n > 5) {
+      query <- sub(match, paste0("IN (<", n, " values>)"), query, fixed = TRUE)
+    }
+  }
+  query
+}
+
 #' @rdname query_log
 write_query_log <- function(log_file,
                             user,
@@ -90,6 +106,7 @@ write_query_log <- function(log_file,
         "  duration_secs REAL",
         ")"
       ))
+      query <- sanitise_query(as.character(query))
       df <- data.frame(
         datetime = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
         user = as.character(user),
@@ -98,7 +115,7 @@ write_query_log <- function(log_file,
         source_dsn = as.character(source_dsn),
         source_project = as.character(source_project),
         source_cbase = as.character(source_cbase),
-        query = as.character(query),
+        query = query,
         rows = as.integer(rows),
         columns = as.integer(columns),
         duration_secs = as.double(duration_secs),
