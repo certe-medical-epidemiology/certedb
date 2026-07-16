@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">certedb</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.14.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.15.0</span>
       </span>
     </div>
 
@@ -107,9 +107,13 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># create a local duckdb database</span></span></span>
 <span class="r-in"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu">db_connect</span><span class="op">(</span><span class="fu">duckdb</span><span class="fu">::</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"~/my_duck.db"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #5F8787;">i</span> <span style="color: #080808;">Opening connection...</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> duckdb is keeping downloaded extensions in a temporary directory:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> /tmp/RtmpGP0zgj/duckdb/extensions</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> This is removed when the R session ends, so extensions are re-downloaded each session.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #AFAF5F;"> OK</span></span>
 <span class="r-in"><span><span class="va">db</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> &lt;duckdb_connection ab930 driver=&lt;duckdb_driver dbdir='/home/runner/my_duck.db' read_only=FALSE bigint=numeric&gt;&gt;</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> &lt;duckdb_connection 39fb0 driver=&lt;duckdb_driver dbdir='/home/runner/my_duck.db' read_only=FALSE bigint=numeric&gt;&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">db</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/backend_dbplyr.html" class="external-link">db_write_table</a></span><span class="op">(</span><span class="st">"my_iris_table"</span>, values <span class="op">=</span> <span class="va">iris</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">db</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/backend_dbplyr.html" class="external-link">db_list_tables</a></span><span class="op">(</span><span class="op">)</span></span></span>
@@ -164,7 +168,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer></div>
