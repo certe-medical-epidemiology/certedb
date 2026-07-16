@@ -33,7 +33,7 @@
 #' @param auto_transform [logical] to apply [auto_transform()] to the resulting data set
 #' @param snake_case [logical] to convert column names to [snake case](https://en.wikipedia.org/wiki/Snake_case), **only** when `auto_transform = TRUE`
 #' @param info a logical to indicate whether info about the connection should be printed
-#' @param log_file a file path to which the query will be logged, after collection and before any transformation. Use `NULL` or `""` to prevent logging.
+#' @param log_file path to a SQLite file to which the query will be logged, after collection and before any transformation. Use `NULL` or `""` to prevent logging. The log can be read with [read_query_log()].
 #' @param query a [data.frame] to view the query of, or a [character] string to run as query in [certedb_getmmb()] (which will ignore all other arguments, except for `where`, `auto_transform` and `info`).
 #' @param limit maximum number of rows to return.
 #' @param only_real_patients,only_conducted_tests,only_validated,only_requested,only_relevant_rows These can all be set to `TRUE` or `FALSE`, and if `TRUE`, run scripts in the folder `read_secrets("db.datafilters")`:
@@ -130,7 +130,7 @@ get_diver_data <- function(date_range = this_year(),
                            diver_testserver = FALSE,
                            diver_tablename = "data",
                            info = interactive(),
-                           log_file = read_secret("db.query_log"),
+                           log_file = read_secret("db.query_log_sqlite"),
                            limit = Inf,
                            only_real_patients = TRUE,
                            only_conducted_tests = TRUE,
@@ -398,26 +398,19 @@ get_diver_data <- function(date_range = this_year(),
     msg_error(time = FALSE, print = info)
     stop(conditionMessage(e), call. = FALSE)
   })
-  log <- FALSE
-  if (!is.null(suppressMessages(suppressWarnings(log_file))) && suppressMessages(suppressWarnings(log_file)) != "") {
-    # log queries
-    df <- data.frame(datetime = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"), 
-                     user = user,
-                     interactive = interactive(),
-                     source_dsn = diver_dsn,
-                     source_project = diver_project,
-                     source_cbase = diver_cbase,
-                     query = limit_txt_length(gsub(" +", " ", gsub("\n", " ", new_qry, fixed = TRUE)), 5000),
-                     rows = NROW(out),
-                     columns = NCOL(out))
-    utils::write.table(x = df,
-                       file = log_file,
-                       append = TRUE,
-                       row.names = FALSE,
-                       col.names = !file.exists(log_file),
-                       sep = ",")
-    log <- TRUE
-  }
+  log <- write_query_log(
+    log_file = log_file,
+    user = user,
+    source_type = "Diver",
+    source_dsn = diver_dsn,
+    source_project = diver_project,
+    source_cbase = diver_cbase,
+    query = new_qry,
+    rows = NROW(out),
+    columns = NCOL(out),
+    duration_secs = as.double(difftime(Sys.time(), pkg_env$time, units = "secs")),
+    print = info
+  )
   msg_ok(time = TRUE, dimensions = dim(out), print = info,
          ifelse(log, paste0(font_black("- logged to "), font_blue(paste0('"', log_file, '"'))), font_red("- not logged")))
   
@@ -536,6 +529,7 @@ get_diver_data <- function(date_range = this_year(),
       join_fn <- getExportedValue(paste0(join_object$type, "_join"), ns = asNamespace("dplyr"))
       join_cols <- join_object$by
       
+      filter_values_n <- NA_integer_
       if (is.null(out_join)) {
         join_where <- vapply(FUN.VALUE = character(1),
                              join_cols,
@@ -543,12 +537,15 @@ get_diver_data <- function(date_range = this_year(),
                                                 unique(out[[x]]),
                                                 ifelse(mode(out[[x]]) == "numeric", "", "'"),
                                                 collapse = ", "))
+        filter_values_n <- max(vapply(FUN.VALUE = integer(1),
+                                      join_cols,
+                                      function(x) length(unique(out[[x]]))))
         join_where <- paste0(join_cols, " %in% c(", join_where, ")", collapse = " & ")
         if (!is.null(join_object$filter)) {
           join_where <- paste0(join_object$filter, " & (", join_where, ")")
         }
-        
-        # query other cBase
+
+        # query other cBase - skip logging here, log as join below
         out_join <- get_diver_data(date_range = NULL, # no date range, so base solely on previous dataset
                                    where = join_where,
                                    where_as_character = TRUE, # this leads to transformation with str2lang()
@@ -569,6 +566,7 @@ get_diver_data <- function(date_range = this_year(),
                                    only_validated = FALSE,
                                    only_requested = FALSE,
                                    only_relevant_rows = FALSE,
+                                   log_file = NULL,
                                    info = FALSE)
       }
       
@@ -599,6 +597,18 @@ get_diver_data <- function(date_range = this_year(),
       
       # the actual join
       out <- out |> join_fn(out_join, by = join_cols, suffix = c("", "2"))
+      write_query_log_join(
+        log_file = log_file,
+        query_log_id = pkg_env$last_log_id,
+        cbase = join_object$cbase,
+        join_type = join_object$type,
+        by_columns = join_cols,
+        filter_values_n = filter_values_n,
+        rows = NROW(out_join),
+        columns = NCOL(out_join),
+        duration_secs = as.double(difftime(Sys.time(), current_time, units = "secs")),
+        print = info
+      )
       pkg_env$time <- current_time
       msg_ok(dimensions = dim(out), print = info)
       
