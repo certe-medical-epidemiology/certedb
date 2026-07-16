@@ -20,7 +20,7 @@
 #' Read and Write the Query Log
 #'
 #' The [read_query_log()] function reads the query log from a SQLite database. The [write_query_log()] function writes a query log entry. Join queries from presets are stored in a separate table and linked to their parent query; use [read_query_log()] to retrieve them together.
-#' @param log_file path to the SQLite query log file. Defaults to the path set in `read_secret("db.query_log")`.
+#' @param log_file path to the SQLite query log file. Defaults to the path set in `read_secret("db.query_log_sqlite")`.
 #' @param user user name that ran the query
 #' @param source_type type of source, e.g. `"Diver"` or `"MySQL"`
 #' @param source_dsn the DSN used to connect
@@ -32,26 +32,29 @@
 #' @param duration_secs duration of the query in seconds
 #' @param print a [logical] to indicate whether info should be printed
 #' @param date_range date range to filter log entries on, can be length 1 or 2 (or more to use the min/max). Defaults to [this_year()]. Use `NULL` to return all entries. Can also be years, or functions such as [`last_month()`][certetoolbox::last_month()].
+#' @param with_joins if `TRUE`, add the joins to the table
 #' @param joins_only if `TRUE`, return only the joins table instead of the main query log
-#' @importFrom DBI dbConnect dbDisconnect dbExecute dbAppendTable dbGetQuery
+#' @importFrom RSQLite SQLite
+#' @importFrom DBI dbConnect dbDisconnect dbExecute dbAppendTable dbGetQuery dbListTables
 #' @importFrom certetoolbox this_year
+#' @importFrom dplyr as_tibble left_join
 #' @rdname query_log
 #' @export
 #' @examples
 #' \dontrun{
 #'
-#' read_query_log()                            # this year (default)
-#' read_query_log(date_range = 2024)           # all of 2024
-#' read_query_log(date_range = last_month())   # last month
-#' read_query_log(date_range = c(2023, 2025))  # range of years
-#' read_query_log(date_range = NULL)           # everything
-#'
+#' read_query_log() # this year (default)
+#' read_query_log(date_range = 2024) # all of 2024
+#' read_query_log(date_range = last_month()) # last month
+#' read_query_log(date_range = c(2023, 2025)) # range of years
+#' read_query_log(date_range = NULL) # everything
 #' }
-read_query_log <- function(log_file = read_secret("db.query_log"),
+read_query_log <- function(log_file = read_secret("db.query_log_sqlite"),
                            date_range = this_year(),
+                           with_joins = TRUE,
                            joins_only = FALSE) {
   if (is.null(log_file) || identical(log_file, "")) {
-    stop("No log file path configured. Set 'db.query_log' or provide a path.", call. = FALSE)
+    stop("No log file path configured. Set 'db.query_log_sqlite' or provide a path.", call. = FALSE)
   }
   if (!file.exists(log_file)) {
     message("Log file does not exist yet: ", log_file)
@@ -79,15 +82,18 @@ read_query_log <- function(log_file = read_secret("db.query_log"),
       date_range[2] <- paste0(max(dates_int, na.rm = TRUE), "-12-31")
     }
     date_range <- tryCatch(as.Date(date_range),
-                           error = function(e) as.Date(date_range, origin = "1970-01-01"))
-    date_filter <- paste0(" WHERE datetime BETWEEN '",
-                          format(date_range[1], "%Y-%m-%d"), " 00:00:00' AND '",
-                          format(date_range[2], "%Y-%m-%d"), " 23:59:59'")
+      error = function(e) as.Date(date_range, origin = "1970-01-01")
+    )
+    date_filter <- paste0(
+      " WHERE datetime BETWEEN '",
+      format(date_range[1], "%Y-%m-%d"), " 00:00:00' AND '",
+      format(date_range[2], "%Y-%m-%d"), " 23:59:59'"
+    )
   }
 
-  conn <- dbConnect(RSQLite::SQLite(), log_file)
+  conn <- dbConnect(SQLite(), log_file)
   on.exit(dbDisconnect(conn))
-  tables <- DBI::dbListTables(conn)
+  tables <- dbListTables(conn)
   if (!"query_log" %in% tables) {
     message("No query log entries found.")
     return(invisible(data.frame()))
@@ -98,14 +104,16 @@ read_query_log <- function(log_file = read_secret("db.query_log"),
       return(invisible(data.frame()))
     }
     if (!is.null(date_filter)) {
-      qry <- paste0("SELECT j.* FROM query_log_joins j ",
-                     "INNER JOIN query_log q ON j.query_log_id = q.id",
-                     date_filter, " ORDER BY j.query_log_id DESC")
+      qry <- paste0(
+        "SELECT j.* FROM query_log_joins j ",
+        "INNER JOIN query_log q ON j.query_log_id = q.id",
+        date_filter, " ORDER BY j.query_log_id DESC"
+      )
     } else {
       qry <- "SELECT * FROM query_log_joins ORDER BY query_log_id DESC"
     }
     out <- dbGetQuery(conn, qry)
-    return(dplyr::as_tibble(out))
+    return(as_tibble(out))
   }
   has_joins <- "query_log_joins" %in% tables
   qry <- paste0("SELECT * FROM query_log", date_filter, " ORDER BY datetime DESC")
@@ -123,7 +131,17 @@ read_query_log <- function(log_file = read_secret("db.query_log"),
   } else {
     out$n_joins <- 0L
   }
-  dplyr::as_tibble(out)
+
+  if (isTRUE(with_joins)) {
+    if (isTRUE(joins_only)) {
+      stop("`joins_only` cannot be TRUE if `with_joins` is also TRUE")
+    }
+    joined <- read_query_log(log_file = log_file, date_range = date_range, joins_only = TRUE, with_joins = FALSE)
+    out <- out |>
+      left_join(joined, by = c("id" = "query_log_id"), suffix = c("", "_joined"))
+  }
+
+  as_tibble(out)
 }
 
 sanitise_query <- function(query) {
@@ -131,8 +149,11 @@ sanitise_query <- function(query) {
   query
 }
 
+
+#' @importFrom RSQLite SQLite
+#' @importFrom DBI dbConnect dbExecute
 log_db_connect <- function(log_file) {
-  conn <- dbConnect(RSQLite::SQLite(), log_file)
+  conn <- dbConnect(SQLite(), log_file)
   dbExecute(conn, "PRAGMA journal_mode=WAL")
   dbExecute(conn, "PRAGMA busy_timeout=5000")
   dbExecute(conn, paste0(
@@ -168,6 +189,7 @@ log_db_connect <- function(log_file) {
 }
 
 #' @rdname query_log
+#' @importFrom DBI dbDisconnect dbAppendTable dbGetQuery
 write_query_log <- function(log_file,
                             user,
                             source_type,
@@ -213,6 +235,7 @@ write_query_log <- function(log_file,
   )
 }
 
+#' @importFrom DBI dbDisconnect dbAppendTable
 write_query_log_join <- function(log_file,
                                  query_log_id,
                                  cbase,
