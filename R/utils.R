@@ -177,6 +177,12 @@ is_empty <- function(x) {
   is.null(x) || isFALSE(x) || identical(x, "") || all(is.na(as.character(x)))
 }
 
+# whether the current output is being rendered by knitr (Quarto/R Markdown),
+# without forcing knitr to load when it is not already in use
+is_knitting <- function() {
+  requireNamespace("knitr", quietly = TRUE) && !is.null(knitr::pandoc_to())
+}
+
 #' @importFrom certestyle font_blue font_black
 where_convert_objects <- function(where, info, convert_numeric, df) {
   string <- paste0(trimws(where), collapse = " ")

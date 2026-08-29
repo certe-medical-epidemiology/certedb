@@ -108,7 +108,7 @@ get_duckdb_data <- function(date_range = this_year(),
   msg_ok(time = TRUE, dimensions = dim(out), print = info)
   qry <- remote_query(out)
   
-  if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
+  if (isTRUE(review_qry) && interactive() && !is_knitting()) {
     choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry,
                                          ifelse(!is.null(preset) & !all(is.na(preset$filter)),
                                                 font_grey(paste0("\n(last part from preset \"", preset$name, "\")")),

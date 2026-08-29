@@ -52,9 +52,6 @@
 #' @importFrom rlang parse_expr quo sym
 #' @importFrom certestyle format2 font_black font_blue font_bold font_green font_grey font_italic
 #' @importFrom certetoolbox auto_transform this_year import
-#' @importFrom tidyr pivot_longer unite pivot_wider
-#' @importFrom AMR as.sir as.mic as.disk
-#' @importFrom knitr pandoc_to
 #' @rdname get_diver_data
 #' @export
 #' @examples 
@@ -356,7 +353,7 @@ get_diver_data <- function(date_range = this_year(),
                               gsub("}\n  (AND|OR) ", "} \\1 ", 
                                    gsub(" (AND|OR) ", "\n  \\1 ", qry)))))
   
-  if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
+  if (isTRUE(review_qry) && interactive() && !is_knitting()) {
     choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry_print,
                                          ifelse(!is.null(preset) & !all(is.na(preset$filter)),
                                                 font_grey(paste0("\n-- (a part of) the WHERE comes from preset \"", preset$name, "\"")),
@@ -576,18 +573,21 @@ get_diver_data <- function(date_range = this_year(),
         out_join <- out_join |> select(!!!join_object$select)
       }
       if (!is.null(join_object$wide_names_from)) {
+        if (!requireNamespace("tidyr", quietly = TRUE)) {
+          stop("Package 'tidyr' is required for joins with `wide_names_from`. Please install it with `install.packages(\"tidyr\")`.", call. = FALSE)
+        }
         if (!is.null(join_object$wide_name_trans)) {
           out_join <- out_join |>
             mutate(across(join_object$wide_names_from,
                           function(.x) !!str2lang(as.character(join_object$wide_name_trans))))
         }
         out_join <- out_join |>
-          pivot_longer(-all_of(c(join_cols, join_object$wide_names_from)),
+          tidyr::pivot_longer(-all_of(c(join_cols, join_object$wide_names_from)),
                        names_to = "type",
                        values_to = "value") |>
-          unite(col = "col", join_object$wide_names_from, type) |>
+          tidyr::unite(col = "col", join_object$wide_names_from, type) |>
           distinct(across(c(join_cols, "col")), .keep_all = TRUE) |>
-          pivot_wider(names_from = col, values_from = value)
+          tidyr::pivot_wider(names_from = col, values_from = value)
       }
       
       if (inherits(out_join, "sf")) {

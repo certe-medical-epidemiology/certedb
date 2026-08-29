@@ -24,30 +24,30 @@ Depends:
 Imports:
   certestyle,
   certetoolbox,
-  AMR (>= 2.0.0),
   cli (>= 3.4.0),
   DBI (>= 1.0.0),
   dbplyr (>= 2.1.0),
   dplyr (>= 1.0.0),
-  DT (>= 0.3.0),
   duckdb (>= 0.8.0),
-  knitr (>= 1.40),
   odbc (>= 1.3.0),
   pillar (>= 1.8.0),
-  shiny (>= 1.9.0),
   RSQLite (>= 2.3.0),
   rlang (>= 1.1.0),
-  tidyr (>= 1.1.0),
   yaml (>= 2.2.1)
 Suggests:
+  AMR (>= 2.0.0),
   callr,
   clipr (>= 0.8.0),
   connections,
+  DT (>= 0.3.0),
+  knitr (>= 1.40),
   RMariaDB,
   rstudioapi,
   sf,
+  shiny (>= 1.9.0),
   stringr,
   testthat (>= 2.0.0),
+  tidyr (>= 1.1.0),
   utils
 License: GPL-2
 Encoding: UTF-8

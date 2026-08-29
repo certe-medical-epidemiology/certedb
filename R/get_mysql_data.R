@@ -40,8 +40,6 @@
 #' @importFrom dbplyr sql remote_query
 #' @importFrom certestyle format2
 #' @importFrom certetoolbox auto_transform ref_dir
-#' @importFrom AMR as.mo eucast_rules first_isolate
-#' @importFrom knitr pandoc_to
 #' @export
 certedb_getmmb <- function(dates = NULL,
                            where = NULL,
@@ -262,7 +260,7 @@ certedb_getmmb <- function(dates = NULL,
   qry <- remote_query(out)
   msg_ok(time = TRUE, dimensions = dim(out), print = info)
   
-  if (isTRUE(review_where) && interactive() && is.null(pandoc_to())) {
+  if (isTRUE(review_where) && interactive() && !is_knitting()) {
     choice <- utils::menu(title = paste0("\nCollect data with this WHERE? (0 for Cancel)\n\n",
                                          gsub("(.*)\nWHERE\n  (.*)", "\\2", qry_beautify(query))),
                           choices = c("Yes", "No", "Print query"),
@@ -339,12 +337,15 @@ certedb_getmmb <- function(dates = NULL,
   }
   
   if ((isTRUE(auto_transform) || isTRUE(first_isolates) || !isFALSE(eucast_rules_setting)) && !is.null(select) && select %like% " i[.]" && nrow(out) > 0) {
+    if (!requireNamespace("AMR", quietly = TRUE)) {
+      stop("Package 'AMR' is required for microorganism/antibiogram processing (`auto_transform`, `first_isolates` or `eucast_rules`). Please install it with `install.packages(\"AMR\")`.", call. = FALSE)
+    }
     if (!"mo" %in% colnames(out) && "bacteriecode" %in% colnames(out)) {
       if (!all(is.na(out$bacteriecode))) {
         suppressWarnings(
           out <- out |>
             rename(bacteriecode_oud = bacteriecode) |>
-            mutate(bacteriecode = as.mo(bacteriecode_oud, keep_synonyms = keep_synonyms))
+            mutate(bacteriecode = AMR::as.mo(bacteriecode_oud, keep_synonyms = keep_synonyms))
         )
       }
     }
@@ -353,58 +354,58 @@ certedb_getmmb <- function(dates = NULL,
     } else {
       if (!needs_mic && !needs_disk && eucast_rules_setting != FALSE) {
         msg_init(paste("Applying EUCAST", eucast_rules_setting, "rules..."), print = info, prefix_time = TRUE)
-        out <- suppressMessages(suppressWarnings(eucast_rules(out, col_mo = "bacteriecode", rules = eucast_rules_setting, info = FALSE)))
+        out <- suppressMessages(suppressWarnings(AMR::eucast_rules(out, col_mo = "bacteriecode", rules = eucast_rules_setting, info = FALSE)))
         msg_ok(print = info)
       }
-      
+
       if (isTRUE(first_isolates)) {
         patid <- colnames(out)[colnames(out) %in% c("patid", "patidnb")][1]
         if (all(c("bacteriecode", "ontvangstdatum", patid) %in% colnames(out), na.rm = TRUE)) {
           msg_init("Determining first isolates...", print = info, prefix_time = TRUE)
-          out$eerste_isolaat <- first_isolate(
+          out$eerste_isolaat <- AMR::first_isolate(
             x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
             method = "episode-based", episode_days = 365, specimen_group = NULL, info = FALSE)
-          out$eerste_isolaat_gewogen <- first_isolate(
+          out$eerste_isolaat_gewogen <- AMR::first_isolate(
             x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode",
             method = "phenotype-based", episode_days = 365, specimen_group = NULL, info = FALSE)
-          
+
           if ("mtrlgroep" %in% colnames(out)) {
             # also add specimen-specific isolates
-            out$eerste_urineisolaat <- first_isolate(
+            out$eerste_urineisolaat <- AMR::first_isolate(
               x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "episode-based", episode_days = 365, specimen_group = "Urine", info = FALSE)
-            out$eerste_urineisolaat_gewogen <- first_isolate(
+            out$eerste_urineisolaat_gewogen <- AMR::first_isolate(
               x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "phenotype-based", episode_days = 365, specimen_group = "Urine", info = FALSE)
-            
-            out$eerste_bloedisolaat <- first_isolate(
+
+            out$eerste_bloedisolaat <- AMR::first_isolate(
               x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "episode-based", episode_days = 365, specimen_group = "Bloed", info = FALSE)
-            out$eerste_bloedisolaat_gewogen <- first_isolate(
+            out$eerste_bloedisolaat_gewogen <- AMR::first_isolate(
               x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "phenotype-based", episode_days = 365, specimen_group = "Bloed", info = FALSE)
-            
-            out$eerste_pusisolaat <- first_isolate(
+
+            out$eerste_pusisolaat <- AMR::first_isolate(
               x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "episode-based", episode_days = 365, specimen_group = "Pus", info = FALSE)
-            out$eerste_pusisolaat_gewogen <- first_isolate(
+            out$eerste_pusisolaat_gewogen <- AMR::first_isolate(
               x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "phenotype-based", episode_days = 365, specimen_group = "Pus", info = FALSE)
-            
-            out$eerste_respisolaat <- first_isolate(
+
+            out$eerste_respisolaat <- AMR::first_isolate(
               x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "episode-based", episode_days = 365, specimen_group = "Respiratoir", info = FALSE)
-            out$eerste_respisolaat_gewogen <- first_isolate(
+            out$eerste_respisolaat_gewogen <- AMR::first_isolate(
               x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "phenotype-based", episode_days = 365, specimen_group = "Respiratoir", info = FALSE)
-            
-            out$eerste_fecesisolaat <- first_isolate(
+
+            out$eerste_fecesisolaat <- AMR::first_isolate(
               x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "episode-based", episode_days = 365, specimen_group = "Feces", info = FALSE)
-            out$eerste_fecesisolaat_gewogen <- first_isolate(
+            out$eerste_fecesisolaat_gewogen <- AMR::first_isolate(
               x = out, col_date = "ontvangstdatum", col_patient_id = patid, col_mo = "bacteriecode", col_specimen = "mtrlgroep",
               method = "phenotype-based", episode_days = 365, specimen_group = "Feces", info = FALSE)
-            
+
           }
           msg_ok(print = info)
         }
@@ -1043,7 +1044,7 @@ get_glims10_data <- function(date_range = this_year(),
                               gsub("'\n  AND ", "' AND ", 
                                    gsub(" AND ", "\n  AND ", qry)))))
   
-  if (isTRUE(review_qry) && interactive() && is.null(pandoc_to())) {
+  if (isTRUE(review_qry) && interactive() && !is_knitting()) {
     choice <- utils::menu(title = paste0("\nCollect data from this query? (0 for Cancel)\n\n", qry_print),
                           choices = c("Yes", "No", "Print column names"),
                           graphics = FALSE)

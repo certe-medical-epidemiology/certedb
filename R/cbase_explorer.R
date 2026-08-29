@@ -20,10 +20,7 @@
 #' Search cBase Interactively
 #' 
 #' Use this Shiny app to search a cBase. There is also an RStudio add-in.
-#' @importFrom shiny fluidPage sidebarLayout sidebarPanel textInput dateRangeInput mainPanel reactive dialogViewer runGadget selectInput actionButton stopApp eventReactive observeEvent div h4 tags textOutput renderText checkboxInput renderUI tagList uiOutput showNotification br
-#' @importFrom DT DTOutput renderDT
 #' @importFrom dplyr mutate_all
-#' @importFrom tidyr pivot_longer pivot_wider
 #' @importFrom certestyle colourpicker
 #' @inheritParams get_diver_data
 #' @export
@@ -33,13 +30,19 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
                            diver_dsn = if (diver_testserver == FALSE) read_secret("db.diver_dsn") else read_secret("db.diver_dsn_test"),
                            diver_testserver = FALSE,
                            diver_tablename = "data") {
-  
+
+  for (pkg in c("shiny", "DT", "tidyr")) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      stop("Package '", pkg, "' is required for cbase_explorer(). Please install it with `install.packages(\"", pkg, "\")`.", call. = FALSE)
+    }
+  }
+
   pkg_env$qry_shiny <- list(date_range = c(paste0(format(Sys.Date(), "%Y"), "-01-01"),
                                            paste0(format(Sys.Date(), "%Y"), "-12-31")),
                             where = NULL)
   
-  ui <- fluidPage(
-    tags$style(paste0(
+  ui <- shiny::fluidPage(
+    shiny::tags$style(paste0(
       ".well { background-color: ", colourpicker("certeblauw6"), "; font-size: 12px; line-height: 1; margin-top: 12px; }",
       ".well label { color: ", colourpicker("certeblauw"), "; }",
       "h4 { color: ", colourpicker("certeblauw"), "; font-size: 14px; font-weight: bold; text-decoration: underline; text-align: center; }",
@@ -52,33 +55,33 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
       "table * { line-height: 14px; font-size: 12px;}",
       "td { padding-top: 1px !important; padding-bottom: 1px !important; padding-left: 0px !important; padding-right: 0px !important; }",
       collapse = " ")),
-    sidebarLayout(
-      sidebarPanel(width = 3,
-                   selectInput("preset_select", "Preset", choices = presets()$preset, selected = preset),
-                   h4("Ordergegevens"),
-                   textInput("Ordernummer", "Ordernummer"),
-                   dateRangeInput("datumbereik", label = textOutput("date_col"),
+    shiny::sidebarLayout(
+      shiny::sidebarPanel(width = 3,
+                   shiny::selectInput("preset_select", "Preset", choices = presets()$preset, selected = preset),
+                   shiny::h4("Ordergegevens"),
+                   shiny::textInput("Ordernummer", "Ordernummer"),
+                   shiny::dateRangeInput("datumbereik", label = shiny::textOutput("date_col"),
                                   start = as.Date(paste0(format(Sys.Date(), "%Y"), "-01-01")),
                                   end = as.Date(paste0(format(Sys.Date(), "%Y"), "-12-31")),
                                   language = "nl"),
-                   textInput("BepalingCode", "BepalingCode"),
-                   textInput("BepalingOmschrijving", "BepalingOmschrijving (reguliere expressie)"),
-                   uiOutput("overig"),
-                   h4("Patient"),
-                   textInput("PatientBSN", "PatientBSN"),
-                   textInput("PatientID", "PatientID"),
-                   textInput("PatientNaam", "PatientNaam (reguliere expressie)"),
-                   textInput("PatientGeboortedatum", "PatientGeboortedatum"),
-                   actionButton("zoek", "Zoeken", width = "31%"),
-                   actionButton("sluit", "Sluiten", width = "25%"),
-                   actionButton("kopie", "Syntax kopieren", width = "41%"),
-                   br(),
-                   br(),
-                   actionButton("opslaan", "Data opslaan als 'df_explorer'", width = "100%")
+                   shiny::textInput("BepalingCode", "BepalingCode"),
+                   shiny::textInput("BepalingOmschrijving", "BepalingOmschrijving (reguliere expressie)"),
+                   shiny::uiOutput("overig"),
+                   shiny::h4("Patient"),
+                   shiny::textInput("PatientBSN", "PatientBSN"),
+                   shiny::textInput("PatientID", "PatientID"),
+                   shiny::textInput("PatientNaam", "PatientNaam (reguliere expressie)"),
+                   shiny::textInput("PatientGeboortedatum", "PatientGeboortedatum"),
+                   shiny::actionButton("zoek", "Zoeken", width = "31%"),
+                   shiny::actionButton("sluit", "Sluiten", width = "25%"),
+                   shiny::actionButton("kopie", "Syntax kopieren", width = "41%"),
+                   shiny::br(),
+                   shiny::br(),
+                   shiny::actionButton("opslaan", "Data opslaan als 'df_explorer'", width = "100%")
       ),
-      mainPanel(width = 9, class = "main",
-                div(class = "data-output",
-                    DTOutput("data_table")
+      shiny::mainPanel(width = 9, class = "main",
+                shiny::div(class = "data-output",
+                    DT::DTOutput("data_table")
                 )
       )
     )
@@ -86,11 +89,11 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
   
   server <- function(input, output, session) {
     
-    output$date_col <- renderText({
+    output$date_col <- shiny::renderText({
       paste0(get_preset(input$preset_select)$date_col, " (gebaseerd op preset)")
     })
     
-    output$overig <- renderUI({
+    output$overig <- shiny::renderUI({
       df <- get_diver_data(date_range = NULL,
                            limit = 0,
                            auto_transform = FALSE,
@@ -102,15 +105,15 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
                            diver_testserver = diver_testserver,
                            diver_tablename = diver_tablename)
       cols <- colnames(df)
-      tagList(
-        h4("Overig criterium"),
-        selectInput("OverigVeld", "Kolom", choices = cols),
-        textInput("OverigWaarde", "Waarde", value = ""),
-        checkboxInput("OverigRegex", "Reguliere expressie", value = TRUE)
+      shiny::tagList(
+        shiny::h4("Overig criterium"),
+        shiny::selectInput("OverigVeld", "Kolom", choices = cols),
+        shiny::textInput("OverigWaarde", "Waarde", value = ""),
+        shiny::checkboxInput("OverigRegex", "Reguliere expressie", value = TRUE)
       )
     })
     
-    data <- eventReactive(input$zoek, {
+    data <- shiny::eventReactive(input$zoek, {
       where_clauses <- vapply(FUN.VALUE = character(1),
                               names(input),
                               function(x) {
@@ -167,11 +170,11 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
       # scroll horizontally
       out <- out |>
         mutate_all(as.character) |>
-        pivot_longer(
+        tidyr::pivot_longer(
           -order_unique,
           names_to = "variable",
           values_to = "value") |>
-        pivot_wider(
+        tidyr::pivot_wider(
           names_from = order_unique,
           values_from = value)
       
@@ -186,11 +189,11 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
       out
     })
     
-    observeEvent(input$sluit, {
-      stopApp()
+    shiny::observeEvent(input$sluit, {
+      shiny::stopApp()
     })
     
-    observeEvent(input$kopie, {
+    shiny::observeEvent(input$kopie, {
       qry_text <- paste0("get_diver_data(date_range = c(\"", pkg_env$qry_shiny$date_range[1], "\", \"", pkg_env$qry_shiny$date_range[2], "\")",
                          ifelse(is.null(pkg_env$qry_shiny$where),
                                 "",
@@ -201,24 +204,24 @@ cbase_explorer <- function(preset = read_secret("db.preset_default_shiny"),
                              message = paste0("Tekst gekopieerd naar klembord:\n\n", qry_text))
     })
     
-    observeEvent(input$opslaan, {
+    shiny::observeEvent(input$opslaan, {
       envir <- globalenv()
       assign(x = "df_explorer", value = pkg_env$cbase_explorer_last, envir = envir)
-      showNotification(session = session, "Opgeslagen naar global environment.")
+      shiny::showNotification(session = session, "Opgeslagen naar global environment.")
     })
     
-    output$data_table <- renderDT({
+    output$data_table <- DT::renderDT({
       data()
     }, options = list(paging = FALSE, info = FALSE, scrollX = TRUE, pageLength = -1), rownames = FALSE)
     
   }
   
-  viewer <- dialogViewer(dialogName = "cBase Explorer",
+  viewer <- shiny::dialogViewer(dialogName = "cBase Explorer",
                          width = 1600,
                          height = 750)
   
   suppressMessages(
-    runGadget(app = ui,
+    shiny::runGadget(app = ui,
               server = server,
               viewer = viewer,
               stopOnCancel = FALSE))
