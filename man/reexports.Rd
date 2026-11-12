@@ -14,6 +14,6 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{dplyr}{\code{\link[dplyr:backend_dbplyr]{db_drop_table}}, \code{\link[dplyr:backend_dbplyr]{db_has_table}}, \code{\link[dplyr:backend_dbplyr]{db_list_tables}}, \code{\link[dplyr:backend_dbplyr]{db_write_table}}}
+  \item{dplyr}{\code{\link[dplyr:db_drop_table]{db_drop_table()}}, \code{\link[dplyr:db_has_table]{db_has_table()}}, \code{\link[dplyr:db_list_tables]{db_list_tables()}}, \code{\link[dplyr:db_write_table]{db_write_table()}}}
 }}
 

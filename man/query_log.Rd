@@ -29,7 +29,7 @@ write_query_log(
 \arguments{
 \item{log_file}{path to the SQLite query log file. Defaults to the path set in \code{read_secret("db.query_log_sqlite")}.}
 
-\item{date_range}{date range to filter log entries on, can be length 1 or 2 (or more to use the min/max). Defaults to \code{\link[certetoolbox:days_around_today]{certetoolbox::this_year()}}. Use \code{NULL} to return all entries. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}.}
+\item{date_range}{date range to filter log entries on, can be length 1 or 2 (or more to use the min/max). Defaults to \code{\link[certetoolbox:this_year]{this_year()}}. Use \code{NULL} to return all entries. Can also be years, or functions such as \code{\link[certetoolbox:last_month]{last_month()}}.}
 
 \item{with_joins}{if \code{TRUE}, add the joins to the table}
 

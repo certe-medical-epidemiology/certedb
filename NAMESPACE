@@ -28,105 +28,127 @@ export(gl)
 export(mysql_init)
 export(presets)
 export(read_query_log)
-importFrom(AMR,as.disk)
-importFrom(AMR,as.mic)
-importFrom(AMR,as.mo)
-importFrom(AMR,as.sir)
-importFrom(AMR,eucast_rules)
-importFrom(AMR,first_isolate)
-importFrom(DBI,dbAppendTable)
-importFrom(DBI,dbConnect)
-importFrom(DBI,dbDisconnect)
-importFrom(DBI,dbExecute)
-importFrom(DBI,dbGetQuery)
-importFrom(DBI,dbListTables)
-importFrom(DBI,dbRemoveTable)
-importFrom(DBI,dbWriteTable)
-importFrom(DT,DTOutput)
-importFrom(DT,renderDT)
+importFrom(AMR,
+  as.disk,
+  as.mic,
+  as.mo,
+  as.sir,
+  eucast_rules,
+  first_isolate
+)
+importFrom(DBI,
+  dbAppendTable,
+  dbConnect,
+  dbDisconnect,
+  dbExecute,
+  dbGetQuery,
+  dbListTables,
+  dbRemoveTable,
+  dbWriteTable
+)
+importFrom(DT,
+  DTOutput,
+  renderDT
+)
 importFrom(RSQLite,SQLite)
-importFrom(certestyle,colourpicker)
-importFrom(certestyle,font_black)
-importFrom(certestyle,font_blue)
-importFrom(certestyle,font_bold)
-importFrom(certestyle,font_green)
-importFrom(certestyle,font_grey)
-importFrom(certestyle,font_italic)
-importFrom(certestyle,font_red)
-importFrom(certestyle,format2)
-importFrom(certetoolbox,auto_transform)
-importFrom(certetoolbox,import)
-importFrom(certetoolbox,ref_dir)
-importFrom(certetoolbox,this_year)
+importFrom(certestyle,
+  colourpicker,
+  font_black,
+  font_blue,
+  font_bold,
+  font_green,
+  font_grey,
+  font_italic,
+  font_red,
+  format2
+)
+importFrom(certetoolbox,
+  auto_transform,
+  import,
+  ref_dir,
+  this_year
+)
 importFrom(cli,symbol)
-importFrom(dbplyr,remote_query)
-importFrom(dbplyr,sql)
-importFrom(dbplyr,src_dbi)
-importFrom(dplyr,`%>%`)
-importFrom(dplyr,across)
-importFrom(dplyr,all_of)
-importFrom(dplyr,arrange)
-importFrom(dplyr,as_tibble)
-importFrom(dplyr,case_when)
-importFrom(dplyr,collect)
-importFrom(dplyr,copy_to)
-importFrom(dplyr,db_drop_table)
-importFrom(dplyr,db_has_table)
-importFrom(dplyr,db_list_tables)
-importFrom(dplyr,db_write_table)
-importFrom(dplyr,desc)
-importFrom(dplyr,distinct)
-importFrom(dplyr,everything)
-importFrom(dplyr,filter)
-importFrom(dplyr,first)
-importFrom(dplyr,left_join)
-importFrom(dplyr,matches)
-importFrom(dplyr,mutate)
-importFrom(dplyr,mutate_all)
-importFrom(dplyr,pull)
-importFrom(dplyr,rename)
-importFrom(dplyr,select)
-importFrom(dplyr,tbl)
-importFrom(dplyr,tibble)
-importFrom(dplyr,type_sum)
+importFrom(dbplyr,
+  remote_query,
+  sql,
+  src_dbi
+)
+importFrom(dplyr,
+  "%>%",
+  across,
+  all_of,
+  arrange,
+  as_tibble,
+  case_when,
+  collect,
+  copy_to,
+  db_drop_table,
+  db_has_table,
+  db_list_tables,
+  db_write_table,
+  desc,
+  distinct,
+  everything,
+  filter,
+  first,
+  left_join,
+  matches,
+  mutate,
+  mutate_all,
+  pull,
+  rename,
+  select,
+  tbl,
+  tibble,
+  type_sum
+)
 importFrom(duckdb,duckdb)
 importFrom(knitr,pandoc_to)
-importFrom(pillar,dim_desc)
-importFrom(pillar,style_subtle)
-importFrom(pillar,tbl_format_footer)
-importFrom(pillar,tbl_sum)
-importFrom(rlang,is_quosure)
-importFrom(rlang,parse_expr)
-importFrom(rlang,quo)
-importFrom(rlang,quo_get_expr)
-importFrom(rlang,quo_set_expr)
-importFrom(rlang,sym)
-importFrom(shiny,actionButton)
-importFrom(shiny,br)
-importFrom(shiny,checkboxInput)
-importFrom(shiny,dateRangeInput)
-importFrom(shiny,dialogViewer)
-importFrom(shiny,div)
-importFrom(shiny,eventReactive)
-importFrom(shiny,fluidPage)
-importFrom(shiny,h4)
-importFrom(shiny,mainPanel)
-importFrom(shiny,observeEvent)
-importFrom(shiny,reactive)
-importFrom(shiny,renderText)
-importFrom(shiny,renderUI)
-importFrom(shiny,runGadget)
-importFrom(shiny,selectInput)
-importFrom(shiny,showNotification)
-importFrom(shiny,sidebarLayout)
-importFrom(shiny,sidebarPanel)
-importFrom(shiny,stopApp)
-importFrom(shiny,tagList)
-importFrom(shiny,tags)
-importFrom(shiny,textInput)
-importFrom(shiny,textOutput)
-importFrom(shiny,uiOutput)
-importFrom(tidyr,pivot_longer)
-importFrom(tidyr,pivot_wider)
-importFrom(tidyr,unite)
+importFrom(pillar,
+  dim_desc,
+  style_subtle,
+  tbl_format_footer,
+  tbl_sum
+)
+importFrom(rlang,
+  is_quosure,
+  parse_expr,
+  quo,
+  quo_get_expr,
+  quo_set_expr,
+  sym
+)
+importFrom(shiny,
+  actionButton,
+  br,
+  checkboxInput,
+  dateRangeInput,
+  dialogViewer,
+  div,
+  eventReactive,
+  fluidPage,
+  h4,
+  mainPanel,
+  observeEvent,
+  reactive,
+  renderText,
+  renderUI,
+  runGadget,
+  selectInput,
+  showNotification,
+  sidebarLayout,
+  sidebarPanel,
+  stopApp,
+  tagList,
+  tags,
+  textInput,
+  textOutput,
+  uiOutput
+)
+importFrom(tidyr,
+  pivot_longer,
+  pivot_wider,
+  unite
+)
 importFrom(yaml,read_yaml)

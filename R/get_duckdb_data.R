@@ -129,7 +129,7 @@ get_duckdb_data <- function(date_range = this_year(),
     }
   } else {
     wh <- strsplit(unclass(remote_query(out)), "[ \n]WHERE[ \n]")[[1]]
-    wh <- paste0(trimws(gsub("\"q[0-9]+\"", "", wh[2:length(wh)])), collapse = " AND ")
+    wh <- paste0(trimws(strip_subquery_alias(wh[2:length(wh)])), collapse = " AND ")
     wh <- gsub(" AND ", "\n  AND ", wh, fixed = TRUE)
     msg("Applying filter: ", wh)
   }
@@ -140,7 +140,7 @@ get_duckdb_data <- function(date_range = this_year(),
   },
   error = function(e) {
     msg_error(time = FALSE, print = info)
-    stop(conditionMessage(e), call. = FALSE)
+    stop(safe_cnd_message(e), call. = FALSE)
   })
   msg_ok(time = TRUE, dimensions = dim(out), print = info)
   

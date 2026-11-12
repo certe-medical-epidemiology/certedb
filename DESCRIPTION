@@ -1,6 +1,6 @@
 Package: certedb
 Title: A Certe R Package for Connecting to Databases
-Version: 1.15.0
+Version: 1.15.1
 Authors@R: c(
   person(given = c("Matthijs", "S."), 
          family = "Berends",
@@ -52,5 +52,5 @@ Suggests:
 License: GPL-2
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Config/testthat/edition: 2
+Config/roxygen2/version: 8.1.1

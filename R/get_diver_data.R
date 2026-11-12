@@ -281,17 +281,20 @@ get_diver_data <- function(date_range = this_year(),
       out <- conn |>
         tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ",
                        date_column, " BETWEEN {", time_function, " '", format2(date_range[1], date_format[1]), "'} ",
-                       "AND {", time_function, " '", format2(date_range[2], date_format[2]), "'}")))
+                       "AND {", time_function, " '", format2(date_range[2], date_format[2]), "'}")),
+            vars = colnames(row1))
     } else if (time_function == "ts") {
       # filter on single date, but it's a timestamp, so filter between 00:00:00-23:59:59
       out <- conn |>
         tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ",
                        date_column, " BETWEEN {", time_function, " '", format2(date_range[1], date_format[1]), "'} ",
-                       "AND {", time_function, " '", format2(date_range[2], date_format[2]), "'}")))
+                       "AND {", time_function, " '", format2(date_range[2], date_format[2]), "'}")),
+            vars = colnames(row1))
     } else {
       out <- conn |>
         tbl(sql(paste0("SELECT * FROM ", diver_tablename, " WHERE ",
-                       date_column, " = {", time_function, " '", format2(date_range[1], date_format[1]), "'}")))
+                       date_column, " = {", time_function, " '", format2(date_range[1], date_format[1]), "'}")),
+            vars = colnames(row1))
     }
   } else {
     msg_init("Retrieving initial cBase...", print = info)
@@ -328,7 +331,7 @@ get_diver_data <- function(date_range = this_year(),
       tryCatch({
         out <- out |> filter({{ where }})
         out$lazy_query$where <- where_convert_like(out$lazy_query$where)
-      }, error = function(e) stop("Invalid WHERE clause: `", deparse(where), "`.\n\n", conditionMessage(e), call. = FALSE))
+      }, error = function(e) stop("Invalid WHERE clause: `", deparse(where), "`.\n\n", safe_cnd_message(e), call. = FALSE))
     }
   }
   if (!is.null(preset) && !all(is.na(preset$filter))) {
@@ -341,13 +344,16 @@ get_diver_data <- function(date_range = this_year(),
       out <- out |> filter(preset_filter)
       msg_ok(print = info, dimensions = dim(out))
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(conditionMessage(e)))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(safe_cnd_message(e)))
     })
   }
   
   # unify query ----
   new_qry <- unify_select_clauses(remote_query(out), diver_tablename)
-  out <- conn |> tbl(sql(new_qry))
+  # supply `vars` so that dbplyr does not run a field query: if that query fails, dbplyr
+  # passes the raw SQL to cli, which cannot parse ODBC literals such as {d '2024-01-01'}
+  # and masks the actual database error; errors now surface in collect() instead
+  out <- conn |> tbl(sql(new_qry), vars = colnames(out))
   
   qry <- remote_query(out)
   qry_print <- gsub(paste0("(", paste0("\"?", gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", colnames(out)), "\"?", collapse = "|"), ")"), font_italic(font_green("\\1")),
@@ -377,7 +383,7 @@ get_diver_data <- function(date_range = this_year(),
     }
   } else if (!interactive()) {
     wh <- strsplit(unclass(remote_query(out)), "[ \n]WHERE[ \n]")[[1]]
-    wh <- paste0(trimws(gsub("\"q[0-9]+\"", "", wh[2:length(wh)])), collapse = " AND ")
+    wh <- paste0(trimws(strip_subquery_alias(wh[2:length(wh)])), collapse = " AND ")
     wh <- gsub(" AND ", "\n  AND ", wh, fixed = TRUE)
     wh <- gsub("[ \n]LIMIT .*", "", wh)
     msg("Applying filter: ", wh)
@@ -396,7 +402,7 @@ get_diver_data <- function(date_range = this_year(),
   },
   error = function(e) {
     msg_error(time = FALSE, print = info)
-    stop(conditionMessage(e), call. = FALSE)
+    stop(safe_cnd_message(e), call. = FALSE)
   })
   log <- write_query_log(
     log_file = log_file,
@@ -503,7 +509,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- out_select
       msg_ok(print = info, dimensions = dim(out))
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(conditionMessage(e)))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(safe_cnd_message(e)))
     })
   }
   
@@ -613,7 +619,7 @@ get_diver_data <- function(date_range = this_year(),
       msg_ok(dimensions = dim(out), print = info)
       
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(conditionMessage(e)))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(safe_cnd_message(e)))
     })
     
   }
@@ -643,7 +649,7 @@ get_diver_data <- function(date_range = this_year(),
       msg_ok(dimensions = dim(out), print = info)
       
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(conditionMessage(e)))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(safe_cnd_message(e)))
     })
   }
   
@@ -715,7 +721,7 @@ get_diver_data <- function(date_range = this_year(),
       out <- auto_transform(out, snake_case = snake_case)
       msg_ok(print = info)
     }, error = function(e) {
-      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(conditionMessage(e)))
+      msg_error(time = TRUE, print = info, font_red("==> Skipping this step\n"), font_red(safe_cnd_message(e)))
     })
     
   }

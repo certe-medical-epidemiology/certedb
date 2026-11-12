@@ -229,7 +229,7 @@ write_query_log <- function(log_file,
       TRUE
     },
     error = function(e) {
-      msg("Could not write to log file: ", conditionMessage(e), print = print)
+      msg("Could not write to log file: ", safe_cnd_message(e), print = print)
       FALSE
     }
   )
@@ -268,7 +268,7 @@ write_query_log_join <- function(log_file,
       TRUE
     },
     error = function(e) {
-      msg("Could not write join to log file: ", conditionMessage(e), print = print)
+      msg("Could not write join to log file: ", safe_cnd_message(e), print = print)
       FALSE
     }
   )

@@ -107,17 +107,17 @@ get_glims10_data(
 )
 }
 \arguments{
-\item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column specified in the YAML file, see \link{presets}. Defaults to \code{\link[certetoolbox:days_around_today]{certetoolbox::this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}. Date-time ojects will be converted to dates, so using times as input is useless. It is supported to filter on a date-time column though.}
+\item{date_range}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column specified in the YAML file, see \link{presets}. Defaults to \code{\link[certetoolbox:this_year]{this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:last_month]{last_month()}}. Date-time ojects will be converted to dates, so using times as input is useless. It is supported to filter on a date-time column though.}
 
 \item{where, post_where}{arguments to filter data on, will be passed on to \code{\link[dplyr:filter]{filter()}}. \strong{Do not use \code{&&} or \code{||} but only \code{&} or \code{|} in filtering.} The \code{post_where} will be run after all downloading and post-processing, but before the auto-transform.}
 
-\item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:output_type]{knitr::pandoc_to()}} must be \code{NULL}.}
+\item{review_qry}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:pandoc_to]{knitr::pandoc_to()}} must be \code{NULL}.}
 
 \item{antibiogram_type}{antibiotic transformation mode. Leave blank to strip antibiotic results from the data, \code{"sir"} to keep SIR values, \code{"mic"} to keep MIC values or \code{"disk"} to keep disk diffusion values. Values will be cleaned with \code{\link[AMR:as.sir]{as.sir()}}, \code{\link[AMR:as.mic]{as.mic()}} or \code{\link[AMR:as.disk]{as.disk()}}.}
 
-\item{distinct}{\link{logical} to apply \code{\link[dplyr:distinct]{dplyr::distinct()}} to the resulting data set}
+\item{distinct}{\link{logical} to apply \code{\link[dplyr:distinct]{distinct()}} to the resulting data set}
 
-\item{auto_transform}{\link{logical} to apply \code{\link[certetoolbox:auto_transform]{certetoolbox::auto_transform()}} to the resulting data set}
+\item{auto_transform}{\link{logical} to apply \code{\link[certetoolbox:auto_transform]{auto_transform()}} to the resulting data set}
 
 \item{snake_case}{\link{logical} to convert column names to \href{https://en.wikipedia.org/wiki/Snake_case}{snake case}, \strong{only} when \code{auto_transform = TRUE}}
 
@@ -158,7 +158,7 @@ get_glims10_data(
 
 \item{duckdb_table}{name of the DuckDB database to retrieve data from}
 
-\item{dates}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column \code{Ontvangstdatum}. Defaults to \code{\link[certetoolbox:days_around_today]{certetoolbox::this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:days_around_today]{last_month()}}.}
+\item{dates}{date range, can be length 1 or 2 (or more to use the min/max) to filter on the column \code{Ontvangstdatum}. Defaults to \code{\link[certetoolbox:this_year]{this_year()}}. Use \code{NULL} to set no date filter. Can also be years, or functions such as \code{\link[certetoolbox:last_month]{last_month()}}.}
 
 \item{select_preset}{settings for old \code{certedb_getmmb()} function}
 
@@ -184,7 +184,7 @@ The default is \code{FALSE}, which will return a note if outdated taxonomic name
 
 \item{only_show_query}{settings for old \code{certedb_getmmb()} function}
 
-\item{review_where}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:output_type]{knitr::pandoc_to()}} must be \code{NULL}.}
+\item{review_where}{a \link{logical} to indicate whether the query must be reviewed first, defaults to \code{TRUE} in interactive mode and \code{FALSE} otherwise. This will always be \code{FALSE} in Quarto / R Markdown, since the output of \code{\link[knitr:pandoc_to]{knitr::pandoc_to()}} must be \code{NULL}.}
 }
 \description{
 Thes functions can be used to download local or remote database data, e.g. Spectre data from DiveLine on a Diver server (from \href{https://www.dimins.com}{Dimensional Insight}). The \code{\link[=get_diver_data]{get_diver_data()}} function sets up an ODBC connection (using \code{\link[=db_connect]{db_connect()}}), which requires their quite limited \href{https://www.dimins.com/online-help/workbench_help/Content/ODBC/di-odbc.html}{DI-ODBC driver}.

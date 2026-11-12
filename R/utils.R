@@ -339,12 +339,38 @@ unify_select_clauses <- function(query, diver_tablename = "data") {
   #   AND ("MateriaalGroep" IN ('Bloed', 'Bloedkweken')
   #   AND "BepalingNaam" IN ('Banale kweek', 'Kweek')
   #   AND "Zorglijn" = '2e lijn')
+  #
+  # dbplyr >= 2.6.0 renders the subquery as `SELECT *\nFROM (...) AS "q01"`
+  # instead of `SELECT "q01".*\nFROM (...) "q01"`, so the alias must be
+  # removed including the `AS` keyword, otherwise invalid SQL is produced
   if (query %like% '"q01"') {
-    qry <- gsub('"q[0-9]+"', "", strsplit(query, "(\n| )WHERE(\n| )")[[1]])
+    qry <- strip_subquery_alias(strsplit(query, "(\n| )WHERE(\n| )")[[1]])
     qry <- qry[-1]
     query <- paste0("SELECT * FROM ", diver_tablename, " WHERE (", paste0(trimws(qry), collapse = " AND "))
   }
   query
+}
+
+strip_subquery_alias <- function(x) {
+  # removes dbplyr subquery aliases such as `"q01".`, ` AS "q01"` and ` "q01"`
+  x <- gsub('"q[0-9]+"[.]', "", x)
+  gsub('([[:space:]]+AS)?[[:space:]]*"q[0-9]+"', "", x)
+}
+
+safe_cnd_message <- function(e) {
+  # conditionMessage() on rlang/cli conditions formats lazily, which can fail
+  # (e.g., when SQL with ODBC literals such as {d '2024-01-01'} ended up in a
+  # cli template); never let that mask the original error
+  tryCatch(paste0(conditionMessage(e), collapse = "\n"),
+           error = function(e2) {
+             txt <- tryCatch(paste0(e$message, collapse = "\n"), error = function(e3) "")
+             if (is.null(e$message) || identical(txt, "")) {
+               txt <- paste0("(error message could not be formatted: ",
+                             tryCatch(paste0(e2$message, collapse = " "), error = function(e3) "unknown"),
+                             ")")
+             }
+             txt
+           })
 }
 
 limit_txt_length <- function(txt, max) {

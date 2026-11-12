@@ -94,7 +94,7 @@ Input for \code{filter} will be passed on to \code{\link[dplyr:filter]{filter()}
 
 \subsection{Joins (\code{join})}{
 
-For joins, you must set at least \code{cbase}, \code{by}, and \code{type} ("left", "right", "inner", etc., \link[dplyr:mutate-joins]{see here}).
+For joins, you must set at least \code{cbase}, \code{by}, and \code{type} ("left", "right", "inner", etc., \link[dplyr:left_join]{see here}).
 
 Other files than a cBase in the field \code{cbase} will be imported using \code{\link[certetoolbox:import]{certetoolbox::import()}}, such as an Excel or CSV file. This can be any file on any local or remote location (even live internet files). For example:
 
